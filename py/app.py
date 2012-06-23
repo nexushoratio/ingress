@@ -48,14 +48,14 @@ def run(func):
   # argv[0] -> argv[0].$HOST.$USER.$DATETIME.$PID
 
   progname = os.path.splitext(os.path.basename(sys.argv[0]))[0]
+  short_filename = '%s.log' % progname
+
   long_filename = '%s.%s.%s.%s.%d' % (
-    progname,
+    short_filename,
     socket.gethostname(), 
     pwd.getpwuid(os.getuid())[0],
     datetime.datetime.now().strftime('%Y%m%d-%H%M%S'),
     os.getpid())
-
-  short_filename = '%s.log' % progname
 
   long_pathname = os.path.join(tempfile.gettempdir(), long_filename)
   short_pathname = os.path.join(tempfile.gettempdir(), short_filename)
