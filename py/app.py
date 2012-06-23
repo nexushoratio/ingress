@@ -61,7 +61,7 @@ def run(func):
   short_pathname = os.path.join(tempfile.gettempdir(), short_filename)
 
   log_format = ('%(levelname).1s%(asctime)s: %(filename)s:%(lineno)d'
-                '(%(funcName)s)] %(message)s')
+                '(%(funcName)s)] {%(name)s} %(message)s')
   logging.basicConfig(level=logging.INFO,
                       format=log_format,
                       filename=long_pathname)
