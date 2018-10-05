@@ -65,10 +65,13 @@ def run(func):
   logging.basicConfig(level=logging.INFO,
                       format=log_format,
                       filename=long_pathname)
+  logging.info('Started.')
   # best effort on symlink
   try:
     os.unlink(short_pathname)
   except OSError:
     pass
   os.symlink(long_pathname, short_pathname)
-  return func(parser) 
+  ret = func(parser)
+  logging.info('Finished. (%d)', ret or 0)
+  return ret
