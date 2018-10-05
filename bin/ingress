@@ -1,0 +1,24 @@
+#!/usr/bin/python
+
+import app
+import argparse
+
+from ingress import database
+
+
+def main(app_parser):
+    """Main."""
+
+    parser = argparse.ArgumentParser(
+        parents=[
+            app_parser
+        ],
+        description='Perform a number of Ingress related functions.',
+    )
+    parser.parse_args()
+
+    dbc = database.Database()
+
+
+if __name__ == '__main__':
+    app.run(main)
