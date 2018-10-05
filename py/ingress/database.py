@@ -17,14 +17,16 @@ Base = declarative.declarative_base()  # pylint: disable=invalid-name
 
 
 class Portal(Base):
-  __tablename__ = 'portals'
+    __tablename__ = 'portals'
 
-  guid = sqlalchemy.Column(sqlalchemy.String, primary_key=True)
-  label = sqlalchemy.Column(sqlalchemy.Unicode, nullable=False)
-  first_seen = sqlalchemy.Column(sqlalchemy.Integer, nullable=False, index=True)
-  last_seen = sqlalchemy.Column(sqlalchemy.Integer, nullable=False, index=True)
-  code = sqlalchemy.Column(sqlalchemy.String)
-  latlng = sqlalchemy.Column(sqlalchemy.String, nullable=False)
+    guid = sqlalchemy.Column(sqlalchemy.String, primary_key=True)
+    label = sqlalchemy.Column(sqlalchemy.Unicode, nullable=False)
+    first_seen = sqlalchemy.Column(
+        sqlalchemy.Integer, nullable=False, index=True)
+    last_seen = sqlalchemy.Column(
+        sqlalchemy.Integer, nullable=False, index=True)
+    code = sqlalchemy.Column(sqlalchemy.String)
+    latlng = sqlalchemy.Column(sqlalchemy.String, nullable=False)
 
 
 class Database(object):
