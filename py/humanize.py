@@ -14,3 +14,26 @@ def binary_size(num):
 def time(seconds):
   """Return hh:mm:ss when given seconds."""
   return str(datetime.timedelta(seconds=seconds))
+
+def h_m_s(seconds):
+  """Return xh ym zs when given seconds."""
+  secs = int(round(seconds))
+  res = list()
+  mins, s = divmod(secs, 60)
+
+  if s or not mins:
+    res.append('%ds' % s)
+
+  if mins:
+    hours, m = divmod(mins, 60)
+    if m:
+      res.append('%dm' % m)
+    if hours:
+      days, h = divmod(hours, 24)
+      if h:
+        res.append('%dh' % h)
+      if days:
+        res.append('%dd' % days)
+
+  res.reverse()
+  return ' '.join(res)
