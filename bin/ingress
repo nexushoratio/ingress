@@ -7,7 +7,7 @@ import logging
 import app
 
 from ingress import database
-from ingress import import_bookmarks
+from ingress import bookmarks
 
 
 def main(app_parser):
@@ -30,7 +30,7 @@ def main(app_parser):
         'import',
         parents=[bm_parser],
         help='Import portals from an IITC bookmark.')
-    parser_import.set_defaults(func=import_bookmarks.import_bookmarks)
+    parser_import.set_defaults(func=bookmarks.import_bookmarks)
 
     args = parser.parse_args()
     dbc = database.Database()
