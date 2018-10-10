@@ -1,20 +1,41 @@
 #!/usr/bin/python
+"""Perform a number of Ingress related functions."""
+
+import argparse
+import logging
 
 import app
-import argparse
 
 from ingress import database
+from ingress import import_bookmarks
 
 
 def main(app_parser):
     """Main."""
-
     parser = argparse.ArgumentParser(
         parents=[app_parser],
-        description='Perform a number of Ingress related functions.', )
-    parser.parse_args()
+        description='Perform a number of Ingresssssss related functions.')
 
+    bm_parser = argparse.ArgumentParser(add_help=False)
+    bm_parser.add_argument(
+        '-b',
+        '--bookmarks',
+        action='store',
+        required=True,
+        help='IITC bookmarks json file to use')
+
+    subparsers = parser.add_subparsers(dest='name')
+
+    parser_import = subparsers.add_parser(
+        'import',
+        parents=[bm_parser],
+        help='Import portals from an IITC bookmark.')
+    parser_import.set_defaults(func=import_bookmarks.import_bookmarks)
+
+    args = parser.parse_args()
     dbc = database.Database()
+    logging.debug('Calling %s with %s', args.name, args)
+    args.func(args, dbc)
 
 
 if __name__ == '__main__':
