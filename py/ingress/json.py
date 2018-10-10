@@ -3,11 +3,11 @@
 import codecs
 import json
 
-def load_json(json_name):
+def load(json_name):
   data = json.load(codecs.open(json_name, encoding='utf-8'))
   return data
 
-def save_json(db_name, data):
+def save(db_name, data):
   newname = '%s.%s' % (db_name, time.strftime('%Y-%m-%dT%H:%M'))
   tmp_fd, tmp_filename = tempfile.mkstemp(prefix='ingress_data', dir='.')
   os.close(tmp_fd)
