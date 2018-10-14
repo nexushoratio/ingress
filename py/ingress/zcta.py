@@ -43,6 +43,8 @@ class Zcta(object):
     def __init__(self):
         if shapely.speedups.available:
             shapely.speedups.enable()
+        self._codes = list()
+        self._code_index = None
 
     # Maybe make this importer a class on its own
     def import_from_shapefile(self):  # pylint: disable=too-many-locals
@@ -94,6 +96,51 @@ class Zcta(object):
                 for multi_polygon_wkt in multi_polygons.itervalues()
             ]).convex_hull.wkt
         json.save(self._full_path(self.INDEX_JSON), hulls_by_code)
+
+    def code_from_latlng(self, latlng):
+        """Figure out which ZCTA a particular location is in."""
+        lat, lng = latlng.split(',')
+        point = shapely.geometry.Point(float(lng), float(lng))
+        code = self._code_by_point(point)
+        if code is None:
+            logging.info('Unable to find code for %s', latlng)
+            code = 'Unknown'
+        return code
+
+    def _code_by_point(self, point):
+        code = self._point_in_any_code(point)
+        if code is None:
+            self._load_group(point)
+            code = self._point_in_any_code(point)
+        return code
+
+    def _point_in_any_code(self, point):
+        for index, entry in enumerate(self._codes):
+            code, area = entry
+            if point.within(area):
+                # Move to the front
+                if index:
+                    self._codes.pop(index)
+                    self._codes.insert(0, entry)
+                return code
+
+    def _load_group(self, point):
+        if self._code_index is None:
+            self._load_code_index()
+
+        for code, polygon in self._code_index.iteritems():
+            if point.within(polygon):
+                basename = '%s.json' % code
+                group = json.load(self._full_path(basename))
+                for key, value in group.iteritems():
+                    area = shapely.wkt.loads(value)
+                    self._codes.append((key, area))
+
+    def _load_code_index(self):
+        wkt = json.load(self._full_path(self.INDEX_JSON))
+        self._code_index = dict()
+        for code, polygon in wkt.iteritems():
+            self._code_index[code] = shapely.wkt.loads(polygon)
 
     def _full_path(self, file_name):
         path_name = self.BASE_PATH + tuple([file_name])
