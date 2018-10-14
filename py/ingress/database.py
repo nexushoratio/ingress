@@ -1,5 +1,6 @@
 """Database connector for Ingress stuff."""
 
+import logging
 import sqlalchemy
 from sqlalchemy.ext import declarative
 from sqlalchemy import orm
@@ -99,6 +100,10 @@ class Address(Base):  # pylint: disable=missing-docstring
 
 class Database(object):
     def __init__(self):
+
+        sql_logger = logging.getLogger('sqlalchemy')
+        root_logger = logging.getLogger()
+        sql_logger.setLevel(root_logger.getEffectiveLevel())
         engine = sqlalchemy.create_engine('sqlite:////home/nexus/ingress.db')
         self.session = orm.sessionmaker(bind=engine)()
         Base.metadata.create_all(engine)
