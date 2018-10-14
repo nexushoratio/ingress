@@ -32,6 +32,13 @@ class Portal(Base):  # pylint: disable=missing-docstring
     code = sqlalchemy.Column(sqlalchemy.String)
     latlng = sqlalchemy.Column(sqlalchemy.String, nullable=False)
 
+    def update(self, **kwargs):
+        """Update a row using kwargs just like the initial creation did."""
+        logging.debug('updating with: %s', kwargs)
+        for key, value in kwargs.iteritems():
+            setattr(self, key, value)
+        logging.debug('updated')
+
 
 class Leg(Base):  # pylint: disable=missing-docstring
     __tablename__ = 'legs'
