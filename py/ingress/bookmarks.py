@@ -24,7 +24,13 @@ def import_bookmarks(args, dbc):
     for row in rows:
         guid = row.guid
         portal = portals[guid]
-        row.update(**portal)
+        # only update if newer
+        if portal['last_seen'] > row.last_seen:
+            row.update(**portal)
+        # or if we have an updated code
+        elif portal['latlng'] == row.latlng and portal['code'] != row.code:
+            row.code = portal['code']
+
         keys.remove(guid)
 
     # whatever is left is a new portal
