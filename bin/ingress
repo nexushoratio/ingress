@@ -14,7 +14,7 @@ def main(app_parser):
     """Main."""
     parser = argparse.ArgumentParser(
         parents=[app_parser],
-        description='Perform a number of Ingresssssss related functions.')
+        description='Perform a number of Ingress related functions.')
 
     bm_parser = argparse.ArgumentParser(add_help=False)
     bm_parser.add_argument(
