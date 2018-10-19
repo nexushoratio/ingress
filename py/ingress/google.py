@@ -2,7 +2,6 @@
 
 from __future__ import absolute_import
 
-import collections
 import httplib
 import json
 import logging
@@ -11,6 +10,8 @@ import socket
 import time
 import urllib
 import urllib2
+
+import attr
 
 API_KEY = 'AIzaSyD5ahcNNKsmB1iB5ldI6HXV8BaWCv66tpo'
 DIRECTIONS_BASE_URL = 'https://maps.googleapis.com/maps/api/directions/json'
@@ -29,37 +30,36 @@ class NetworkError(Error):
     """Generic network issue."""
 
 
-# TODO: Switch to attr, maybe move into caller
-DistanceResult = collections.namedtuple(
-    'DistanceResult',
-    ['origin_latlng', 'destination_latlng', 'duration', 'polyline'])
+@attr.s  # pylint: disable=missing-docstring,too-few-public-methods
+class Directions(object):
+    begin_latlng = attr.ib()
+    end_latlng = attr.ib()
+    duration = attr.ib()
+    polyline = attr.ib()
+    mode = attr.ib()
 
 
-def directions(origin, destination, **args):
+def directions(origin, destination, mode):
     """Get directions from origin to destination."""
-    args.update({
+    args = {
         'origin': origin,
         'destination': destination,
-    })
+        'mode': mode,
+    }
     result = _call_api(DIRECTIONS_BASE_URL, args)
     if result['status'] == 'ZERO_RESULTS':
         # Need to fake it -- sometimes gmaps just cannot figure it out
         # On the other hand, don't worry about it until we see a failure
         raise Error('Zero results: %s' % pprint.pformat(args))
 
-        # parse_ll will be used elsewhere, so where to put it?
-        # py/geo.py or something?
-
-        # origin_ll = parse_ll(origin)
-        # destination_ll = parse_ll(destination)
-        # egp = encode_polyline((origin_ll, destination_ll))
-        # answer = DistanceResult(origin, destination, 9999, egp)
-    else:
-        data = result['routes'][0]['legs'][0]
-        answer = DistanceResult(
-            '%(lat)s,%(lng)s' % data['start_location'], '%(lat)s,%(lng)s' %
-            data['end_location'], data['duration']['value'],
-            result['routes'][0]['overview_polyline']['points'])
+    leg_data = result['routes'][0]['legs'][0]
+    answer = Directions(
+        begin_latlng='{lat},{lng}'.format(**leg_data['start_location']),
+        end_latlng='{lat},{lng}'.format(**leg_data['end_location']),
+        duration=leg_data['duration']['value'],
+        polyline=result['routes'][0]['overview_polyline']['points'],
+        mode=mode
+    )  # yapf: disable
     return answer
 
 
