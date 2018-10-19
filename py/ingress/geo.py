@@ -37,3 +37,12 @@ def _clean(dbc):
         database.Address.date < oldest_allowed)
     for row in rows:
         print 'Delete ', row
+    rows = dbc.session.query(database.Leg).filter(
+        database.Leg.date < oldest_allowed)
+    for row in rows:
+        print 'Delete ', row
+    rows = dbc.session.query(database.Path).filter(
+        database.Path.date < oldest_allowed)
+    for row in rows:
+        print 'Delete ', row
+    dbc.session.commit()
