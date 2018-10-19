@@ -100,7 +100,7 @@ class Address(Base):  # pylint: disable=missing-docstring
     __tablename__ = 'addresses'
 
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)  # pylint: disable=invalid-name
-    latlng = sqlalchemy.Column(sqlalchemy.String, nullable=False)
+    latlng = sqlalchemy.Column(sqlalchemy.String, nullable=False, unique=True)
     address = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     date = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
 
