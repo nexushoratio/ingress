@@ -14,6 +14,7 @@ def update(args, dbc):
     portals = bookmarks.load(args.bookmarks)
     _clean(dbc)
     _update_addresses(dbc, portals)
+    _update_directions(dbc, portals)
 
 
 def _update_addresses(dbc, portals):
@@ -28,6 +29,26 @@ def _update_addresses(dbc, portals):
                 latlng=latlng, address=street_address, date=now)
             dbc.session.add(db_address)
             dbc.session.commit()
+
+
+def _update_directions(dbc, portals):
+    now = time.time()
+    for begin_portal in portals.itervalues():
+        for end_portal in portals.itervalues():
+            if begin_portal['guid'] != end_portal['guid']:
+                for mode in ('walking', 'driving'):
+                    rows = dbc.session.query(database.Path).filter(
+                        database.Path.begin_latlng == begin_portal['latlng'],
+                        database.Path.end_latlng == end_portal['latlng'],
+                        database.Path.mode == mode)
+                    if not dbc.session.query(rows.exists()).scalar():
+                        db_path = database.Path(
+                            begin_latlng=begin_portal['latlng'],
+                            end_latlng=end_portal['latlng'],
+                            mode=mode,
+                            date=now)
+                        dbc.session.add(db_path)
+    dbc.session.commit()
 
 
 def _clean(dbc):
