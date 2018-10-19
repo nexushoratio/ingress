@@ -1,5 +1,6 @@
 """Functions for all things geo related."""
 
+import random
 import time
 
 from ingress import database
@@ -17,6 +18,14 @@ def update(args, dbc):
     _update_directions(dbc, portals)
 
 
+def _portal_combos(portals):
+    for begin_portal in portals.itervalues():
+        for end_portal in portals.itervalues():
+            if begin_portal['guid'] != end_portal['guid']:
+                for mode in ('walking', 'driving'):
+                    yield begin_portal, end_portal, mode
+
+
 def _update_addresses(dbc, portals):
     now = time.time()
     latlngs = [portal['latlng'] for portal in portals.itervalues()]
@@ -32,22 +41,88 @@ def _update_addresses(dbc, portals):
 
 
 def _update_directions(dbc, portals):
+    _update_paths(dbc, portals)
+    _update_path_legs(dbc, portals)
+
+
+def _update_paths(dbc, portals):
     now = time.time()
-    for begin_portal in portals.itervalues():
-        for end_portal in portals.itervalues():
-            if begin_portal['guid'] != end_portal['guid']:
-                for mode in ('walking', 'driving'):
-                    rows = dbc.session.query(database.Path).filter(
-                        database.Path.begin_latlng == begin_portal['latlng'],
-                        database.Path.end_latlng == end_portal['latlng'],
-                        database.Path.mode == mode)
-                    if not dbc.session.query(rows.exists()).scalar():
-                        db_path = database.Path(
-                            begin_latlng=begin_portal['latlng'],
-                            end_latlng=end_portal['latlng'],
-                            mode=mode,
-                            date=now)
-                        dbc.session.add(db_path)
+    for begin_portal, end_portal, mode in _portal_combos(portals):
+        rows = dbc.session.query(database.Path).filter(
+            database.Path.begin_latlng == begin_portal['latlng'],
+            database.Path.end_latlng == end_portal['latlng'],
+            database.Path.mode == mode)
+        if not dbc.session.query(rows.exists()).scalar():
+            db_path = database.Path(
+                begin_latlng=begin_portal['latlng'],
+                end_latlng=end_portal['latlng'],
+                mode=mode,
+                date=now,
+            )  # yapf: disable
+            dbc.session.add(db_path)
+    dbc.session.commit()
+
+
+def _update_path_legs(dbc, portals):
+    path_ids = set()
+    for begin_portal, end_portal, mode in _portal_combos(portals):
+        rows = dbc.session.query(database.Path).filter(
+            database.Path.begin_latlng == begin_portal['latlng'],
+            database.Path.end_latlng == end_portal['latlng'],
+            database.Path.mode == mode,
+        )  # yapf: disable
+        for row in rows:
+            path_ids.add(row.id)
+    _ensure_path_legs(dbc, path_ids)
+
+
+def _ensure_path_legs(dbc, path_ids):
+    path_ids = list(path_ids)
+    random.shuffle(path_ids)
+    print 'checking %d paths' % len(path_ids)
+    for path_id in path_ids:
+        _ensure_path_legs_by_path_id(dbc, path_id)
+
+
+def _ensure_path_legs_by_path_id(dbc, path_id):
+    now = time.time()
+    path_complete = False
+    db_path = dbc.session.query(database.Path).filter(
+        database.Path.id == path_id).one()
+    legs_of_interest = [(db_path.begin_latlng, db_path.end_latlng)]
+    while not path_complete:
+        rows = dbc.session.query(database.PathLeg).filter(
+            database.PathLeg.path_id == path_id)
+        path_legs = [row.id for row in rows]
+        # do something here with known paths_legs and desired legs and
+        # tsort
+
+        for index, leg_of_interest in enumerate(legs_of_interest):
+            _ensure_leg(dbc, path_id, leg_of_interest, db_path.mode)
+            return
+
+
+def _ensure_leg(dbc, path_id, leg_of_interest, mode):
+    # First look to see if there is already a matching leg, and if so,
+    # use it.  If not, try to find a new leg matching and save it.
+    print '_ensure_leg', path_id, leg_of_interest, mode
+    db_leg = dbc.session.query(database.Leg).filter(
+        database.Leg.begin_latlng == leg_of_interest[0],
+        database.Leg.end_latlng == leg_of_interest[1],
+        database.Leg.mode == mode).one_or_none()
+    if db_leg is None:
+        google_leg = google.directions(leg_of_interest[0], leg_of_interest[1],
+                                       mode)
+        db_leg = database.Leg(begin_latlng=google_leg.begin_latlng,
+                              end_latlng=google_leg.end_latlng,
+                              mode=google_leg.mode,
+                              date=time.time(),
+                              duration=google_leg.duration,
+                              polyline=google_leg.polyline)
+        dbc.session.add(db_leg)
+        dbc.session.flush()
+    db_leg_path = database.PathLeg(leg_id=db_leg.id, path_id=path_id)
+    dbc.session.add(db_leg_path)
     dbc.session.commit()
 
 
