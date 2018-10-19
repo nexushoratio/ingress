@@ -2,6 +2,7 @@
 
 from __future__ import absolute_import
 
+import collections
 import httplib
 import json
 import logging
@@ -43,10 +44,12 @@ def directions(origin, destination, **args):
     result = _call_api(DIRECTIONS_BASE_URL, args)
     if result['status'] == 'ZERO_RESULTS':
         # Need to fake it -- sometimes gmaps just cannot figure it out
+        # On the other hand, don't worry about it until we see a failure
         raise Error('Zero results: %s' % pprint.pformat(args))
-        # TODO: parse_ll will be used elsewhere, so where to put it?
+
+        # parse_ll will be used elsewhere, so where to put it?
         # py/geo.py or something?
-        
+
         # origin_ll = parse_ll(origin)
         # destination_ll = parse_ll(destination)
         # egp = encode_polyline((origin_ll, destination_ll))
@@ -64,7 +67,7 @@ def latlng_to_address(latlng, **args):
     """Get a textual address for a specific location."""
     args.update({
         'latlng': latlng,
-    })
+    })  # yapf: disable
     answer = 'No known street address'
     result = _call_api(GEOCODE_BASE_URL, args)
     for entry in result['results']:
