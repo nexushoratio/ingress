@@ -72,7 +72,7 @@ class Path(Base):  # pylint: disable=missing-docstring
     )  # yapf: disable
 
 
-class PathLegs(Base):  # pylint: disable=missing-docstring
+class PathLeg(Base):  # pylint: disable=missing-docstring
     __tablename__ = 'path_legs'
 
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)  # pylint: disable=invalid-name
@@ -85,7 +85,7 @@ class PathLegs(Base):  # pylint: disable=missing-docstring
 
 
 sqlalchemy.event.listen(
-    PathLegs.__table__,  # pylint: disable=no-member
+    PathLeg.__table__,  # pylint: disable=no-member
     'after_create',
     sqlalchemy.DDL('CREATE TRIGGER delete_legs'
                    ' AFTER DELETE ON path_legs'
