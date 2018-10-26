@@ -45,7 +45,7 @@ def _update_addresses(dbc, portals):
         have = set(row.latlng for row in rows)
         needed.difference_update(have)
 
-    print 'Need %d addresses' % len(needed)
+    print 'Addresses needed: %d' % len(needed)
     for latlng in needed:
         street_address = google.latlng_to_address(latlng)
         db_address = database.Address(
