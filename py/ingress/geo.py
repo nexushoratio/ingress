@@ -1,5 +1,6 @@
 """Functions for all things geo related."""
 
+import itertools
 import random
 import time
 
@@ -26,18 +27,31 @@ def _portal_combos(portals):
                     yield begin_portal, end_portal, mode
 
 
+def _grouper(iterable, size):
+    args = [iter(iterable)] * size
+    return itertools.izip_longest(*args)
+
+
 def _update_addresses(dbc, portals):
     now = time.time()
-    latlngs = [portal['latlng'] for portal in portals.itervalues()]
-    for latlng in latlngs:
+    needed = set()
+    latlng_groups = _grouper((portal['latlng']
+                              for portal in portals.itervalues()), 64)
+    for latlng_group in latlng_groups:
+        filtered_latlng_group = [x for x in latlng_group if x is not None]
+        needed.update(filtered_latlng_group)
         rows = dbc.session.query(database.Address).filter(
-            database.Address.latlng == latlng)
-        if not dbc.session.query(rows.exists()).scalar():
-            street_address = google.latlng_to_address(latlng)
-            db_address = database.Address(
-                latlng=latlng, address=street_address, date=now)
-            dbc.session.add(db_address)
-            dbc.session.commit()
+            database.Address.latlng.in_(filtered_latlng_group))
+        have = set(row.latlng for row in rows)
+        needed.difference_update(have)
+
+    print 'Need %d addresses' % len(needed)
+    for latlng in needed:
+        street_address = google.latlng_to_address(latlng)
+        db_address = database.Address(
+            latlng=latlng, address=street_address, date=now)
+        dbc.session.add(db_address)
+        dbc.session.commit()
 
 
 def _update_directions(dbc, portals):
