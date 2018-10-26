@@ -4,6 +4,7 @@ import collections
 import itertools
 import random
 import time
+import toposort
 
 from ingress import database
 from ingress import bookmarks
@@ -113,16 +114,31 @@ def _ensure_path_legs_by_path_id(dbc, path_id):
     db_path = dbc.session.query(database.Path).get(path_id)
     legs_of_interest = set()
     while not path_complete:
-        rows = dbc.session.query(database.PathLeg).filter(
-            database.PathLeg.path_id == path_id)
-        path_legs = [row.id for row in rows]
-        # do something here with known paths_legs and desired legs and
-        # tsort
+        legs = collections.defaultdict(set)
+        for leg in dbc.session.query(database.Leg).join(
+                database.PathLeg).filter(database.PathLeg.path_id == path_id):
+            legs[leg.begin_latlng].add(leg.end_latlng)
 
-        for index, leg_of_interest in enumerate(legs_of_interest):
-            _ensure_leg(dbc, path_id, leg_of_interest, db_path.mode)
-            return
+        if legs:
+            sorted_legs = list(toposort.toposort(legs))
+            if len(sorted_legs[0]) > 1:
+                print 'There is a hole for path %d.  Clearing.' % path_id
+                dbc.session.query(database.PathLeg).filter(
+                    database.PathLeg.path_id == path_id).delete()
+            else:
+                first = sorted_legs[-1].pop()
+                last = sorted_legs[0].pop()
+                if first != db_path.begin_latlng:
+                    legs_of_interest.add((db_path.begin_latlng, first))
+                if last != db_path.end_latlng:
+                    legs_of_interest.add((last, db_path.end_latlng))
+                path_complete = not (legs_of_interest)
+        else:
+            legs_of_interest.add((db_path.begin_latlng, db_path.end_latlng))
 
+        for leg in legs_of_interest:
+            _ensure_leg(dbc, path_id, leg, db_path.mode)
+            path_complete = True
 
 def _ensure_leg(dbc, path_id, leg_of_interest, mode):
     # First look to see if there is already a matching leg, and if so,
