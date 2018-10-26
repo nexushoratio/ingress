@@ -93,8 +93,7 @@ def _update_path_legs(dbc, portals):
         rows = dbc.session.query(database.Path).filter(
             database.Path.begin_latlng == begin_portal['latlng'],
             database.Path.end_latlng == end_portal['latlng'],
-            database.Path.mode == mode,
-        )  # yapf: disable
+            database.Path.mode == mode)
         for row in rows:
             path_ids.add(row.id)
     _ensure_path_legs(dbc, path_ids)
