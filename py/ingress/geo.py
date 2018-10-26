@@ -152,10 +152,12 @@ def _ensure_leg(dbc, path_id, leg_of_interest, mode):
 def _clean(dbc):
     now = time.time()
     oldest_allowed = now - MAX_AGE
+    print 'oldest_allowed:', oldest_allowed
     rows = dbc.session.query(database.Address).filter(
         database.Address.date < oldest_allowed)
     for row in rows:
-        print 'Delete ', row
+        print 'Delete ', row.date, row.address
+        dbc.session.delete(row)
     rows = dbc.session.query(database.Leg).filter(
         database.Leg.date < oldest_allowed)
     for row in rows:
