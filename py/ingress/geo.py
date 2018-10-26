@@ -110,9 +110,8 @@ def _ensure_path_legs(dbc, path_ids):
 def _ensure_path_legs_by_path_id(dbc, path_id):
     now = time.time()
     path_complete = False
-    db_path = dbc.session.query(database.Path).filter(
-        database.Path.id == path_id).one()
-    legs_of_interest = [(db_path.begin_latlng, db_path.end_latlng)]
+    db_path = dbc.session.query(database.Path).get(path_id)
+    legs_of_interest = set()
     while not path_complete:
         rows = dbc.session.query(database.PathLeg).filter(
             database.PathLeg.path_id == path_id)
