@@ -1,5 +1,6 @@
 """Functions for all things geo related."""
 
+import collections
 import itertools
 import random
 import time
@@ -61,19 +62,28 @@ def _update_directions(dbc, portals):
 
 def _update_paths(dbc, portals):
     now = time.time()
-    for begin_portal, end_portal, mode in _portal_combos(portals):
-        rows = dbc.session.query(database.Path).filter(
-            database.Path.begin_latlng == begin_portal['latlng'],
-            database.Path.end_latlng == end_portal['latlng'],
-            database.Path.mode == mode)
-        if not dbc.session.query(rows.exists()).scalar():
-            db_path = database.Path(
-                begin_latlng=begin_portal['latlng'],
-                end_latlng=end_portal['latlng'],
-                mode=mode,
-                date=now,
-            )  # yapf: disable
-            dbc.session.add(db_path)
+    combo_groups = _grouper(_portal_combos(portals), 64)
+    for combo_group in combo_groups:
+        filtered_combo_group = [x for x in combo_group if x is not None]
+        needed = set()
+        queries = collections.defaultdict(set)
+        for begin_portal, end_portal, mode in filtered_combo_group:
+            needed.add((begin_portal['latlng'], end_portal['latlng'], mode))
+            queries[mode].add(begin_portal['latlng'])
+        for mode, begin_portals in queries.iteritems():
+            for row in dbc.session.query(database.Path).filter(
+                    database.Path.mode == mode,
+                    database.Path.begin_latlng.in_(begin_portals)):
+                found = (row.begin_latlng, row.end_latlng, mode)
+                needed.discard(found)
+
+        for begin_latlng, end_latlng, mode in needed:
+            dbc.session.add(
+                database.Path(
+                    begin_latlng=begin_latlng,
+                    end_latlng=end_latlng,
+                    mode=mode,
+                    date=now))
     dbc.session.commit()
 
 
