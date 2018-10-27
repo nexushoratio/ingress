@@ -14,7 +14,7 @@ MAX_AGE = 90 * 24 * 60 * 60
 
 
 def update(args, dbc):
-    """Update the distances between portals listed in the bookmarks."""
+    """Update the travel times between portals listed in the bookmarks."""
     portals = bookmarks.load(args.bookmarks)
     _clean(dbc)
     _update_addresses(dbc, portals)
@@ -103,7 +103,7 @@ def _update_path_legs(dbc, portals):
 def _ensure_path_legs(dbc, path_ids):
     path_ids = list(path_ids)
     random.shuffle(path_ids)
-    print 'checking %d paths' % len(path_ids)
+    print 'Paths to check: %d' % len(path_ids)
     for path_id in path_ids:
         _ensure_path_legs_by_path_id(dbc, path_id)
 
