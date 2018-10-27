@@ -4,6 +4,8 @@ import collections
 import itertools
 import random
 import time
+
+import pyproj
 import toposort
 
 from ingress import database
@@ -185,3 +187,12 @@ def _clean(dbc):
 def _latlng_str_to_floats(latlng_as_str):
     lat, lng = latlng_as_str.split(',')
     return float(lat), float(lng)
+
+
+def _distance(begin, end):
+    geod = pyproj.Geod(ellps='WGS84')
+    blat, blng = _latlng_str_to_floats(begin)
+    elat, elng = _latlng_str_to_floats(end)
+    fwd, rev, dist = geod.inv(blng, blat, elng, elat)
+    del fwd, rev
+    return dist
