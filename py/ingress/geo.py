@@ -132,7 +132,7 @@ def _ensure_path_legs_by_path_id(dbc, path_id):
                     legs_of_interest.add((db_path.begin_latlng, first))
                 if last != db_path.end_latlng:
                     legs_of_interest.add((last, db_path.end_latlng))
-                path_complete = not (legs_of_interest)
+                path_complete = not legs_of_interest
         else:
             legs_of_interest.add((db_path.begin_latlng, db_path.end_latlng))
 
