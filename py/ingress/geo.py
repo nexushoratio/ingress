@@ -137,9 +137,11 @@ def _ensure_path_legs_by_path_id(dbc, path_id):
         else:
             legs_of_interest.add((db_path.begin_latlng, db_path.end_latlng))
 
-        for leg in legs_of_interest:
-            _ensure_leg(dbc, path_id, leg, db_path.mode)
-            path_complete = True
+        while legs_of_interest:
+            leg = legs_of_interest.pop()
+            more_legs = _ensure_leg(dbc, path_id, leg, db_path.mode)
+            legs_of_interest.update(more_legs)
+
 
 def _ensure_leg(dbc, path_id, leg_of_interest, mode):
     # First look to see if there is already a matching leg, and if so,
@@ -163,6 +165,14 @@ def _ensure_leg(dbc, path_id, leg_of_interest, mode):
     db_leg_path = database.PathLeg(leg_id=db_leg.id, path_id=path_id)
     dbc.session.add(db_leg_path)
     dbc.session.commit()
+
+    # Just because we asked for something, it doesn't mean we got it
+    new_legs = set()
+    if begin != db_leg.begin_latlng:
+        new_legs.add((begin, db_leg.begin_latlng))
+    if db_leg.end_latlng != end:
+        new_legs.add((db_leg.end_latlng, end))
+    return new_legs
 
 
 def _clean(dbc):
