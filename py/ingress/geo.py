@@ -180,3 +180,8 @@ def _clean(dbc):
     for row in rows:
         print 'Delete ', row
     dbc.session.commit()
+
+
+def _latlng_str_to_floats(latlng_as_str):
+    lat, lng = latlng_as_str.split(',')
+    return float(lat), float(lng)
