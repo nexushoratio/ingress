@@ -143,9 +143,9 @@ def _ensure_leg(dbc, path_id, leg_of_interest, mode):
     # First look to see if there is already a matching leg, and if so,
     # use it.  If not, try to find a new leg matching and save it.
     print '_ensure_leg', path_id, leg_of_interest, mode
+    begin, end = leg_of_interest
     db_leg = dbc.session.query(database.Leg).filter(
-        database.Leg.begin_latlng == leg_of_interest[0],
-        database.Leg.end_latlng == leg_of_interest[1],
+        database.Leg.begin_latlng == begin, database.Leg.end_latlng == end,
         database.Leg.mode == mode).one_or_none()
     if db_leg is None:
         google_leg = google.directions(leg_of_interest[0], leg_of_interest[1],
