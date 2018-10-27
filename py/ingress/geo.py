@@ -152,8 +152,7 @@ def _ensure_leg(dbc, path_id, leg_of_interest, mode):
         database.Leg.begin_latlng == begin, database.Leg.end_latlng == end,
         database.Leg.mode == mode).one_or_none()
     if db_leg is None:
-        google_leg = google.directions(leg_of_interest[0], leg_of_interest[1],
-                                       mode)
+        google_leg = _get_reasonable_google_leg(begin, end, mode)
         db_leg = database.Leg(begin_latlng=google_leg.begin_latlng,
                               end_latlng=google_leg.end_latlng,
                               mode=google_leg.mode,
