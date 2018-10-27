@@ -174,6 +174,24 @@ def _ensure_leg(dbc, path_id, leg_of_interest, mode):
     return new_legs
 
 
+def _get_reasonable_google_leg(begin, end, mode):
+    google_leg = google.directions(begin, end, mode)
+    if len(google.decode_polyline(
+            google_leg.polyline)) == 1 and mode != 'walking':
+        google_leg = google.directions(begin, end, 'walking')
+
+    if len(google.decode_polyline(google_leg.polyline)) == 1:
+        # Still too short.  Screw it, straight line walk
+        google_leg.begin_latlng = begin
+        google_leg.end_latlng = end
+        google_leg.mode = 'walking'
+        google_leg.polyline = unicode(
+            google.encode_polyline((_latlng_str_to_floats(begin),
+                                    _latlng_str_to_floats(end))))
+
+    return google_leg
+
+
 def _clean(dbc):
     now = time.time()
     oldest_allowed = now - MAX_AGE
