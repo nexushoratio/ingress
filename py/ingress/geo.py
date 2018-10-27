@@ -153,12 +153,21 @@ def _ensure_leg(dbc, path_id, leg_of_interest, mode):
         database.Leg.mode == mode).one_or_none()
     if db_leg is None:
         google_leg = _get_reasonable_google_leg(begin, end, mode)
-        db_leg = database.Leg(begin_latlng=google_leg.begin_latlng,
-                              end_latlng=google_leg.end_latlng,
-                              mode=google_leg.mode,
-                              date=time.time(),
-                              duration=google_leg.duration,
-                              polyline=google_leg.polyline)
+
+        # Now check to see if THIS exists:
+        db_leg = dbc.session.query(database.Leg).filter(
+            database.Leg.begin_latlng == google_leg.begin_latlng,
+            database.Leg.end_latlng == google_leg.end_latlng,
+            database.Leg.mode == google_leg.mode).one_or_none()
+        if db_leg is None:
+            # finally add it
+            db_leg = database.Leg(begin_latlng=google_leg.begin_latlng,
+                                  end_latlng=google_leg.end_latlng,
+                                  mode=google_leg.mode,
+                                  date=time.time(),
+                                  duration=google_leg.duration,
+                                  polyline=google_leg.polyline)
+
         dbc.session.add(db_leg)
         dbc.session.flush()
     db_leg_path = database.PathLeg(leg_id=db_leg.id, path_id=path_id)
