@@ -112,13 +112,12 @@ def _ensure_path_legs_by_path_id(dbc, path_id):
     now = time.time()
     path_complete = False
     db_path = dbc.session.query(database.Path).get(path_id)
-    legs_of_interest = set()
     while not path_complete:
+        legs_of_interest = set()
         legs = collections.defaultdict(set)
         for leg in dbc.session.query(database.Leg).join(
                 database.PathLeg).filter(database.PathLeg.path_id == path_id):
             legs[leg.begin_latlng].add(leg.end_latlng)
-
         if legs:
             sorted_legs = list(toposort.toposort(legs))
             if len(sorted_legs[0]) > 1:
