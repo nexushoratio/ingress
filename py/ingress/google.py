@@ -14,7 +14,12 @@ import urllib2
 import attr
 
 API_KEY = 'AIzaSyD5ahcNNKsmB1iB5ldI6HXV8BaWCv66tpo'
-DIRECTIONS_BASE_URL = 'https://maps.googleapis.com/maps/api/directions/json'
+REAL_DIRECTIONS_BASE_URL = (
+    'https://maps.googleapis.com/maps/api/directions/json')
+FAKE_DIRECTIONS_BASE_URL = (
+    'https://script.google.com/macros/s'
+    '/AKfycbzz6mcFX79LS2HAB6JmWtFfOqV-lWjI4WqPHbdH8W6_kG8ZkcE0/exec')
+DIRECTIONS_BASE_URL = FAKE_DIRECTIONS_BASE_URL
 GEOCODE_BASE_URL = 'https://maps.googleapis.com/maps/api/geocode/json'
 
 
@@ -42,6 +47,7 @@ class Directions(object):
 def directions(origin, destination, mode):
     """Get directions from origin to destination."""
     args = {
+        'command': 'directions',
         'origin': origin,
         'destination': destination,
         'mode': mode,
