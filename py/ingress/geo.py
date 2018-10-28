@@ -147,7 +147,6 @@ def _ensure_path_legs_by_path_id(dbc, path_id):
 def _ensure_leg(dbc, path_id, leg_of_interest, mode):
     # First look to see if there is already a matching leg, and if so,
     # use it.  If not, try to find a new leg matching and save it.
-    print '_ensure_leg', mode, leg_of_interest
     begin, end = leg_of_interest
     db_leg = dbc.session.query(database.Leg).filter(
         database.Leg.begin_latlng == begin, database.Leg.end_latlng == end,
@@ -181,13 +180,10 @@ def _ensure_leg(dbc, path_id, leg_of_interest, mode):
         new_legs.add((begin, db_leg.begin_latlng))
     if db_leg.end_latlng != end:
         new_legs.add((db_leg.end_latlng, end))
-    if new_legs:
-        print 'new_legs:', new_legs
     return new_legs
 
 
 def _get_reasonable_google_leg(begin, end, mode):
-    print '_get_reasonable_google_leg:', begin, end
     google_leg = google.directions(begin, end, mode)
     if mode == 'driving' and (len(google.decode_polyline(
             google_leg.polyline)) == 1 or google_leg.duration < 30):
