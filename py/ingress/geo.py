@@ -201,6 +201,7 @@ def _get_reasonable_google_leg(begin, end, mode):
         google_leg.polyline = unicode(
             google.encode_polyline((_latlng_str_to_floats(begin),
                                     _latlng_str_to_floats(end))))
+        print 'Replaced with short walk:', google_leg
 
     return google_leg
 
