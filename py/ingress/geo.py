@@ -147,7 +147,7 @@ def _ensure_path_legs_by_path_id(dbc, path_id):
 def _ensure_leg(dbc, path_id, leg_of_interest, mode):
     # First look to see if there is already a matching leg, and if so,
     # use it.  If not, try to find a new leg matching and save it.
-    print '_ensure_leg', path_id, leg_of_interest, mode
+    print '_ensure_leg', mode, leg_of_interest
     begin, end = leg_of_interest
     db_leg = dbc.session.query(database.Leg).filter(
         database.Leg.begin_latlng == begin, database.Leg.end_latlng == end,
