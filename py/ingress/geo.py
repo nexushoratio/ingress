@@ -111,9 +111,10 @@ def _ensure_path_legs(dbc, path_ids):
 
 
 def _ensure_path_legs_by_path_id(dbc, path_id):
+    db_path = dbc.session.query(database.Path).get(path_id)
+    print '_ensure_path_legs_by_path_id:', path_id, db_path.begin_latlng, db_path.end_latlng
     now = time.time()
     path_complete = False
-    db_path = dbc.session.query(database.Path).get(path_id)
     while not path_complete:
         legs_of_interest = set()
         legs = collections.defaultdict(set)
