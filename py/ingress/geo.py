@@ -181,10 +181,13 @@ def _ensure_leg(dbc, path_id, leg_of_interest, mode):
         new_legs.add((begin, db_leg.begin_latlng))
     if db_leg.end_latlng != end:
         new_legs.add((db_leg.end_latlng, end))
+    if new_legs:
+        print 'new_legs:', new_legs
     return new_legs
 
 
 def _get_reasonable_google_leg(begin, end, mode):
+    print '_get_reasonable_google_leg:', begin, end
     google_leg = google.directions(begin, end, mode)
     if len(google.decode_polyline(
             google_leg.polyline)) == 1 and mode != 'walking':
