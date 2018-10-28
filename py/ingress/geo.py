@@ -130,6 +130,7 @@ def _ensure_path_legs_by_path_id(dbc, path_id):
                 print 'There is a hole for path %d.  Clearing.' % path_id
                 dbc.session.query(database.PathLeg).filter(
                     database.PathLeg.path_id == path_id).delete()
+                dbc.session.commit()
             else:
                 first = sorted_legs[-1].pop()
                 last = sorted_legs[0].pop()
