@@ -188,8 +188,9 @@ def _ensure_leg(dbc, path_id, leg_of_interest, mode):
 
 def _get_reasonable_google_leg(begin, end, mode):
     google_leg = google.directions(begin, end, mode)
-    if mode == 'driving' and (len(google.decode_polyline(
-            google_leg.polyline)) == 1 or google_leg.duration < 30):
+    if mode == 'driving' and (
+            len(google.decode_polyline(google_leg.polyline)) == 1 or
+            google_leg.duration < 30):
         google_leg = google.directions(begin, end, 'walking')
 
     if _distance(google_leg.begin_latlng, google_leg.end_latlng) < 5:
