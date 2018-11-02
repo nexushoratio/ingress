@@ -106,15 +106,15 @@ def _ensure_path_legs(dbc, path_ids):
     path_ids = list(path_ids)
     random.shuffle(path_ids)
     print 'Paths to check: %d' % len(path_ids)
-    for path_id in path_ids:
-        _ensure_path_legs_by_path_id(dbc, path_id)
+    for count, path_id in enumerate(path_ids):
+        _ensure_path_legs_by_path_id(dbc, count, path_id)
 
 
-def _ensure_path_legs_by_path_id(dbc, path_id):
+def _ensure_path_legs_by_path_id(dbc, count, path_id):
     db_path = dbc.session.query(database.Path).get(path_id)
 
-    print '_ensure_path_legs_by_path_id: %4d|%23s|%23s' % (
-        path_id, db_path.begin_latlng, db_path.end_latlng)
+    print '%4d path_id: %4d|%23s|%23s' % (
+        count, path_id, db_path.begin_latlng, db_path.end_latlng)
 
     now = time.time()
     path_complete = False
