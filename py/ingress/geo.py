@@ -191,20 +191,23 @@ def _ensure_leg(dbc, path_id, leg_of_interest, mode):
 
 def _get_reasonable_google_leg(begin, end, mode):
     google_leg = google.directions(begin, end, mode)
-    if mode == 'driving' and (
-            len(google.decode_polyline(google_leg.polyline)) == 1 or
-            google_leg.duration < 30):
+    crow_flies = _distance(begin, end)
+    if mode == 'driving' and (crow_flies < 120 or google_leg.duration < 30):
         google_leg = google.directions(begin, end, 'walking')
 
-    if _distance(google_leg.begin_latlng, google_leg.end_latlng) < 5:
+    if _distance(google_leg.begin_latlng, google_leg.end_latlng) < 10:
         google_leg.begin_latlng = begin
         google_leg.end_latlng = end
         google_leg.mode = 'walking'
+        google_leg.duration = crow_flies  # seems like a good guess
         google_leg.polyline = unicode(
             google.encode_polyline((_latlng_str_to_floats(begin),
                                     _latlng_str_to_floats(end))))
-        print 'Replaced with short walk:', google_leg
 
+    print 'wanted: %23s %23s %7s %5d' % (begin, end, mode, crow_flies)
+    print 'got:    %23s %23s %7s %5d' % (
+        google_leg.begin_latlng, google_leg.end_latlng, google_leg.mode,
+        _distance(google_leg.begin_latlng, google_leg.end_latlng))
     return google_leg
 
 
