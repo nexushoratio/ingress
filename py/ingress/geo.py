@@ -118,7 +118,8 @@ def _ensure_path_legs_by_path_id(dbc, count, path_id):
 
     now = time.time()
     path_complete = False
-    while not path_complete:
+    attempts = 1
+    while not path_complete and attempts < 5:
         legs_of_interest = set()
         legs = collections.defaultdict(set)
         for leg in dbc.session.query(database.Leg).join(
@@ -142,7 +143,8 @@ def _ensure_path_legs_by_path_id(dbc, count, path_id):
         else:
             legs_of_interest.add((db_path.begin_latlng, db_path.end_latlng))
 
-        while legs_of_interest:
+        while legs_of_interest and attempts < 15:
+            attempts += 1
             leg = legs_of_interest.pop()
             more_legs = _ensure_leg(dbc, path_id, leg, db_path.mode)
             legs_of_interest.update(more_legs)
