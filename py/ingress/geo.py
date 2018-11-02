@@ -172,8 +172,8 @@ def _ensure_leg(dbc, path_id, leg_of_interest, mode):
                                   duration=google_leg.duration,
                                   polyline=google_leg.polyline)
 
-        dbc.session.add(db_leg)
-        dbc.session.flush()
+            dbc.session.add(db_leg)
+            dbc.session.flush()
     db_leg_path = database.PathLeg(leg_id=db_leg.id, path_id=path_id)
     dbc.session.add(db_leg_path)
     dbc.session.commit()
