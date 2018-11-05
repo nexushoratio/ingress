@@ -9,6 +9,7 @@ import app
 from ingress import database
 from ingress import bookmarks
 from ingress import geo
+from ingress import routes
 
 
 def main(app_parser):
@@ -38,6 +39,20 @@ def main(app_parser):
         parents=[bm_parser],
         help='Update locations and travel times by bookmark.')
     parser_update_geo.set_defaults(func=geo.update)
+
+    parser_routes = subparsers.add_parser(
+        'routes',
+        parents=[bm_parser],
+        help='Calculate an optimal route between portals.')
+
+    parser_routes.add_argument(
+        '-w',
+        '--walk-auto',
+        action='store',
+        type=int,
+        help='Longest walk time to automatically accept.',
+        default=300)
+    parser_routes.set_defaults(func=routes.route)
 
     args = parser.parse_args()
     dbc = database.Database()
