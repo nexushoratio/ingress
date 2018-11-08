@@ -34,9 +34,13 @@ def import_bookmarks(args, dbc):
         keys.remove(guid)
 
     # whatever is left is a new portal
+    known_columns = [x.key for x in database.Portal.__table__.columns]  # pylint: disable=no-member
+
     for key in keys:
         portal = portals[key]
-        db_portal = database.Portal(first_seen=timestamp, **portal)
+        portal['first_seen'] = timestamp
+        new_portal = dict((k, portal[k]) for k in known_columns)
+        db_portal = database.Portal(**new_portal)
         dbc.session.add(db_portal)
 
     dbc.session.commit()
