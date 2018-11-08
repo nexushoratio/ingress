@@ -1,8 +1,48 @@
 """Create and save routes between portals."""
 
 from ingress import bookmarks
+from ingress import database
+from ingress import tsp
 
 
 def route(args, dbc):
     """Calculate an optimal route between portals."""
+    best_costs = dict()
     portals = bookmarks.load(args.bookmarks)
+    print tsp.optimize(
+        portals.keys(),
+        lambda start, end: _cost(dbc, best_costs, args.walk_auto, start, end))
+
+
+def _cost(dbc, best_costs, max_walking_time_allowed, begin, end):
+    cost = best_costs.get((begin, end))
+    if cost:
+        return cost
+    costs = dict()
+    begin_portal = dbc.session.query(database.Portal).get(begin)
+    end_portal = dbc.session.query(database.Portal).get(end)
+    paths = dbc.session.query(database.Path).filter(
+        database.Path.begin_latlng == begin_portal.latlng,
+        database.Path.end_latlng == end_portal.latlng)
+    for path in paths:
+        costs[path.mode] = _path_cost(dbc, path)
+
+    walking = costs['walking']
+    driving = costs['driving']
+    walking_to_driving = 1.0 * walking / driving
+    if walking < max_walking_time_allowed or walking_to_driving < 1.1:
+        cost = walking
+    else:
+        cost = driving
+    best_costs[(begin, end)] = cost
+    return cost
+
+
+def _path_cost(dbc, path):
+    cost = 0
+    for path_leg in dbc.session.query(database.PathLeg).filter(
+            database.PathLeg.path_id == path.id):
+        leg = dbc.session.query(database.Leg).get(path_leg.leg_id)
+        cost += leg.duration
+
+    return cost
