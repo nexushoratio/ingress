@@ -7,6 +7,7 @@ https://github.com/tzmartin/Google-Maps-TSP-Solver
 """
 
 import itertools
+import sys
 
 
 def optimize(nodes, cost):
@@ -22,11 +23,22 @@ def optimize(nodes, cost):
 
 
 def _brute_force(nodes, cost):
+    print nodes, cost
+    best_cost = sys.maxint
+    best_path = None
     for order in itertools.permutations(nodes[1:-1]):
         path = [nodes[0]]
         path.extend(order)
         path.append(nodes[-1])
-        print path
+        path_cost = 0
+        for start, end in zip(path, path[1:]):
+            path_cost += cost(start, end)
+
+        if path_cost < best_cost:
+            best_cost = path_cost
+            best_path = path[:]
+
+    return best_cost, best_path
 
 
 def _dynamic(nodes, cost):
@@ -43,6 +55,3 @@ def _greedy(nodes, cost):
 
 def _k_opt(nodes, cost, count):
     pass
-
-
-_brute_force(['a', 'b', 'c', 'd', 'e', 'a'], ())
