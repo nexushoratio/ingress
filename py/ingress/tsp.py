@@ -41,7 +41,7 @@ def _brute_force(nodes, cost):
 
 
 def _greedy(nodes, cost):
-    nodes_to_visit = set(nodes[1:])
+    nodes_to_visit = set(nodes[1:-1])
     start = nodes[0]
     path = [start]
     while nodes_to_visit:
