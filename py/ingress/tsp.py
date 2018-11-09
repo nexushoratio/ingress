@@ -31,9 +31,7 @@ def _brute_force(nodes, cost):
         path = [nodes[0]]
         path.extend(order)
         path.append(nodes[-1])
-        path_cost = 0
-        for start, end in zip(path, path[1:]):
-            path_cost += cost(start, end)
+        path_cost = _path_cost(path, cost)
 
         if path_cost < best_cost:
             best_cost = path_cost
@@ -57,10 +55,7 @@ def _greedy(nodes, cost):
         start = end
     path.append(nodes[0])
 
-    path_cost = 0
-    for start, end in zip(path, path[1:]):
-        path_cost += cost(start, end)
-    return path_cost, path
+    return _path_cost(path, cost), path
 
 
 def _ant_colony(nodes, cost):
@@ -69,3 +64,10 @@ def _ant_colony(nodes, cost):
 
 def _k_opt(nodes, cost, count):
     pass
+
+
+def _path_cost(path, cost):
+    path_cost = 0
+    for start, end in zip(path, path[1:]):
+        path_cost += cost(start, end)
+    return path_cost
