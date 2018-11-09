@@ -19,7 +19,9 @@ def optimize(nodes, cost):
         nodes: List[str], will be modified in place
         cost: Function[str, str] -> float, cost from first to second
     """
-    return _brute_force(nodes, cost)
+    print 'optimizing %d nodes' % len(nodes)
+    # return _brute_force(nodes, cost)
+    return _greedy(nodes, cost)
 
 
 def _brute_force(nodes, cost):
@@ -40,15 +42,28 @@ def _brute_force(nodes, cost):
     return best_cost, best_path
 
 
-def _dynamic(nodes, cost):
-    pass
+def _greedy(nodes, cost):
+    nodes_to_visit = set(nodes[1:])
+    start = nodes[0]
+    path = [start]
+    while nodes_to_visit:
+        costs = set()
+        for end in nodes_to_visit:
+            this_cost = cost(start, end)
+            costs.add((this_cost, end))
+        end = min(costs)[1]
+        path.append(end)
+        nodes_to_visit.discard(end)
+        start = end
+    path.append(nodes[0])
+
+    path_cost = 0
+    for start, end in zip(path, path[1:]):
+        path_cost += cost(start, end)
+    return path_cost, path
 
 
 def _ant_colony(nodes, cost):
-    pass
-
-
-def _greedy(nodes, cost):
     pass
 
 
