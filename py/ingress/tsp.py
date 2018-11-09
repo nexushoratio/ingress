@@ -23,7 +23,6 @@ def optimize(nodes, cost):
 
 
 def _brute_force(nodes, cost):
-    print nodes, cost
     best_cost = sys.maxint
     best_path = None
     for order in itertools.permutations(nodes[1:-1]):
