@@ -101,7 +101,7 @@ def latlng_to_address(latlng, **args):
     answers.sort()
     answer = answers[0]
     print '%s: %s (%d)' % (latlng, answer[1], answer[0])
-    return answer[0]
+    return answer[1]
 
 
 def encode_polyline(coords):
