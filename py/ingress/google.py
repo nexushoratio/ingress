@@ -22,6 +22,20 @@ FAKE_DIRECTIONS_BASE_URL = (
 DIRECTIONS_BASE_URL = FAKE_DIRECTIONS_BASE_URL
 GEOCODE_BASE_URL = 'https://maps.googleapis.com/maps/api/geocode/json'
 
+LOCATION_TYPE_SCORES = {
+    'ROOFTOP': 0,
+    'RANGE_INTERPOLATED': 1,
+    'GEOMETRIC_CENTER': 2,
+    'APPROXIMATE': 3,
+    'PLUS': 90,
+    'UNKNOWN': 99,
+}
+
+PLUS_CODE_SCORES = {
+    'compound_code': 0,
+    'global_code': 1,
+}
+
 
 class Error(Exception):
     """Base module exception."""
@@ -74,13 +88,20 @@ def latlng_to_address(latlng, **args):
     args.update({
         'latlng': latlng,
     })  # yapf: disable
-    answer = 'No known street address'
+    answers = [(LOCATION_TYPE_SCORES['UNKNOWN'], 'No known street address')]
     result = _call_api(GEOCODE_BASE_URL, args)
+    for key, value in result['plus_code'].iteritems():
+        score = LOCATION_TYPE_SCORES['PLUS'] + PLUS_CODE_SCORES[key]
+        answers.append((score, value))
+    logging.info('latlng_to_address: %s', pprint.pformat(result))
     for entry in result['results']:
         if 'street_address' in entry['types']:
-            print 'found street_address', entry['formatted_address']
-            answer = entry['formatted_address']
-    return answer
+            score = LOCATION_TYPE_SCORES[entry['geometry']['location_type']]
+            answers.append((score, entry['formatted_address']))
+    answers.sort()
+    answer = answers[0]
+    print '%s: %s (%d)' % (latlng, answer[1], answer[0])
+    return answer[0]
 
 
 def encode_polyline(coords):
