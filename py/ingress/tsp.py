@@ -25,12 +25,14 @@ def optimize(nodes, cost):
         nodes: List[str], will be modified in place
         cost: Function[str, str] -> float, cost from first to second
     """
+    node_count = len(nodes)
     print 'optimizing %d nodes with initial path cost of %.1f' % (
-        len(nodes), _path_cost(nodes, cost))
-    # return _brute_force(nodes, cost)
-    # return _greedy(nodes, cost)
-    tmp = _greedy(nodes, cost)
-    return _k_opt(tmp[1], cost)
+        node_count, _path_cost(nodes, cost))
+    if node_count < 12:
+        return _brute_force(nodes, cost)
+    else:
+        tmp = _greedy(nodes, cost)
+        return _k_opt(tmp[1], cost)
 
 
 def _brute_force(nodes, cost):
