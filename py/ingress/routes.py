@@ -1,5 +1,7 @@
 """Create and save routes between portals."""
 
+import os
+
 from ingress import bookmarks
 from ingress import database
 from ingress import tsp
@@ -9,9 +11,15 @@ def route(args, dbc):
     """Calculate an optimal route between portals."""
     best_costs = dict()
     portals = bookmarks.load(args.bookmarks)
-    print tsp.optimize(
+    basename = os.path.splitext(args.bookmarks)[0]
+    optimized_path = tsp.optimize(
         portals.keys(),
         lambda start, end: _cost(dbc, best_costs, args.walk_auto, start, end))
+
+    _save_as_kml(basename, optimized_path)
+    _save_as_bookmarks(basename, optimized_path)
+    _save_as_text(basename, optimized_path)
+    _save_as_drawtools(basename, optimized_path)
 
 
 def _cost(dbc, best_costs, max_walking_time_allowed, begin, end):
@@ -46,3 +54,19 @@ def _path_cost(dbc, path):
         cost += leg.duration
 
     return cost
+
+
+def _save_as_kml(basename, path):
+    pass
+
+
+def _save_as_bookmarks(basename, path):
+    pass
+
+
+def _save_as_text(basename, path):
+    pass
+
+
+def _save_as_drawtools(basename, path):
+    pass
