@@ -1,9 +1,16 @@
-"""Traveling salesman problem optimizer.
+"""Traveling salesman problem optimizers.
 
-Ported from the old Optimap stuff on gebweb.net.
+Tested against some of the TSPLIBs asymmetric test data.
+https://www.iwr.uni-heidelberg.de/groups/comopt/software/TSPLIB95/
 
-Also see:
-https://github.com/tzmartin/Google-Maps-TSP-Solver
+greedy followed by k-opt currently gets the following:
+  Set     Best   This    Diff
+--------+------+------+-------
+ br17:      39     39    0.0%
+ ft53:    6905   7473    7.9%
+ ft70:   38673  39949    3.3%
+ kro124: 36230  38459    6.0%
+
 """
 import itertools
 import sys
@@ -61,6 +68,11 @@ def _greedy(nodes, cost):
 
 
 def _ant_colony(nodes, cost):
+    """Ported from the old Optimap stuff on gebweb.net.
+
+    Also see:
+    https://github.com/tzmartin/Google-Maps-TSP-Solver
+    """
     pass
 
 
