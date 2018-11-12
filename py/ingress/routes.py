@@ -11,10 +11,13 @@ def route(args, dbc):
     """Calculate an optimal route between portals."""
     best_costs = dict()
     portals = bookmarks.load(args.bookmarks)
-    basename = os.path.splitext(args.bookmarks)[0]
+    portal_keys = portals.keys()
+    portal_keys.append(portal_keys[0])
     optimized_path = tsp.optimize(
-        portals.keys(),
+        portal_keys,
         lambda start, end: _cost(dbc, best_costs, args.walk_auto, start, end))
+
+    basename = os.path.splitext(args.bookmarks)[0]
 
     _save_as_kml(basename, optimized_path)
     _save_as_bookmarks(basename, optimized_path)
