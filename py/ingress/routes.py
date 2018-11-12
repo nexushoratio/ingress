@@ -9,13 +9,13 @@ from ingress import tsp
 
 def route(args, dbc):
     """Calculate an optimal route between portals."""
-    best_costs = dict()
+    mode_cost = dict()
     portals = bookmarks.load(args.bookmarks)
     portal_keys = portals.keys()
     portal_keys.append(portal_keys[0])
     optimized_path = tsp.optimize(
         portal_keys,
-        lambda start, end: _cost(dbc, best_costs, args.walk_auto, start, end))
+        lambda start, end: _cost(dbc, mode_cost, args.walk_auto, start, end))
 
     basename = os.path.splitext(args.bookmarks)[0]
 
@@ -25,8 +25,8 @@ def route(args, dbc):
     _save_as_drawtools(basename, optimized_path)
 
 
-def _cost(dbc, best_costs, max_walking_time_allowed, begin, end):
-    cost = best_costs.get((begin, end))
+def _cost(dbc, mode_cost, max_walking_time_allowed, begin, end):
+    cost = mode_cost.get((begin, end))
     if cost:
         return cost
     costs = dict()
@@ -45,7 +45,7 @@ def _cost(dbc, best_costs, max_walking_time_allowed, begin, end):
         cost = walking
     else:
         cost = driving
-    best_costs[(begin, end)] = cost
+    mode_cost[(begin, end)] = cost
     return cost
 
 
