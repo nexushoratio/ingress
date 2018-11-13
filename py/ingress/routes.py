@@ -3,11 +3,13 @@
 import collections
 import os
 
+import humanize
 import kmldom
 import toposort
 
 from ingress import bookmarks
 from ingress import database
+from ingress import google
 from ingress import tsp
 
 COLORS = {
@@ -31,7 +33,7 @@ def route(args, dbc):
 
     path_info = _path_info(dbc, optimized_info[1], mode_cost_map)
 
-    _save_as_kml(basename, path_info)
+    _save_as_kml(basename, path_info, optimized_info[0])
     _save_as_bookmarks(basename, path_info)
     _save_as_text(basename, path_info)
     _save_as_drawtools(basename, path_info)
@@ -95,7 +97,8 @@ def _path_info(dbc, opt_path, mode_cost_map):
             legs_dict[db_leg.begin_latlng] = db_leg
         sorted_legs = list(reversed(toposort.toposort_flatten(legs_set)))
         items.append(
-            ('legs', [legs_dict[latlng] for latlng in sorted_legs[:-1]]))
+            ('legs', [legs_dict[latlng] for latlng in sorted_legs[:-1]],
+             db_path, db_end))
 
     return items
 
@@ -133,49 +136,57 @@ def _build_kml_portal(factory, portal):
     return placemark
 
 
-def _save_as_kml(basename, path):
+def _finalize_kml_leg_placemark(placemark, mode, duration, label):
+    name = '%s for %s to %s' % (mode, humanize.h_m_s(duration), label)
+    styleurl = '#%s' % mode
+    placemark.set_name(name.encode('utf8'))
+    placemark.set_styleurl(styleurl.encode('utf8'))
+
+
+def _build_kml_legs(factory, legs):
+    db_path = legs[2]
+    db_portal = legs[3]
+
+    current_mode = None
+    placemark = None
+    duration = 0
+
+    for db_leg in legs[1]:
+        if db_leg.mode != current_mode:
+            if placemark:
+                if db_path.mode == current_mode:
+                    label = db_portal.label
+                else:
+                    label = 'waypoint'
+                _finalize_kml_leg_placemark(placemark, current_mode, duration,
+                                            label)
+                yield placemark
+            current_mode = db_leg.mode
+            placemark = factory.CreatePlacemark()
+            coordinates = factory.CreateCoordinates()
+            line_string = factory.CreateLineString()
+            duration = 0
+            line_string.set_coordinates(coordinates)
+            placemark.set_geometry(line_string)
+        duration += db_leg.duration
+        for lat, lng in google.decode_polyline(db_leg.polyline):
+            coordinates.add_latlng(lat, lng)
+
+    if placemark:
+        _finalize_kml_leg_placemark(placemark, current_mode, duration,
+                                    db_portal.label)
+        yield placemark
+
+
+def _save_as_kml(basename, path, duration):
     # https://developers.google.com/kml/documentation/kmlreference
-
-    # About to get tricky.
-
-    # The previous implementation emitted 2 kinds of Placemarks.  Point for the
-    # portal itself, LineString for the path.  A Placemark can have a name and
-    # a style.  For paths, there was a major mode for getting from point to
-    # point [walking, driving], and this was used to define the style for those
-    # placemarks.  However, a path can actually consist of legs which could
-    # contain both walking and driving themselves.  However, displayed on the
-    # map, they only showed up as as the major style.  Thus, it could look like
-    # one would drive onto a park to get to a portal.  Not something we want to
-    # encourage.
-
-    # Since a Placemark can only have one style, it seems like the best plan is
-    # to do the following:
-    # Placemark,Point,PORTAL_NAME
-    # Placemark,LineString,'MODE for TIMEFRAME to (waypoint|PORTAL_NAME)'
-    # Where PORTAL_NAME would only be used on the last leg.  So, it might look
-    # like this:
-    # (Portal) Portal One
-    # (Leg) walking to waypoint
-    # (Leg) driving to waypoint
-    # (Leg) walking to Portal Two
-    # (Portal) Portal Two
-    #
-
-    # Another option might be to use PORTAL_NAME for both the final leg and the
-    # first leg that has the same mode as the major mode
-
-    # (Portal) Portal One
-    # (Leg) walking to waypoint
-    # (Leg) driving to Portal Two
-    # (Leg) walking to Portal Two
-    # (Portal) Portal Two
 
     factory = kmldom.KmlFactory_GetFactory()
     kml = factory.CreateKml()
     doc = factory.CreateDocument()
     folder = factory.CreateFolder()
 
-    folder.set_name(basename)
+    folder.set_name('%s - %s' % (basename, humanize.h_m_s(duration)))
     doc.set_name(basename)
     doc.add_feature(folder)
     kml.set_feature(doc)
@@ -190,19 +201,21 @@ def _save_as_kml(basename, path):
         doc.add_styleselector(style)
         color.set_color_abgr(_kml_color(style_name))
         line_style.set_color(color)
+        line_style.set_width(4)
 
     for item in path:
-        print item
         type_ = item[0]
         if type_ == 'portal':
             placemark = _build_kml_portal(factory, item)
+            folder.add_feature(placemark)
         elif type_ == 'legs':
-            pass
+            for placemark in _build_kml_legs(factory, item):
+                folder.add_feature(placemark)
         else:
             raise Exception('Unknown type: %s' % type_)
-        folder.add_feature(placemark)
 
-    print kmldom.SerializePretty(kml)
+    with open('%s-rt.kml' % basename, 'w') as f_kml:
+        print >> f_kml, kmldom.SerializePretty(kml)
 
 
 def _save_as_bookmarks(basename, path):
