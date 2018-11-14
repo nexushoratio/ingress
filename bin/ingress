@@ -8,6 +8,7 @@ import app
 
 from ingress import database
 from ingress import bookmarks
+from ingress import json
 from ingress import geo
 from ingress import routes
 
@@ -25,6 +26,14 @@ def main(app_parser):
         action='store',
         required=True,
         help='IITC bookmarks json file to use')
+
+    file_parser = argparse.ArgumentParser(add_help=False)
+    file_parser.add_argument(
+        '-f',
+        '--filename',
+        action='store',
+        required=True,
+        help='Any arbitrary file argument.')
 
     subparsers = parser.add_subparsers(dest='name')
 
@@ -53,6 +62,10 @@ def main(app_parser):
         help='Longest walk time to automatically accept.',
         default=300)
     parser_routes.set_defaults(func=routes.route)
+
+    parser_clean_json = subparsers.add_parser(
+        'clean_json', parents=[file_parser], help='Clean up a json file.')
+    parser_clean_json.set_defaults(func=json.clean)
 
     args = parser.parse_args()
     dbc = database.Database()

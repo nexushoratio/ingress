@@ -28,3 +28,10 @@ def save(db_name, data):
     except OSError:
         pass
     os.rename(tmp_filename, db_name)
+
+
+def clean(args, dbc):
+    """Simply read in and write back out a json file."""
+    del dbc
+    data = load(args.filename)
+    save(args.filename, data)
