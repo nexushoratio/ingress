@@ -59,3 +59,24 @@ def load(filename):
 
     logging.info('%s portals loaded', len(portals))
     return portals
+
+
+def new():
+    """Create a new, empty bookmarks object."""
+    bookmarks = {
+        'maps': {
+            'idOthers': {
+                'bkmrk': {},
+                'label': 'Others',
+                'state': 1,
+            },
+        },
+        'portals': {
+            'idOthers': {
+                'bkmrk': {},
+                'label': 'Others',
+                'state': 0,
+            },
+        },
+    }
+    return bookmarks

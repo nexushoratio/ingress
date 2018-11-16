@@ -6,11 +6,13 @@ import random
 import time
 
 import pyproj
+import shapely.speedups
 import toposort
 
 from ingress import database
 from ingress import bookmarks
 from ingress import google
+from ingress import json
 
 MAX_AGE = 90 * 24 * 60 * 60
 
@@ -21,6 +23,27 @@ def update(args, dbc):
     _clean(dbc)
     _update_addresses(dbc, portals)
     _update_directions(dbc, portals)
+
+
+def bounds(args, dbc):
+    """Create a drawtools file outlining portals in a bookmarks file."""
+    if shapely.speedups.available:
+        shapely.speedups.enable()
+
+    data = bookmarks.load(args.bookmarks)
+    points = list()
+    for bookmark in data.itervalues():
+        latlng = _latlng_str_to_floats(bookmark['latlng'])
+        lnglat = (latlng[1], latlng[0])
+        point = shapely.geometry.Point(lnglat)
+        points.append(point)
+
+    collection = shapely.geometry.MultiPoint(points)
+    hull_shapely = collection.convex_hull.exterior.coords
+
+    hull = [{'lng': point[0], 'lat': point[1]} for point in hull_shapely]
+
+    json.save('hull.json', [{'type': 'polygon', 'latLngs': hull}])
 
 
 def _portal_combos(portals):

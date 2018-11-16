@@ -50,6 +50,13 @@ def main(app_parser):
         help=geo.update.__doc__)
     parser_update_geo.set_defaults(func=geo.update)
 
+    parser_bounds = subparsers.add_parser(
+        'bounds',
+        parents=[bm_parser],
+        description=geo.bounds.__doc__,
+        help=geo.bounds.__doc__)
+    parser_bounds.set_defaults(func=geo.bounds)
+
     parser_routes = subparsers.add_parser(
         'routes',
         parents=[bm_parser],
