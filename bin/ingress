@@ -15,9 +15,7 @@ from ingress import routes
 
 def main(app_parser):
     """Main."""
-    parser = argparse.ArgumentParser(
-        parents=[app_parser],
-        description='Perform a number of Ingress related functions.')
+    parser = argparse.ArgumentParser(parents=[app_parser], description=__doc__)
 
     bm_parser = argparse.ArgumentParser(add_help=False)
     bm_parser.add_argument(
@@ -35,24 +33,28 @@ def main(app_parser):
         required=True,
         help='Any arbitrary file argument.')
 
-    subparsers = parser.add_subparsers(dest='name')
+    subparsers = parser.add_subparsers(
+        title='commands', dest='name', help='subparser help')
 
     parser_import = subparsers.add_parser(
         'import',
         parents=[bm_parser],
-        help='Import portals from an IITC bookmark.')
+        description=bookmarks.import_bookmarks.__doc__,
+        help=bookmarks.import_bookmarks.__doc__)
     parser_import.set_defaults(func=bookmarks.import_bookmarks)
 
     parser_update_geo = subparsers.add_parser(
         'update-geo',
         parents=[bm_parser],
-        help='Update locations and travel times by bookmark.')
+        description=geo.update.__doc__,
+        help=geo.update.__doc__)
     parser_update_geo.set_defaults(func=geo.update)
 
     parser_routes = subparsers.add_parser(
         'routes',
         parents=[bm_parser],
-        help='Calculate an optimal route between portals.')
+        description=routes.route.__doc__,
+        help=routes.route.__doc__)
 
     parser_routes.add_argument(
         '-w',
@@ -64,7 +66,10 @@ def main(app_parser):
     parser_routes.set_defaults(func=routes.route)
 
     parser_clean_json = subparsers.add_parser(
-        'clean_json', parents=[file_parser], help='Clean up a json file.')
+        'clean_json',
+        parents=[file_parser],
+        description=json.clean.__doc__,
+        help=json.clean.__doc__)
     parser_clean_json.set_defaults(func=json.clean)
 
     args = parser.parse_args()

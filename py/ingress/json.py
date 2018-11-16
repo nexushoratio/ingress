@@ -31,7 +31,7 @@ def save(db_name, data):
 
 
 def clean(args, dbc):
-    """Simply read in and write back out a json file."""
+    """Clean and format a json file."""
     del dbc
     data = load(args.filename)
     save(args.filename, data)

@@ -9,7 +9,7 @@ from ingress import zcta as zcta_lib
 
 
 def import_bookmarks(args, dbc):
-    """Update the portals database from a new set of bookmarks."""
+    """Update the database with portals listed in a bookmarks file."""
     portals = load(args.bookmarks)
     timestamp = os.stat(args.bookmarks).st_mtime
 

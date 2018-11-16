@@ -19,7 +19,7 @@ COLORS = {
 
 
 def route(args, dbc):
-    """Calculate an optimal route between portals."""
+    """Calculate an optimal route between portals listed in a bookmarks file."""
     mode_cost_map = dict()
     portals = bookmarks.load(args.bookmarks)
     portal_keys = portals.keys()

@@ -16,7 +16,7 @@ MAX_AGE = 90 * 24 * 60 * 60
 
 
 def update(args, dbc):
-    """Update the travel times between portals listed in the bookmarks."""
+    """Update the locations and travel times for portals in a bookmarks file."""
     portals = bookmarks.load(args.bookmarks)
     _clean(dbc)
     _update_addresses(dbc, portals)
