@@ -44,7 +44,7 @@ def bounds(args, dbc):
     hull_shapely = collection.convex_hull.exterior.coords
 
     hull = [{'lng': point[0], 'lat': point[1]} for point in hull_shapely]
-    json.save('hull.json', [{'type': 'polygon', 'latLngs': hull}])
+    json.save(args.drawtools, [{'type': 'polygon', 'latLngs': hull}])
 
 
 def trim(args, dbc):

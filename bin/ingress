@@ -76,7 +76,7 @@ def main(app_parser):
 
     parser_bounds = subparsers.add_parser(
         'bounds',
-        parents=[bm_parser],
+        parents=[bm_parser, dt_parser],
         description=geo.bounds.__doc__,
         help=geo.bounds.__doc__)
     parser_bounds.set_defaults(func=geo.bounds)
