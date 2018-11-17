@@ -27,7 +27,7 @@ def main(app_parser):
 
     dt_parser = argparse.ArgumentParser(add_help=False)
     dt_parser.add_argument(
-        '-D',
+        '-d',
         '--drawtools',
         action='store',
         required=True,
