@@ -56,6 +56,22 @@ def main(app_parser):
         parents=[bm_parser],
         description=geo.update.__doc__,
         help=geo.update.__doc__)
+    parser_update.add_argument(
+        '--noaddresses',
+        action='store_false',
+        dest='addresses',
+        help='Disable updating addresses.')
+    parser_update.add_argument(
+        '--addresses', action='store_true', help='Enable updating addresses.')
+    parser_update.add_argument(
+        '--nodirections',
+        action='store_false',
+        dest='directions',
+        help='Disable updating directions.')
+    parser_update.add_argument(
+        '--directions',
+        action='store_true',
+        help='Enable updating directions..')
     parser_update.set_defaults(func=geo.update)
 
     parser_bounds = subparsers.add_parser(
