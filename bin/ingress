@@ -77,7 +77,6 @@ def main(app_parser):
         parents=[bm_parser],
         description=routes.route.__doc__,
         help=routes.route.__doc__)
-
     parser_routes.add_argument(
         '-w',
         '--walk-auto',
