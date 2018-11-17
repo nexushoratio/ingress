@@ -51,12 +51,12 @@ def main(app_parser):
         help=bookmarks.import_bookmarks.__doc__)
     parser_import.set_defaults(func=bookmarks.import_bookmarks)
 
-    parser_update_geo = subparsers.add_parser(
-        'update-geo',
+    parser_update = subparsers.add_parser(
+        'update',
         parents=[bm_parser],
         description=geo.update.__doc__,
         help=geo.update.__doc__)
-    parser_update_geo.set_defaults(func=geo.update)
+    parser_update.set_defaults(func=geo.update)
 
     parser_bounds = subparsers.add_parser(
         'bounds',
