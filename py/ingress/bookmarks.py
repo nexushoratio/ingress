@@ -47,7 +47,7 @@ def import_bookmarks(args, dbc):
 
 
 def load(filename):
-    """Load a particular bookmarks file."""
+    """Load a particular bookmarks file returning a dict of portals."""
     bookmarks = json.load(filename)
     portals_by_folder = bookmarks['portals']
     portals = dict()
@@ -59,6 +59,13 @@ def load(filename):
 
     logging.info('%s portals loaded', len(portals))
     return portals
+
+
+def save(portals, filename):
+    """Save a dictionary of portals into a particular bookmarks file."""
+    new_bookmarks = new()
+    new_bookmarks['portals']['idOthers']['bkmrk'] = portals
+    json.save(filename, new_bookmarks)
 
 
 def new():

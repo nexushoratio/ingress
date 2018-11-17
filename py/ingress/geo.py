@@ -42,8 +42,56 @@ def bounds(args, dbc):
     hull_shapely = collection.convex_hull.exterior.coords
 
     hull = [{'lng': point[0], 'lat': point[1]} for point in hull_shapely]
-
     json.save('hull.json', [{'type': 'polygon', 'latLngs': hull}])
+
+
+def trim(args, dbc):
+    """Trim a bookmarks file to only include portals inside a bounds."""
+    if shapely.speedups.available:
+        shapely.speedups.enable()
+
+    portals = bookmarks.load(args.bookmarks)
+    outlines = json.load(args.drawtools)
+    polygons = _outlines_to_polygons(outlines)
+
+    collection = shapely.geometry.MultiPolygon(polygons)
+    to_delete = set()
+    for guid, portal in portals.iteritems():
+        latlng = _latlng_str_to_floats(portal['latlng'])
+        lnglat = (latlng[1], latlng[0])
+        point = shapely.geometry.Point(lnglat)
+        if not point.intersects(collection):
+            to_delete.add(guid)
+    for guid in to_delete:
+        del portals[guid]
+
+    if to_delete:
+        print 'deleting:', to_delete
+        bookmarks.save(portals, args.bookmarks)
+
+
+def _outlines_to_polygons(outlines):
+    polygons = list()
+    for outline in outlines:
+        typ = outline['type']
+        if typ == 'polygon':
+            points = [(point['lng'], point['lat'])
+                      for point in outline['latLngs']]
+            polygons.append(shapely.geometry.Polygon(points))
+        elif typ == 'circle':
+            # Turn it into a finely defined polygon
+            geod = pyproj.Geod(ellps='WGS84')
+            dist = outline['radius']
+            lat = outline['latLng']['lat']
+            lng = outline['latLng']['lng']
+            points = [
+                geod.fwd(lng, lat, angle, dist)[:2]
+                for angle in range(0, 360, 5)
+            ]
+        else:
+            raise Exception('%s is a type not yet handled.' % typ)
+
+    return polygons
 
 
 def _portal_combos(portals):

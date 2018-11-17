@@ -25,6 +25,14 @@ def main(app_parser):
         required=True,
         help='IITC bookmarks json file to use')
 
+    dt_parser = argparse.ArgumentParser(add_help=False)
+    dt_parser.add_argument(
+        '-D',
+        '--drawtools',
+        action='store',
+        required=True,
+        help='IITC drawtools json file to use')
+
     file_parser = argparse.ArgumentParser(add_help=False)
     file_parser.add_argument(
         '-f',
@@ -56,6 +64,13 @@ def main(app_parser):
         description=geo.bounds.__doc__,
         help=geo.bounds.__doc__)
     parser_bounds.set_defaults(func=geo.bounds)
+
+    parser_trim = subparsers.add_parser(
+        'trim',
+        parents=[bm_parser, dt_parser],
+        description=geo.trim.__doc__,
+        help=geo.trim.__doc__)
+    parser_trim.set_defaults(func=geo.trim)
 
     parser_routes = subparsers.add_parser(
         'routes',
