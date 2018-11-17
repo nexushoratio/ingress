@@ -1,5 +1,6 @@
 """Functions to work with IITC bookmarks files."""
 
+import itertools
 import logging
 import os
 
@@ -66,6 +67,31 @@ def save(portals, filename):
     new_bookmarks = new()
     new_bookmarks['portals']['idOthers']['bkmrk'] = portals
     json.save(filename, new_bookmarks)
+
+
+def find_missing_labels(args, dbc):
+    """Look through globs of bookmarks for missing labels.
+
+    It will remove portals with missing labels from the bookmarks and
+    add them to a newly created bookmarks file instead.  The contents of
+    the destination bookmarks file will be destroyed.
+    """
+    missing_portals = dict()
+    save(missing_portals, args.bookmarks)
+    for filename in itertools.chain(*args.glob):
+        missing_guids = set()
+        portals = load(filename)
+        for portal in portals.itervalues():
+            if not portal.has_key('label'):
+                missing_guids.add(portal['guid'])
+        if missing_guids:
+            for guid in missing_guids:
+                missing_portals[guid] = portals[guid]
+                del portals[guid]
+            save(missing_portals, args.bookmarks)
+            ftime = os.stat(filename)
+            save(portals, filename)
+            os.utime(filename, (ftime.st_atime, ftime.st_mtime))
 
 
 def new():

@@ -2,6 +2,7 @@
 """Perform a number of Ingress related functions."""
 
 import argparse
+import glob
 import logging
 
 import app
@@ -11,6 +12,10 @@ from ingress import bookmarks
 from ingress import json
 from ingress import geo
 from ingress import routes
+
+
+def _globber(pattern):
+    return glob.iglob(pattern)
 
 
 def main(app_parser):
@@ -41,6 +46,16 @@ def main(app_parser):
         required=True,
         help='Any arbitrary file argument.')
 
+    glob_parser = argparse.ArgumentParser(add_help=False)
+    glob_parser.add_argument(
+        '-g',
+        '--glob',
+        action='append',
+        required=True,
+        type=_globber,
+        help=('A filename glob that will be matched by the program'
+              ' instead of the shell.  May be specified multiple times.'))
+
     subparsers = parser.add_subparsers(
         title='commands', dest='name', help='subparser help')
 
@@ -50,6 +65,13 @@ def main(app_parser):
         description=bookmarks.import_bookmarks.__doc__,
         help=bookmarks.import_bookmarks.__doc__)
     parser_import.set_defaults(func=bookmarks.import_bookmarks)
+
+    parser_find_missing_labels = subparsers.add_parser(
+        'find-missing-labels',
+        parents=[bm_parser, glob_parser],
+        description=bookmarks.find_missing_labels.__doc__,
+        help=bookmarks.find_missing_labels.__doc__)
+    parser_find_missing_labels.set_defaults(func=bookmarks.find_missing_labels)
 
     parser_update = subparsers.add_parser(
         'update',
