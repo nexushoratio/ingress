@@ -100,7 +100,7 @@ class Zcta(object):
     def code_from_latlng(self, latlng):
         """Figure out which ZCTA a particular location is in."""
         lat, lng = latlng.split(',')
-        point = shapely.geometry.Point(float(lng), float(lng))
+        point = shapely.geometry.Point(float(lng), float(lat))
         code = self._code_by_point(point)
         if code is None:
             logging.info('Unable to find code for %s', latlng)
