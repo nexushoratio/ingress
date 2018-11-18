@@ -2,7 +2,7 @@
 
 from ingress import database
 
-_BOOLY = {
+_BINARY = {
     'true': True,
     'True': True,
     'false': False,
@@ -28,19 +28,6 @@ def register_module_parsers(ctx):
         type=unicode,
         required=True,
         help='The location code.')
-    code_write_parser.add_argument(
-        '-l',
-        '--label',
-        action='store',
-        type=unicode,
-        help='Label for the location code.')
-    code_write_parser.add_argument(
-        '-k',
-        '--keep',
-        type=lambda x: _BOOLY.get(x, x),
-        choices=(True, False),
-        help=('Controls whether or not to keep portals with this location code'
-              ' during the prune operations.'))
 
     code_read_parser = ctx.argparse.ArgumentParser(add_help=False)
     code_read_parser.add_argument(
@@ -49,13 +36,26 @@ def register_module_parsers(ctx):
         action='store',
         type=unicode,
         help='The location code.')
-    code_read_parser.add_argument(
+
+    label_parser = ctx.argparse.ArgumentParser(add_help=False)
+    label_parser.add_argument(
         '-l',
         '--label',
         action='store',
         type=unicode,
         help='Label for the location code.')
-    code_read_parser.add_argument(
+
+    keep_write_parser = ctx.argparse.ArgumentParser(add_help=False)
+    keep_write_parser.add_argument(
+        '-k',
+        '--keep',
+        type=lambda x: _BINARY.get(x, x),
+        choices=(True, False),
+        help=('Controls whether or not to keep portals with this location code'
+              ' during the prune operations.'))
+
+    keep_read_parser = ctx.argparse.ArgumentParser(add_help=False)
+    keep_read_parser.add_argument(
         '-k',
         '--keep',
         type=lambda x: _TRINARY.get(x, x),
@@ -65,14 +65,14 @@ def register_module_parsers(ctx):
 
     parser = ctx.subparsers.add_parser(
         'codes-set',
-        parents=[code_write_parser],
+        parents=[code_write_parser, label_parser, keep_write_parser],
         description=setter.__doc__,
         help=setter.__doc__)
     parser.set_defaults(func=setter)
 
     parser = ctx.subparsers.add_parser(
         'codes-get',
-        parents=[code_read_parser],
+        parents=[code_read_parser, label_parser, keep_read_parser],
         description=getter.__doc__,
         help=getter.__doc__)
     parser.set_defaults(func=getter)
@@ -124,7 +124,11 @@ def getter(args, dbc):
 
 def deleter(args, dbc):
     """Delete a location code."""
-    pass
+    code = dbc.session.query(database.Code).get(args.code)
+    if code is not None:
+        print 'deleting...'
+        dbc.session.delete(code)
+        dbc.session.commit()
 
 
 def pruner(args, dbc):
