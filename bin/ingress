@@ -2,10 +2,10 @@
 """Perform a number of Ingress related functions."""
 
 import argparse
-import glob
 import logging
 
 import app
+import attr
 
 from ingress import database
 from ingress import bookmarks
@@ -14,122 +14,33 @@ from ingress import geo
 from ingress import routes
 
 
-def _globber(pattern):
-    return glob.iglob(pattern)
+@attr.s  # pylint: disable=missing-docstring,too-few-public-methods
+class Context(object):
+    argparse = attr.ib()
+    shared_parsers = attr.ib()
+    subparsers = attr.ib()
 
 
 def main(app_parser):
     """Main."""
     parser = argparse.ArgumentParser(parents=[app_parser], description=__doc__)
 
-    bm_parser = argparse.ArgumentParser(add_help=False)
-    bm_parser.add_argument(
-        '-b',
-        '--bookmarks',
-        action='store',
-        required=True,
-        help='IITC bookmarks json file to use')
-
-    dt_parser = argparse.ArgumentParser(add_help=False)
-    dt_parser.add_argument(
-        '-d',
-        '--drawtools',
-        action='store',
-        required=True,
-        help='IITC drawtools json file to use')
-
-    file_parser = argparse.ArgumentParser(add_help=False)
-    file_parser.add_argument(
-        '-f',
-        '--filename',
-        action='store',
-        required=True,
-        help='Any arbitrary file argument.')
-
-    glob_parser = argparse.ArgumentParser(add_help=False)
-    glob_parser.add_argument(
-        '-g',
-        '--glob',
-        action='append',
-        required=True,
-        type=_globber,
-        help=('A filename glob that will be matched by the program'
-              ' instead of the shell.  May be specified multiple times.'))
-
     subparsers = parser.add_subparsers(
         title='commands', dest='name', help='subparser help')
+    ctx = Context(
+        argparse=argparse, shared_parsers=dict(), subparsers=subparsers)
 
-    parser_import = subparsers.add_parser(
-        'import',
-        parents=[bm_parser],
-        description=bookmarks.import_bookmarks.__doc__,
-        help=bookmarks.import_bookmarks.__doc__)
-    parser_import.set_defaults(func=bookmarks.import_bookmarks)
+    for module in (database, bookmarks, json, geo, routes):
+        register_shared_parsers = getattr(module, 'register_shared_parsers',
+                                          None)
+        if register_shared_parsers:
+            register_shared_parsers(ctx)
 
-    parser_find_missing_labels = subparsers.add_parser(
-        'find-missing-labels',
-        parents=[bm_parser, glob_parser],
-        description=bookmarks.find_missing_labels.__doc__,
-        help=bookmarks.find_missing_labels.__doc__)
-    parser_find_missing_labels.set_defaults(func=bookmarks.find_missing_labels)
-
-    parser_update = subparsers.add_parser(
-        'update',
-        parents=[bm_parser],
-        description=geo.update.__doc__,
-        help=geo.update.__doc__)
-    parser_update.add_argument(
-        '--noaddresses',
-        action='store_false',
-        dest='addresses',
-        help='Disable updating addresses.')
-    parser_update.add_argument(
-        '--addresses', action='store_true', help='Enable updating addresses.')
-    parser_update.add_argument(
-        '--nodirections',
-        action='store_false',
-        dest='directions',
-        help='Disable updating directions.')
-    parser_update.add_argument(
-        '--directions',
-        action='store_true',
-        help='Enable updating directions..')
-    parser_update.set_defaults(func=geo.update)
-
-    parser_bounds = subparsers.add_parser(
-        'bounds',
-        parents=[bm_parser, dt_parser],
-        description=geo.bounds.__doc__,
-        help=geo.bounds.__doc__)
-    parser_bounds.set_defaults(func=geo.bounds)
-
-    parser_trim = subparsers.add_parser(
-        'trim',
-        parents=[bm_parser, dt_parser],
-        description=geo.trim.__doc__,
-        help=geo.trim.__doc__)
-    parser_trim.set_defaults(func=geo.trim)
-
-    parser_routes = subparsers.add_parser(
-        'routes',
-        parents=[bm_parser],
-        description=routes.route.__doc__,
-        help=routes.route.__doc__)
-    parser_routes.add_argument(
-        '-w',
-        '--walk-auto',
-        action='store',
-        type=int,
-        help='Longest walk time to automatically accept.',
-        default=300)
-    parser_routes.set_defaults(func=routes.route)
-
-    parser_clean_json = subparsers.add_parser(
-        'clean_json',
-        parents=[file_parser],
-        description=json.clean.__doc__,
-        help=json.clean.__doc__)
-    parser_clean_json.set_defaults(func=json.clean)
+    for module in (database, bookmarks, json, geo, routes):
+        register_module_parsers = getattr(module, 'register_module_parsers',
+                                          None)
+        if register_module_parsers:
+            register_module_parsers(ctx)
 
     args = parser.parse_args()
     dbc = database.Database()

@@ -1,5 +1,6 @@
 """Functions to work with IITC bookmarks files."""
 
+import glob
 import itertools
 import logging
 import os
@@ -7,6 +8,50 @@ import os
 from ingress import database
 from ingress import json
 from ingress import zcta as zcta_lib
+
+
+def register_shared_parsers(ctx):
+    """Parser registration API."""
+    bm_parser = ctx.argparse.ArgumentParser(add_help=False)
+    bm_parser.add_argument(
+        '-b',
+        '--bookmarks',
+        action='store',
+        required=True,
+        help='IITC bookmarks json file to use')
+
+    glob_parser = ctx.argparse.ArgumentParser(add_help=False)
+    glob_parser.add_argument(
+        '-g',
+        '--glob',
+        action='append',
+        required=True,
+        type=glob.iglob,
+        help=('A filename glob that will be matched by the program'
+              ' instead of the shell.  May be specified multiple times.'))
+
+    ctx.shared_parsers['bm_parser'] = bm_parser
+    ctx.shared_parsers['glob_parser'] = glob_parser
+
+
+def register_module_parsers(ctx):
+    """Parser registration API."""
+    bm_parser = ctx.shared_parsers['bm_parser']
+    glob_parser = ctx.shared_parsers['glob_parser']
+
+    parser_import = ctx.subparsers.add_parser(
+        'import',
+        parents=[bm_parser],
+        description=import_bookmarks.__doc__,
+        help=import_bookmarks.__doc__)
+    parser_import.set_defaults(func=import_bookmarks)
+
+    parser_find_missing_labels = ctx.subparsers.add_parser(
+        'find-missing-labels',
+        parents=[bm_parser, glob_parser],
+        description=find_missing_labels.__doc__,
+        help=find_missing_labels.__doc__)
+    parser_find_missing_labels.set_defaults(func=find_missing_labels)
 
 
 def import_bookmarks(args, dbc):

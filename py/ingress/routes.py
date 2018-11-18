@@ -18,6 +18,25 @@ COLORS = {
 }
 
 
+def register_module_parsers(ctx):
+    """Parser registration API."""
+    bm_parser = ctx.shared_parsers['bm_parser']
+
+    parser_routes = ctx.subparsers.add_parser(
+        'routes',
+        parents=[bm_parser],
+        description=route.__doc__,
+        help=route.__doc__)
+    parser_routes.add_argument(
+        '-w',
+        '--walk-auto',
+        action='store',
+        type=int,
+        help='Longest walk time to automatically accept.',
+        default=300)
+    parser_routes.set_defaults(func=route)
+
+
 def route(args, dbc):
     """Calculate an optimal route between portals listed in a bookmarks file."""
     mode_cost_map = dict()

@@ -105,6 +105,14 @@ class Address(Base):  # pylint: disable=missing-docstring
     date = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
 
 
+class Code(Base):  # pylint: disable=missing-docstring
+    __tablename__ = 'codes'
+    code = sqlalchemy.Column(
+        sqlalchemy.Unicode, primary_key=True, nullable=False)
+    label = sqlalchemy.Column(sqlalchemy.Unicode)
+    keep = sqlalchemy.Column(sqlalchemy.Boolean)
+
+
 class Database(object):
     def __init__(self):
 

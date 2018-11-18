@@ -17,6 +17,62 @@ from ingress import json
 MAX_AGE = 90 * 24 * 60 * 60
 
 
+def register_shared_parsers(ctx):
+    """Parser registration API."""
+    dt_parser = ctx.argparse.ArgumentParser(add_help=False)
+    dt_parser.add_argument(
+        '-d',
+        '--drawtools',
+        action='store',
+        required=True,
+        help='IITC drawtools json file to use')
+
+    ctx.shared_parsers['dt_parser'] = dt_parser
+
+
+def register_module_parsers(ctx):
+    """Parser registration API."""
+    bm_parser = ctx.shared_parsers['bm_parser']
+    dt_parser = ctx.shared_parsers['dt_parser']
+
+    parser_update = ctx.subparsers.add_parser(
+        'update',
+        parents=[bm_parser],
+        description=update.__doc__,
+        help=update.__doc__)
+    parser_update.add_argument(
+        '--noaddresses',
+        action='store_false',
+        dest='addresses',
+        help='Disable updating addresses.')
+    parser_update.add_argument(
+        '--addresses', action='store_true', help='Enable updating addresses.')
+    parser_update.add_argument(
+        '--nodirections',
+        action='store_false',
+        dest='directions',
+        help='Disable updating directions.')
+    parser_update.add_argument(
+        '--directions',
+        action='store_true',
+        help='Enable updating directions..')
+    parser_update.set_defaults(func=update)
+
+    parser_bounds = ctx.subparsers.add_parser(
+        'bounds',
+        parents=[bm_parser, dt_parser],
+        description=bounds.__doc__,
+        help=bounds.__doc__)
+    parser_bounds.set_defaults(func=bounds)
+
+    parser_trim = ctx.subparsers.add_parser(
+        'trim',
+        parents=[bm_parser, dt_parser],
+        description=trim.__doc__,
+        help=trim.__doc__)
+    parser_trim.set_defaults(func=trim)
+
+
 def update(args, dbc):
     """Update the locations and directions for portals in a bookmarks file."""
     portals = bookmarks.load(args.bookmarks)
