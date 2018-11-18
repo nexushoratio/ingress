@@ -9,47 +9,77 @@ _BOOLY = {
     'False': False,
 }
 
+_TRINARY = {
+    'true': True,
+    'True': True,
+    'false': False,
+    'False': False,
+    'null': 'null',
+}
+
 
 def register_module_parsers(ctx):
     """Parser registration API."""
-    code_parser = ctx.argparse.ArgumentParser(add_help=False)
-    code_parser.add_argument(
+    code_write_parser = ctx.argparse.ArgumentParser(add_help=False)
+    code_write_parser.add_argument(
         '-c',
         '--code',
         action='store',
         type=unicode,
         required=True,
         help='The location code.')
-    code_parser.add_argument(
+    code_write_parser.add_argument(
         '-l',
         '--label',
         action='store',
         type=unicode,
         help='Label for the location code.')
-    code_parser.add_argument(
+    code_write_parser.add_argument(
         '-k',
         '--keep',
         type=lambda x: _BOOLY.get(x, x),
         choices=(True, False),
         help=('Controls whether or not to keep portals with this location code'
               ' during the prune operations.'))
+
+    code_read_parser = ctx.argparse.ArgumentParser(add_help=False)
+    code_read_parser.add_argument(
+        '-c',
+        '--code',
+        action='store',
+        type=unicode,
+        help='The location code.')
+    code_read_parser.add_argument(
+        '-l',
+        '--label',
+        action='store',
+        type=unicode,
+        help='Label for the location code.')
+    code_read_parser.add_argument(
+        '-k',
+        '--keep',
+        type=lambda x: _TRINARY.get(x, x),
+        choices=(True, False, 'null'),
+        help=('Controls whether or not to keep portals with this location code'
+              ' during the prune operations.'))
+
     parser = ctx.subparsers.add_parser(
         'codes-set',
-        parents=[code_parser],
+        parents=[code_write_parser],
         description=setter.__doc__,
         help=setter.__doc__)
     parser.set_defaults(func=setter)
 
     parser = ctx.subparsers.add_parser(
         'codes-get',
-        parents=[code_parser],
+        parents=[code_read_parser],
         description=getter.__doc__,
         help=getter.__doc__)
     parser.set_defaults(func=getter)
 
     parser = ctx.subparsers.add_parser(
         'codes-delete',
-        parents=[code_parser],
+        parents=[code_write_parser],
         description=deleter.__doc__,
         help=deleter.__doc__)
     parser.set_defaults(func=deleter)
@@ -74,7 +104,22 @@ def setter(args, dbc):
 
 def getter(args, dbc):
     """Display one or more location codes."""
-    pass
+    query = dbc.session.query(database.Code)
+    if args.code is not None:
+        query = query.filter(database.Code.code == args.code)
+    if args.label is not None:
+        query = query.filter(database.Code.label == args.label)
+    if args.keep is not None:
+        keep = args.keep
+        if keep == 'null':
+            keep = None
+        query = query.filter(database.Code.keep == keep)
+    for db_code in query:
+        print '%(code)8s | %(keep)4s | %(label)s' % {
+            'code': db_code.code,
+            'keep': db_code.keep,
+            'label': db_code.label,
+        }
 
 
 def deleter(args, dbc):
