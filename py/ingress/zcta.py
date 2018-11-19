@@ -44,6 +44,7 @@ class Zcta(object):
         if shapely.speedups.available:
             shapely.speedups.enable()
         self._codes = list()
+        self._groups_loaded = set()
         self._code_index = None
 
     # Maybe make this importer a class on its own
@@ -117,9 +118,9 @@ class Zcta(object):
     def _point_in_any_code(self, point):
         for index, entry in enumerate(self._codes):
             code, area = entry
-            if point.within(area):
+            if point.intersects(area):
                 # Move to the front
-                if index:
+                if index > 275:
                     self._codes.pop(index)
                     self._codes.insert(0, entry)
                 return code
@@ -129,12 +130,14 @@ class Zcta(object):
             self._load_code_index()
 
         for code, polygon in self._code_index.iteritems():
-            if point.within(polygon):
-                basename = '%s.json' % code
-                group = json.load(self._full_path(basename))
-                for key, value in group.iteritems():
-                    area = shapely.wkt.loads(value)
-                    self._codes.append((key, area))
+            if code not in self._groups_loaded:
+                if point.intersects(polygon):
+                    self._groups_loaded.add(code)
+                    basename = '%s.json' % code
+                    group = json.load(self._full_path(basename))
+                    for key, value in group.iteritems():
+                        area = shapely.wkt.loads(value)
+                        self._codes.append((key, area))
 
     def _load_code_index(self):
         wkt = json.load(self._full_path(self.INDEX_JSON))
