@@ -5,17 +5,16 @@ from ingress import database
 _BINARY = {
     'true': True,
     'True': True,
+    'y': True,
+    'Y': True,
     'false': False,
     'False': False,
+    'n': False,
+    'N': False,
 }
 
-_TRINARY = {
-    'true': True,
-    'True': True,
-    'false': False,
-    'False': False,
-    'null': 'null',
-}
+_TRINARY = _BINARY.copy()
+_TRINARY.update({'null': 'null'})
 
 
 def register_module_parsers(ctx):
@@ -86,6 +85,13 @@ def register_module_parsers(ctx):
 
     parser = ctx.subparsers.add_parser(
         'codes-prune', description=pruner.__doc__, help=pruner.__doc__)
+    parser.add_argument(
+        '-m',
+        '--mode',
+        choices=('new-codes-only', 'dry-run', 'full-pruning'),
+        default='new-codes-only',
+        help=('Scan for new codes only, a pretend run, or a full commitment'
+              ' to pruning.'))
     parser.set_defaults(func=pruner)
 
 
@@ -133,4 +139,25 @@ def deleter(args, dbc):
 
 def pruner(args, dbc):
     """Prune portals based upon keep status of location codes."""
-    pass
+    all_codes = set()
+    delete_codes = set()
+    # Probably better done as a join
+    for db_code in dbc.session.query(database.Code):
+        all_codes.add(db_code.code)
+        if db_code.keep is False:
+            delete_codes.add(db_code.code)
+
+    for db_portal in dbc.session.query(database.Portal):
+        code = db_portal.code
+        if code not in all_codes:
+            print 'New code: %s' % code
+            dbc.session.add(database.Code(code=code))
+            all_codes.add(code)
+        if args.mode != 'new-codes-only':
+            if code in delete_codes:
+                print 'Pruning %s - %s' % (db_portal.guid, db_portal.label)
+
+    if args.mode == 'dry-run':
+        dbc.session.rollback()
+    else:
+        dbc.session.commit()
