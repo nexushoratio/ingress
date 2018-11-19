@@ -3,14 +3,19 @@
 import collections
 import time
 
+from ingress import bookmarks
 from ingress import database
 
 
 def register_module_parsers(ctx):
     """Parser registration API."""
+    bm_parser = ctx.shared_parsers['bm_parser']
 
     parser = ctx.subparsers.add_parser(
-        'show-portals', description=show.__doc__, help=show.__doc__)
+        'show-portals',
+        parents=[bm_parser],
+        description=show.__doc__,
+        help=show.__doc__)
 
     parser.add_argument(
         '-f',
@@ -43,7 +48,10 @@ def register_module_parsers(ctx):
 
 
 def show(args, dbc):
-    """Show portals sorted by date."""
+    """Show portals sorted by date.
+
+    They will be exported to a bookmarks file.
+    """
     start = args.start or 0
     stop = args.stop or float('inf')
     query = dbc.session.query(database.Portal)
@@ -54,30 +62,39 @@ def show(args, dbc):
 
     query = query.filter(field.between(start, stop))
     groups = collections.defaultdict(list)
+    portals = dict()
+    known_columns = frozenset(x.key for x in database.Portal.__table__.columns)  # pylint: disable=no-member
+
     for row in query:
         portal = dict()
-        if args.field == 'first_seen':
-            timestamp = row.first_seen
-        if args.field == 'last_seen':
-            timestamp = row.last_seen
-        portal['date'] = _format_date(timestamp)
-        portal['code'] = row.code
-        portal['label'] = row.label
-        portal['latlng'] = row.latlng
-        portal['guid'] = row.guid
+        for column in known_columns:
+            portal[column] = getattr(row, column)
+        portal['date'] = _format_date(portal[args.field])
         groups[portal[args.group_by]].append(portal)
+        portals[row.guid] = portal
 
-    output = list()
-    reverse = args.order == 'descend'
-    for group in sorted(groups.keys(), reverse=reverse):
+    text_output = list()
+    for group in sorted(groups.keys(), reverse=args.order == 'descend'):
         line = '%s: %s\n\n' % (args.group_by.capitalize(), group)
         groups[group].sort(key=lambda x: x['label'])
         for portal in groups[group]:
             line += ('%(label)s: %(date)s\nhttps://www.ingress.com/intel?'
                      'pll=%(latlng)s\n\n') % portal
-        output.append(line)
-    note = '=======\n\n'.join(output)
-    print note.encode('utf8')
+        text_output.append(line)
+
+    print '=======\n\n'.join(text_output).encode('utf8')
+    _save_cleaned_bookmarks(portals, known_columns, args.bookmarks)
+
+
+def _save_cleaned_bookmarks(portals, known_columns, filename):
+    for portal in portals.itervalues():
+        keys_to_delete = set()
+        for key in portal.iterkeys():
+            if key not in known_columns:
+                keys_to_delete.add(key)
+        for key in keys_to_delete:
+            del portal[key]
+    bookmarks.save(portals, filename)
 
 
 def _parse_date(date_string):
