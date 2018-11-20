@@ -53,6 +53,13 @@ def register_module_parsers(ctx):
         help=find_missing_labels.__doc__)
     parser_find_missing_labels.set_defaults(func=find_missing_labels)
 
+    parser = ctx.subparsers.add_parser(
+        'merge-bookmarks',
+        parents=[bm_parser, glob_parser],
+        description=merge.__doc__,
+        help=merge.__doc__)
+    parser.set_defaults(func=merge)
+
 
 def import_bookmarks(args, dbc):
     """Update the database with portals listed in a bookmarks file."""
@@ -137,6 +144,20 @@ def find_missing_labels(args, dbc):
             ftime = os.stat(filename)
             save(portals, filename)
             os.utime(filename, (ftime.st_atime, ftime.st_mtime))
+
+
+def merge(args, dbc):
+    """Merge multiple bookmarks files into one.
+
+    Inputs will be the files specified by the glob arguments.  The
+    contents of the destination bookmarks file will be destroyed.
+    """
+    portals = dict()
+    save(portals, args.bookmarks)
+    for filename in itertools.chain(*args.glob):
+        portals.update(load(filename))
+
+    save(portals, args.bookmarks)
 
 
 def new():
