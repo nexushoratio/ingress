@@ -26,12 +26,12 @@ def register_module_parsers(ctx):
     """Parser registration API."""
     file_parser = ctx.shared_parsers['file_parser']
 
-    parser_clean_json = ctx.subparsers.add_parser(
+    parser = ctx.subparsers.add_parser(
         'clean-json',
         parents=[file_parser],
         description=clean.__doc__,
         help=clean.__doc__)
-    parser_clean_json.set_defaults(func=clean)
+    parser.set_defaults(func=clean)
 
 
 def load(json_name):

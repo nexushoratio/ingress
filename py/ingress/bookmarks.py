@@ -39,19 +39,19 @@ def register_module_parsers(ctx):
     bm_parser = ctx.shared_parsers['bm_parser']
     glob_parser = ctx.shared_parsers['glob_parser']
 
-    parser_import = ctx.subparsers.add_parser(
+    parser = ctx.subparsers.add_parser(
         'import',
         parents=[bm_parser],
         description=import_bookmarks.__doc__,
         help=import_bookmarks.__doc__)
-    parser_import.set_defaults(func=import_bookmarks)
+    parser.set_defaults(func=import_bookmarks)
 
-    parser_find_missing_labels = ctx.subparsers.add_parser(
+    parser = ctx.subparsers.add_parser(
         'find-missing-labels',
         parents=[bm_parser, glob_parser],
         description=find_missing_labels.__doc__,
         help=find_missing_labels.__doc__)
-    parser_find_missing_labels.set_defaults(func=find_missing_labels)
+    parser.set_defaults(func=find_missing_labels)
 
     parser = ctx.subparsers.add_parser(
         'merge-bookmarks',

@@ -35,42 +35,42 @@ def register_module_parsers(ctx):
     bm_parser = ctx.shared_parsers['bm_parser']
     dt_parser = ctx.shared_parsers['dt_parser']
 
-    parser_update = ctx.subparsers.add_parser(
+    parser = ctx.subparsers.add_parser(
         'update',
         parents=[bm_parser],
         description=update.__doc__,
         help=update.__doc__)
-    parser_update.add_argument(
+    parser.add_argument(
         '--noaddresses',
         action='store_false',
         dest='addresses',
         help='Disable updating addresses.')
-    parser_update.add_argument(
+    parser.add_argument(
         '--addresses', action='store_true', help='Enable updating addresses.')
-    parser_update.add_argument(
+    parser.add_argument(
         '--nodirections',
         action='store_false',
         dest='directions',
         help='Disable updating directions.')
-    parser_update.add_argument(
+    parser.add_argument(
         '--directions',
         action='store_true',
         help='Enable updating directions..')
-    parser_update.set_defaults(func=update)
+    parser.set_defaults(func=update)
 
-    parser_bounds = ctx.subparsers.add_parser(
+    parser = ctx.subparsers.add_parser(
         'bounds',
         parents=[bm_parser, dt_parser],
         description=bounds.__doc__,
         help=bounds.__doc__)
-    parser_bounds.set_defaults(func=bounds)
+    parser.set_defaults(func=bounds)
 
-    parser_trim = ctx.subparsers.add_parser(
+    parser = ctx.subparsers.add_parser(
         'trim',
         parents=[bm_parser, dt_parser],
         description=trim.__doc__,
         help=trim.__doc__)
-    parser_trim.set_defaults(func=trim)
+    parser.set_defaults(func=trim)
 
 
 def update(args, dbc):
