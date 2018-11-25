@@ -23,6 +23,7 @@ def register_module_parsers(ctx):
     """Parser registration API."""
     bm_parser = ctx.shared_parsers['bm_parser']
     dt_parser = ctx.shared_parsers['dt_parser']
+    glob_parser = ctx.shared_parsers['glob_parser']
 
     parser = ctx.subparsers.add_parser(
         'update',
@@ -49,7 +50,7 @@ def register_module_parsers(ctx):
 
     parser = ctx.subparsers.add_parser(
         'bounds',
-        parents=[bm_parser, dt_parser],
+        parents=[dt_parser, glob_parser],
         description=bounds.__doc__,
         help=bounds.__doc__)
     parser.set_defaults(func=bounds)
@@ -102,20 +103,19 @@ def update(args, dbc):
 
 
 def bounds(args, dbc):
-    """Create a drawtools file outlining portals in a bookmarks file."""
-    if shapely.speedups.available:
-        shapely.speedups.enable()
-
-    data = bookmarks.load(args.bookmarks)
-    points = list()
-    for bookmark in data.itervalues():
-        latlng = _latlng_str_to_floats(bookmark['latlng'])
-        lnglat = (latlng[1], latlng[0])
-        point = shapely.geometry.Point(lnglat)
-        points.append(point)
-
-    collection = shapely.geometry.MultiPoint(points)
-    drawtools.save_bounds(args.drawtools, collection)
+    """Create a drawtools file outlining portals in multiple bookmarks files."""
+    collections = list()
+    for filename in itertools.chain(*args.glob):
+        data = bookmarks.load(filename)
+        points = list()
+        for bookmark in data.itervalues():
+            latlng = _latlng_str_to_floats(bookmark['latlng'])
+            lnglat = (latlng[1], latlng[0])
+            point = shapely.geometry.Point(lnglat)
+            points.append(point)
+        multi_points = shapely.geometry.MultiPoint(points)
+        collections.append(multi_points)
+    drawtools.save_bounds(args.drawtools, collections)
 
 
 def trim(args, dbc):

@@ -19,12 +19,22 @@ def register_shared_parsers(ctx):
     ctx.shared_parsers['dt_parser'] = dt_parser
 
 
-def save_bounds(filename, collection):
-    """Save the hull of a MultiPoints instance in drawtools format."""
-    hull_shapely = collection.convex_hull.exterior.coords
-
-    hull = [{'lng': point[0], 'lat': point[1]} for point in hull_shapely]
-    json.save(filename, [{'type': 'polygon', 'latLngs': hull}])
+def save_bounds(filename, collections):
+    """Save the hull of MultiPoints instances in drawtools format."""
+    hulls = list()
+    color = 256 * 256 * 256
+    stride = color / (len(collections) + 1)
+    for index, collection in enumerate(collections, start=1):
+        color = stride * index
+        print '#%06x' % color
+        hull_shapely = collection.convex_hull.exterior.coords
+        hull = [{'lng': point[0], 'lat': point[1]} for point in hull_shapely]
+        hulls.append({
+            'type': 'polygon',
+            'color': '#%06x' % color,
+            'latLngs': hull
+        })
+    json.save(filename, hulls)
 
 
 def load_polygons(filename):
