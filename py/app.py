@@ -12,7 +12,6 @@ The main function is expected to take an argparse.ArgumentParser object
 and use that as a parents= parameter to another instance.
 """
 
-
 import argparse
 import datetime
 import logging
@@ -23,14 +22,16 @@ import sys
 import tempfile
 
 
-class LogAction(argparse.Action):
-  """Callback action to tweak log settings during flag parsing."""
-  def __call__(self, parser, namespace, values, option_string=None):
-    numeric_level = getattr(logging, values.upper())
-    logging.getLogger().setLevel(numeric_level)
+class LogAction(argparse.Action):  # pylint: disable=too-few-public-methods
+    """Callback action to tweak log settings during flag parsing."""
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        numeric_level = getattr(logging, values.upper())
+        logging.getLogger().setLevel(numeric_level)
+
 
 def run(func):
-  """Main entry point for application.
+    """Main entry point for application.
 
   Args:
     func: callback function - Signature should be (argparse.ArgumentParser)
@@ -38,40 +39,38 @@ def run(func):
   Returns:
     Return value of func
   """
-  parser = argparse.ArgumentParser(add_help=False)
-  parser.add_argument('-L', '--loglevel', action=LogAction,
-                      help='Log level',
-                      default=argparse.SUPPRESS,
-                      choices=('debug', 'info', 'warning', 'error'))
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument(
+        '-L',
+        '--loglevel',
+        action=LogAction,
+        help='Log level',
+        default=argparse.SUPPRESS,
+        choices=('debug', 'info', 'warning', 'error'))
 
+    # argv[0] -> argv[0].$HOST.$USER.$DATETIME.$PID
 
-  # argv[0] -> argv[0].$HOST.$USER.$DATETIME.$PID
+    progname = os.path.splitext(os.path.basename(sys.argv[0]))[0]
+    short_filename = '%s.log' % progname
 
-  progname = os.path.splitext(os.path.basename(sys.argv[0]))[0]
-  short_filename = '%s.log' % progname
+    long_filename = '%s.%s.%s.%s.%d' % (
+        short_filename, socket.gethostname(), pwd.getpwuid(os.getuid())[0],
+        datetime.datetime.now().strftime('%Y%m%d-%H%M%S'), os.getpid())
 
-  long_filename = '%s.%s.%s.%s.%d' % (
-    short_filename,
-    socket.gethostname(), 
-    pwd.getpwuid(os.getuid())[0],
-    datetime.datetime.now().strftime('%Y%m%d-%H%M%S'),
-    os.getpid())
+    long_pathname = os.path.join(tempfile.gettempdir(), long_filename)
+    short_pathname = os.path.join(tempfile.gettempdir(), short_filename)
 
-  long_pathname = os.path.join(tempfile.gettempdir(), long_filename)
-  short_pathname = os.path.join(tempfile.gettempdir(), short_filename)
-
-  log_format = ('%(levelname).1s%(asctime)s: %(filename)s:%(lineno)d'
-                '(%(funcName)s)] {%(name)s} %(message)s')
-  logging.basicConfig(level=logging.INFO,
-                      format=log_format,
-                      filename=long_pathname)
-  logging.info('Started.')
-  # best effort on symlink
-  try:
-    os.unlink(short_pathname)
-  except OSError:
-    pass
-  os.symlink(long_pathname, short_pathname)
-  ret = func(parser)
-  logging.info('Finished. (%d)', ret or 0)
-  return ret
+    log_format = ('%(levelname).1s%(asctime)s: %(filename)s:%(lineno)d'
+                  '(%(funcName)s)] {%(name)s} %(message)s')
+    logging.basicConfig(
+        level=logging.INFO, format=log_format, filename=long_pathname)
+    logging.info('Started.')
+    # best effort on symlink
+    try:
+        os.unlink(short_pathname)
+    except OSError:
+        pass
+    os.symlink(long_pathname, short_pathname)
+    ret = func(parser)
+    logging.info('Finished. (%d)', ret or 0)
+    return ret
