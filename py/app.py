@@ -18,8 +18,11 @@ import logging
 import os
 import pwd
 import socket
+import resource
 import sys
 import tempfile
+
+import humanize
 
 
 class LogAction(argparse.Action):  # pylint: disable=too-few-public-methods
@@ -72,5 +75,8 @@ def run(func):
         pass
     os.symlink(long_pathname, short_pathname)
     ret = func(parser)
+    logging.info('Max memory used: %s',
+                 humanize.binary_size(
+                     resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
     logging.info('Finished. (%d)', ret or 0)
     return ret
