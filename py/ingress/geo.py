@@ -6,6 +6,7 @@ import random
 import sys
 import time
 
+import attr
 import pyproj
 import shapely
 import toposort
@@ -157,7 +158,33 @@ def donuts(args, dbc):
     because it reaches out to a sparsely populated area.
     """
     point = drawtools.load_point(args.drawtools)
-    print point
+    ordering = _order_by_distance(point, dbc)
+
+    print '\n'.join(str(x) for x in ordering[:args.size])
+
+
+@attr.s  # pylint: disable=missing-docstring,too-few-public-methods
+class PortalGeo(object):
+    distance = attr.ib()
+    angle = attr.ib()
+    guid = attr.ib()
+
+
+def _order_by_distance(point, dbc):
+    geod = pyproj.Geod(ellps='WGS84')
+    lat = point.y
+    lng = point.x
+
+    rows = dbc.session.query(database.Portal)
+    portals = list()
+    for db_portal in rows:
+        plat, plng = db_portal.latlng.split(',')
+        angle, rangle, distance = geod.inv(lng, lat, float(plng), float(plat))
+        portal = PortalGeo(distance=distance, angle=angle, guid=db_portal.guid)
+        portals.append(portal)
+
+    portals.sort(key=lambda x: x.distance)
+    return portals
 
 
 def _portal_combos(portals):
