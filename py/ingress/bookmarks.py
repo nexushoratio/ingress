@@ -126,13 +126,12 @@ def save_from_guids(guids, filename, dbc):
     known_columns = frozenset(x.key for x in database.Portal.__table__.columns)  # pylint: disable=no-member
 
     portals = dict()
-    for guid in guids:
+    for db_portal in dbc.session.query(database.Portal).filter(
+            database.Portal.guid.in_(guids)):
         portal = dict()
-        db_portal = dbc.session.query(database.Portal).get(guid)
         for column in known_columns:
             portal[column] = getattr(db_portal, column)
-        portals[guid] = portal
-
+        portals[db_portal.guid] = portal
     save(portals, filename)
 
 
