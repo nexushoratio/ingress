@@ -10,6 +10,7 @@ import attr
 from ingress import bookmarks
 from ingress import codes
 from ingress import database
+from ingress import drawtools
 from ingress import geo
 from ingress import json
 from ingress import portals
@@ -32,13 +33,13 @@ def main(app_parser):
     ctx = Context(
         argparse=argparse, shared_parsers=dict(), subparsers=subparsers)
 
-    for module in (bookmarks, codes, geo, json, portals, routes):
+    for module in (bookmarks, codes, drawtools, geo, json, portals, routes):
         register_shared_parsers = getattr(module, 'register_shared_parsers',
                                           None)
         if register_shared_parsers:
             register_shared_parsers(ctx)
 
-    for module in (bookmarks, codes, geo, json, portals, routes):
+    for module in (bookmarks, codes, drawtools, geo, json, portals, routes):
         register_module_parsers = getattr(module, 'register_module_parsers',
                                           None)
         if register_module_parsers:
