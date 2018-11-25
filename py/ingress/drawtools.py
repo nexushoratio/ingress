@@ -52,3 +52,30 @@ def load_polygons(filename):
             raise Exception('%s is a type not yet handled.' % typ)
 
     return shapely.geometry.MultiPolygon(polygons)
+
+
+def load_point(filename):
+    """Find a singular point from a drawtools file.
+
+    Args:
+      filename: str, name of the file
+
+    Returns:
+      shapely.geometry.Point
+    """
+    common_point_types = ('circle', 'marker')
+    drawing = json.load(filename)
+    if len(drawing) != 1:
+        raise Exception('%s should have one element; has %d elements instead' %
+                        (filename, len(drawing)))
+    element = drawing[0]
+    typ = element['type']
+    if typ in common_point_types:
+        latlng = element['latLng']
+        lat = latlng['lat']
+        lng = latlng['lng']
+    else:
+        raise Exception('%s is a type not yet handlded.' % typ)
+
+    point = shapely.geometry.Point(lng, lat)
+    return point

@@ -155,7 +155,9 @@ def donuts(args, dbc):
     of portals in a bite and how big (in area) a bite would be.  For
     example, it will try to avoid having a bite be the entire donut
     because it reaches out to a sparsely populated area.
-"""
+    """
+    point = drawtools.load_point(args.drawtools)
+    print point
 
 
 def _portal_combos(portals):
