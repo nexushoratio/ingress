@@ -3,10 +3,11 @@
 import collections
 import itertools
 import random
+import sys
 import time
 
 import pyproj
-import shapely.speedups
+import shapely
 import toposort
 
 from ingress import database
@@ -58,6 +59,35 @@ def register_module_parsers(ctx):
         description=trim.__doc__,
         help=trim.__doc__)
     parser.set_defaults(func=trim)
+
+    parser = ctx.subparsers.add_parser(
+        'make-donuts',
+        parents=[dt_parser],
+        description=donuts.__doc__,
+        help=donuts.__doc__)
+    parser.add_argument(
+        '-s',
+        '--size',
+        action='store',
+        type=int,
+        required=True,
+        help='Number of portals per bite.')
+    parser.add_argument(
+        '-b',
+        '--bites',
+        action='store',
+        type=int,
+        default=sys.maxint,
+        help='Limit the number of bites.')
+    parser.add_argument(
+        '-p',
+        '--pattern',
+        action='store',
+        default='donut-{count}-{bite:{width}}.json',
+        help=(
+            'Pattern used to name the output files.  Uses PEP 3101 formatting'
+            ' strings with the following fields:  count, width, bite'))
+    parser.set_defaults(func=donuts)
 
 
 def update(args, dbc):
@@ -113,6 +143,24 @@ def trim(args, dbc):
     if to_delete:
         print 'deleting:', to_delete
         bookmarks.save(portals, args.bookmarks)
+
+
+def donuts(args, dbc):
+    """Automatically group portals into COUNT sized bookmarks files.
+
+    The idea is to provide a series of bookmarks that would be suitably
+    sized groups for efficient capturing.
+
+    Given a starting marker specified in the drawtools file, a circle
+    (donut hole) that includes COUNT portals will be created.  The size
+    of this hole will inform the size of concentric rings (donuts).
+
+    The donut will be broken down into bites that contain roughly COUNT
+    portals.  The command will try to balance between between the number
+    of portals in a bite and how big (in area) a bite would be.  For
+    example, it will try to avoid having a bite be the entire donut
+    because it reaches out to a sparsely populated area.
+"""
 
 
 def _outlines_to_polygons(outlines):
