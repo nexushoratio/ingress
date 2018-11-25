@@ -158,9 +158,34 @@ def donuts(args, dbc):
     because it reaches out to a sparsely populated area.
     """
     point = drawtools.load_point(args.drawtools)
-    ordering = _order_by_distance(point, dbc)
+    ordered_sprinkles = _order_by_distance(point, dbc)
+    full_donuts = _donuts(ordered_sprinkles, args.size)
+    print full_donuts[0]
 
-    print '\n'.join(str(x) for x in ordering[:args.size])
+
+def _donuts(all_sprinkles, count):
+    """Each donuts should have at least count sprinkles on it."""
+    donuts = list()
+    delta = all_sprinkles[count].distance
+    radius = 0
+    while all_sprinkles:
+        donut = list()
+        # Keep making donuts bigger until it has at least count sprinkles on
+        # it.
+        while len(donut) < count:
+            radius += delta
+            donut_sprinkles = [
+                sprinkle for sprinkle in all_sprinkles
+                if sprinkle.distance < radius
+            ]
+            donut.extend(donut_sprinkles)
+            del all_sprinkles[:len(donut_sprinkles)]
+            # toss the left over sprinkles onto the last donut
+            if len(all_sprinkles) < count:
+                donut.extend(all_sprinkles)
+                del all_sprinkles[:]
+        donuts.append(donut)
+    return donuts
 
 
 @attr.s  # pylint: disable=missing-docstring,too-few-public-methods
