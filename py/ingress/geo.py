@@ -167,7 +167,6 @@ def donuts(args, dbc):
         if nibble < args.bites:
             filename = args.pattern.format(
                 size=args.size, width=width, bite=nibble)
-            print filename
             guids = (sprinkle.guid for sprinkle in bite)
             bookmarks.save_from_guids(guids, filename, dbc)
 
