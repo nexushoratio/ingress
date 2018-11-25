@@ -160,7 +160,38 @@ def donuts(args, dbc):
     point = drawtools.load_point(args.drawtools)
     ordered_sprinkles = _order_by_distance(point, dbc)
     full_donuts = _donuts(ordered_sprinkles, args.size)
-    print full_donuts[0]
+    bites = _bites(full_donuts, args.size)
+    print len(bites)
+
+
+def _bites(full_donuts, count):
+    all_bites = list()
+    _order_sprinkles(full_donuts)
+    for donut in full_donuts:
+        bite_count = len(donut) / count + bool(len(donut) % count)
+        overlap = 1.0 * ((bite_count * count) - len(donut)) / bite_count
+        donut *= 2
+        for nibble in xrange(bite_count):
+            start = int(round(count - overlap) * nibble)
+            stop = start + count
+            bite = donut[start:stop]
+            for smaller_bite in _smaller_bites(bite):
+                all_bites.append(smaller_bite)
+    return all_bites
+
+
+def _smaller_bites(bite):
+    yield bite
+
+
+def _order_sprinkles(full_donuts):
+    # sort the sprinkles by angle
+    for donut in full_donuts:
+        start = donut[0].angle
+        for sprinkle in donut:
+            if sprinkle.angle < start:
+                sprinkle.angle += 360
+        donut.sort(key=lambda sprinkle: sprinkle.angle)
 
 
 def _donuts(all_sprinkles, count):
