@@ -12,8 +12,8 @@ import toposort
 
 from ingress import database
 from ingress import bookmarks
+from ingress import drawtools
 from ingress import google
-from ingress import json
 
 MAX_AGE = 90 * 24 * 60 * 60
 
@@ -114,10 +114,7 @@ def bounds(args, dbc):
         points.append(point)
 
     collection = shapely.geometry.MultiPoint(points)
-    hull_shapely = collection.convex_hull.exterior.coords
-
-    hull = [{'lng': point[0], 'lat': point[1]} for point in hull_shapely]
-    json.save(args.drawtools, [{'type': 'polygon', 'latLngs': hull}])
+    drawtools.save_bounds(args.drawtools, collection)
 
 
 def trim(args, dbc):
@@ -126,10 +123,8 @@ def trim(args, dbc):
         shapely.speedups.enable()
 
     portals = bookmarks.load(args.bookmarks)
-    outlines = json.load(args.drawtools)
-    polygons = _outlines_to_polygons(outlines)
+    collection = drawtools.load_polygons(args.drawtools)
 
-    collection = shapely.geometry.MultiPolygon(polygons)
     to_delete = set()
     for guid, portal in portals.iteritems():
         latlng = _latlng_str_to_floats(portal['latlng'])
@@ -161,30 +156,6 @@ def donuts(args, dbc):
     example, it will try to avoid having a bite be the entire donut
     because it reaches out to a sparsely populated area.
 """
-
-
-def _outlines_to_polygons(outlines):
-    polygons = list()
-    for outline in outlines:
-        typ = outline['type']
-        if typ == 'polygon':
-            points = [(point['lng'], point['lat'])
-                      for point in outline['latLngs']]
-            polygons.append(shapely.geometry.Polygon(points))
-        elif typ == 'circle':
-            # Turn it into a finely defined polygon
-            geod = pyproj.Geod(ellps='WGS84')
-            dist = outline['radius']
-            lat = outline['latLng']['lat']
-            lng = outline['latLng']['lng']
-            points = [
-                geod.fwd(lng, lat, angle, dist)[:2]
-                for angle in range(0, 360, 5)
-            ]
-        else:
-            raise Exception('%s is a type not yet handled.' % typ)
-
-    return polygons
 
 
 def _portal_combos(portals):
