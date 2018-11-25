@@ -121,6 +121,21 @@ def save(portals, filename):
     json.save(filename, new_bookmarks)
 
 
+def save_from_guids(guids, filename, dbc):
+    """Save portals specified by guids into a particular bookmarks file."""
+    known_columns = frozenset(x.key for x in database.Portal.__table__.columns)  # pylint: disable=no-member
+
+    portals = dict()
+    for guid in guids:
+        portal = dict()
+        db_portal = dbc.session.query(database.Portal).get(guid)
+        for column in known_columns:
+            portal[column] = getattr(db_portal, column)
+        portals[guid] = portal
+
+    save(portals, filename)
+
+
 def find_missing_labels(args, dbc):
     """Look through globs of bookmarks for missing labels.
 
