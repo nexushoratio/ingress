@@ -87,7 +87,7 @@ def import_bookmarks(args, dbc):
         keys.remove(guid)
 
     # whatever is left is a new portal
-    known_columns = [x.key for x in database.Portal.__table__.columns]  # pylint: disable=no-member
+    known_columns = frozenset(x.key for x in database.Portal.__table__.columns)  # pylint: disable=no-member
 
     for key in keys:
         portal = portals[key]
