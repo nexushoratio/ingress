@@ -84,10 +84,10 @@ def register_module_parsers(ctx):
         '-p',
         '--pattern',
         action='store',
-        default='donut-{count}-{bite:{width}}.json',
+        default='donut-{size}-{bite:0{width}d}.json',
         help=(
             'Pattern used to name the output files.  Uses PEP 3101 formatting'
-            ' strings with the following fields:  count, width, bite'))
+            ' strings with the following fields:  size, width, bite'))
     parser.set_defaults(func=donuts)
 
 
@@ -161,7 +161,15 @@ def donuts(args, dbc):
     ordered_sprinkles = _order_by_distance(point, dbc)
     full_donuts = _donuts(ordered_sprinkles, args.size)
     bites = _bites(full_donuts, args.size)
-    print len(bites)
+    print 'There are %d donut bites.' % len(bites)
+    width = len(str(len(bites)))
+    for nibble, bite in enumerate(bites):
+        if nibble < args.bites:
+            filename = args.pattern.format(
+                size=args.size, width=width, bite=nibble)
+            print filename
+            guids = (sprinkle.guid for sprinkle in bite)
+            bookmarks.save_from_guids(guids, filename, dbc)
 
 
 def _bites(full_donuts, count):
@@ -181,6 +189,7 @@ def _bites(full_donuts, count):
 
 
 def _smaller_bites(bite):
+    """Examine a bite for various issues, maybe resulting in smaller bites."""
     yield bite
 
 
