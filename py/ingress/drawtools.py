@@ -25,8 +25,11 @@ def save_bounds(filename, collections):
     color = 256 * 256 * 256
     stride = color / (len(collections) + 1)
     for index, collection in enumerate(collections, start=1):
+        if len(collection) < 3:
+            # give points and lines a bit of area
+            collection = collection.buffer(0.0005, resolution=1)
         color = stride * index
-        print '#%06x' % color
+
         hull_shapely = collection.convex_hull.exterior.coords
         hull = [{'lng': point[0], 'lat': point[1]} for point in hull_shapely]
         hulls.append({
