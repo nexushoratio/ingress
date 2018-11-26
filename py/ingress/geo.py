@@ -85,7 +85,7 @@ def register_module_parsers(ctx):
         '-p',
         '--pattern',
         action='store',
-        default='donut-{size}-{bite:0{width}d}.json',
+        default='bm-donut-{size}-{bite:0{width}d}.json',
         help=(
             'Pattern used to name the output files.  Uses PEP 3101 formatting'
             ' strings with the following fields:  size, width, bite'))
