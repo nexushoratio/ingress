@@ -38,6 +38,7 @@ def register_module_parsers(ctx):
     """Parser registration API."""
     bm_parser = ctx.shared_parsers['bm_parser']
     glob_parser = ctx.shared_parsers['glob_parser']
+    file_parser = ctx.shared_parsers['file_parser']
 
     parser = ctx.subparsers.add_parser(
         'import',
@@ -59,6 +60,13 @@ def register_module_parsers(ctx):
         description=export.__doc__,
         help=export.__doc__)
     parser.set_defaults(func=export)
+
+    parser = ctx.subparsers.add_parser(
+        'flatten',
+        parents=[bm_parser, file_parser],
+        description=flatten.__doc__,
+        help=flatten.__doc__)
+    parser.set_defaults(func=flatten)
 
     parser = ctx.subparsers.add_parser(
         'find-missing-labels',
@@ -128,6 +136,12 @@ def export(args, dbc):
     """Export all portals as a bookmarks file."""
     guids = [result[0] for result in dbc.session.query(database.Portal.guid)]
     save_from_guids(guids, args.bookmarks, dbc)
+
+
+def flatten(args, dbc):
+    """Load portals from a bookmarks file and write out as a list."""
+    portals = load(args.bookmarks)
+    json.save(args.filename, portals.values())
 
 
 def load(filename):
