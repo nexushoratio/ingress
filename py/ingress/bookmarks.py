@@ -54,6 +54,13 @@ def register_module_parsers(ctx):
     parser.set_defaults(func=unimport)
 
     parser = ctx.subparsers.add_parser(
+        'export',
+        parents=[bm_parser],
+        description=export.__doc__,
+        help=export.__doc__)
+    parser.set_defaults(func=export)
+
+    parser = ctx.subparsers.add_parser(
         'find-missing-labels',
         parents=[bm_parser, glob_parser],
         description=find_missing_labels.__doc__,
@@ -115,6 +122,12 @@ def unimport(args, dbc):
         dbc.session.delete(db_portal)
 
     dbc.session.commit()
+
+
+def export(args, dbc):
+    """Export all portals as a bookmarks file."""
+    guids = [result[0] for result in dbc.session.query(database.Portal.guid)]
+    save_from_guids(guids, args.bookmarks, dbc)
 
 
 def load(filename):
