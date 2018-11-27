@@ -47,6 +47,13 @@ def register_module_parsers(ctx):
     parser.set_defaults(func=import_bookmarks)
 
     parser = ctx.subparsers.add_parser(
+        'unimport',
+        parents=[bm_parser],
+        description=unimport.__doc__,
+        help=unimport.__doc__)
+    parser.set_defaults(func=unimport)
+
+    parser = ctx.subparsers.add_parser(
         'find-missing-labels',
         parents=[bm_parser, glob_parser],
         description=find_missing_labels.__doc__,
@@ -95,6 +102,17 @@ def import_bookmarks(args, dbc):
         new_portal = dict((k, portal[k]) for k in known_columns)
         db_portal = database.Portal(**new_portal)
         dbc.session.add(db_portal)
+
+    dbc.session.commit()
+
+
+def unimport(args, dbc):
+    """Remove portals listed in a bookmarks file from the database."""
+    portals = load(args.bookmarks)
+    for db_portal in dbc.session.query(database.Portal).filter(
+            database.Portal.guid.in_(portals)):
+        print 'Deleting', db_portal.label, db_portal.last_seen
+        dbc.session.delete(db_portal)
 
     dbc.session.commit()
 
