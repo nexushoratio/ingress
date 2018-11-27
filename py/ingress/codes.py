@@ -156,6 +156,7 @@ def pruner(args, dbc):
         if args.mode != 'new-codes-only':
             if code in delete_codes:
                 print 'Pruning %s - %s' % (db_portal.guid, db_portal.label)
+                dbc.session.delete(db_portal)
 
     if args.mode == 'dry-run':
         dbc.session.rollback()
