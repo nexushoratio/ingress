@@ -65,15 +65,20 @@ def show(args, dbc):
     portals = dict()
     known_columns = frozenset(x.key for x in database.Portal.__table__.columns)  # pylint: disable=no-member
 
+    dates = list()
     for row in query:
         portal = dict()
         for column in known_columns:
             portal[column] = getattr(row, column)
         portal['date'] = _format_date(portal[args.field])
+        dates.append(portal['date'])
         groups[portal[args.group_by]].append(portal)
         portals[row.guid] = portal
 
+    dates.sort()
     text_output = list()
+    text_output.append('%d portals %s between %s and %s\n\n' %
+                       (len(dates), args.field, dates[0], dates[-1]))
     for group in sorted(groups.keys(), reverse=args.order == 'descend'):
         line = '%s: %s\n\n' % (args.group_by.capitalize(), group)
         groups[group].sort(key=lambda x: x['label'])
