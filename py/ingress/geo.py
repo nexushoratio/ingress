@@ -10,6 +10,7 @@ import time
 import attr
 import pyproj
 import shapely
+import rtree
 import toposort
 
 from ingress import database
@@ -194,7 +195,53 @@ def donuts(args, dbc):
 def cluster(args, dbc):
     """Find clusters of portals together and save them in a file."""
     points_to_guids = _points_to_guids(dbc)
+    index = _rtree_index(points_to_guids)
     print len(points_to_guids)
+
+
+def _make_rtree_friendly(stere_to_data):
+    for index, entry in stere_to_data:
+        point, data = entry
+        yield index, (point.x, point.y, point.x, point.y), data
+
+
+def _closest_point(target, points):
+    print 'target:', target
+    geod = pyproj.Geod(ellps='WGS84')
+    tlat = target.y
+    tlng = target.x
+    distances = ((geod.inv(p.x, p.y, tlng, tlat)[2], p) for p in points)
+    result = min(distances)
+    print 'distance from geographical centroid:', result[0]
+    return result[1]
+
+
+def _rtree_index(points_to_guids):
+    # Find a good centroid to use for a projection, then use that for the index
+    old_centroid = None
+    points = list(data.point for data in points_to_guids.itervalues())
+    new_centroid = points[0]
+    while new_centroid != old_centroid:
+        print 'new_centroid:', new_centroid
+        old_centroid = new_centroid
+        latlng = pyproj.Proj(proj='latlong')
+        stere = pyproj.Proj(
+            proj='stere',
+            lat_0=new_centroid.y,
+            lon_0=new_centroid.x,
+            lat_ts=new_centroid.y)
+        forward = functools.partial(pyproj.transform, latlng, stere)
+        reverse = functools.partial(pyproj.transform, stere, latlng)
+        latlng_multi_points = shapely.geometry.MultiPoint(points)
+        stere_multi_points = shapely.ops.transform(forward,
+                                                   latlng_multi_points)
+        centroid = shapely.ops.transform(reverse, stere_multi_points.centroid)
+        new_centroid = _closest_point(centroid, latlng_multi_points)
+    stere_data = enumerate(
+        (stere, points_to_guids[latlng.wkt])
+        for stere, latlng in zip(stere_multi_points, latlng_multi_points))
+    index = rtree.index.Index(_make_rtree_friendly(stere_data))
+    return index
 
 
 @attr.s  # pylint: disable=missing-docstring,too-few-public-methods
