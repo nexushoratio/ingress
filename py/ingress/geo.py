@@ -1,6 +1,7 @@
 """Functions for all things geo related."""
 
 import collections
+import functools
 import itertools
 import random
 import sys
@@ -17,6 +18,7 @@ from ingress import drawtools
 from ingress import google
 
 MAX_AGE = 90 * 24 * 60 * 60
+FUDGE_FACTOR = 1.1
 
 
 def register_module_parsers(ctx):
@@ -158,9 +160,19 @@ def donuts(args, dbc):
     because it reaches out to a sparsely populated area.
     """
     point = drawtools.load_point(args.drawtools)
+    transform = functools.partial(
+        pyproj.transform,
+        pyproj.Proj(proj='latlong'),
+        pyproj.Proj(
+            proj='stere', lat_0=point.y, lon_0=point.x, lat_ts=point.y))
     ordered_sprinkles = _order_by_distance(point, dbc)
-    full_donuts = _donuts(ordered_sprinkles, args.size)
-    bites = _bites(full_donuts, args.size)
+    full_donuts, delta = _donuts(ordered_sprinkles, args.size)
+    transformed_points = _points_from_sprinkles(full_donuts[0], transform)
+    max_area = transformed_points.convex_hull.area * FUDGE_FACTOR
+    max_length = delta * FUDGE_FACTOR
+    print 'max_line:', max_length
+    print 'max_area:', max_area
+    bites = _bites(full_donuts, args.size, transform, max_length, max_area)
     print 'There are %d donut bites.' % len(bites)
     width = len(str(len(bites)))
     for nibble, bite in enumerate(bites):
@@ -171,7 +183,36 @@ def donuts(args, dbc):
             bookmarks.save_from_guids(guids, filename, dbc)
 
 
-def _bites(full_donuts, count):
+def cluster(args, dbc):
+    """Find clusters of portals together and save them in a file."""
+    points_to_guids = _points_to_guids(dbc)
+
+
+@attr.s  # pylint: disable=missing-docstring,too-few-public-methods
+class PointData(object):
+    point = attr.ib()
+    guids = attr.ib(default=attr.Factory(set))
+
+
+def _points_to_guids(dbc):
+    """Create a mapping from latlngs to portal guids."""
+    # We use a set because we may have two portals at the same latlng.
+    mapping = collections.defaultdict(set)
+    for db_portal in dbc.session.query(database.Portal):
+        point = _latlng_str_to_point(db_portal.latlng)
+        mapping[point.wkt].add(db_portal.guid)
+    return mapping
+
+
+def _points_from_sprinkles(donut, transform):
+    points = (_latlng_str_to_floats(sprinkle.latlng) for sprinkle in donut)
+    multi_points = shapely.geometry.MultiPoint(
+        [(lng, lat) for lat, lng in points])
+    transformed_points = shapely.ops.transform(transform, multi_points)
+    return transformed_points
+
+
+def _bites(full_donuts, count, transform, max_length, max_area):
     all_bites = list()
     _order_sprinkles(full_donuts)
     for donut in full_donuts:
@@ -182,14 +223,42 @@ def _bites(full_donuts, count):
             start = int(round(count - overlap) * nibble)
             stop = start + count
             bite = donut[start:stop]
-            for smaller_bite in _smaller_bites(bite):
+            for smaller_bite in _smaller_bites(bite, transform, max_length,
+                                               max_area):
                 all_bites.append(smaller_bite)
     return all_bites
 
 
-def _smaller_bites(bite):
+def _smaller_bites(bite, transform, max_length, max_area):
     """Examine a bite for various issues, maybe resulting in smaller bites."""
-    yield bite
+    transformed_points = _points_from_sprinkles(bite, transform)
+    good = True
+    if transformed_points.convex_hull.area > max_area:
+        print 'too big:', transformed_points.convex_hull.area, max_area
+        good = False
+    if len(transformed_points) > 1:
+        length = transformed_points.minimum_rotated_rectangle.length / len(
+            transformed_points)
+        if length > max_length:
+            print 'too long:', length, max_length
+            good = False
+
+    if len(transformed_points) == 1:
+        good = True
+
+    if good:
+        yield bite
+    else:
+        smaller_bites = _smaller_bites(bite[:-1], transform, max_length,
+                                       max_area)
+        yield smaller_bites.next()
+        rest = list()
+        for sprinkles in smaller_bites:
+            rest.extend(sprinkles)
+        rest.append(bite[-1])
+        for smaller_bite in _smaller_bites(rest, transform, max_length,
+                                           max_area):
+            yield smaller_bite
 
 
 def _order_sprinkles(full_donuts):
@@ -224,7 +293,7 @@ def _donuts(all_sprinkles, count):
                 donut.extend(all_sprinkles)
                 del all_sprinkles[:]
         donuts.append(donut)
-    return donuts
+    return donuts, delta
 
 
 @attr.s  # pylint: disable=missing-docstring,too-few-public-methods
@@ -232,6 +301,7 @@ class PortalGeo(object):
     distance = attr.ib()
     angle = attr.ib()
     guid = attr.ib()
+    latlng = attr.ib()
 
 
 def _order_by_distance(point, dbc):
@@ -242,9 +312,13 @@ def _order_by_distance(point, dbc):
     rows = dbc.session.query(database.Portal)
     portals = list()
     for db_portal in rows:
-        plat, plng = db_portal.latlng.split(',')
-        angle, rangle, distance = geod.inv(lng, lat, float(plng), float(plat))
-        portal = PortalGeo(distance=distance, angle=angle, guid=db_portal.guid)
+        plat, plng = _latlng_str_to_floats(db_portal.latlng)
+        angle, rangle, distance = geod.inv(lng, lat, plng, plat)
+        portal = PortalGeo(
+            distance=distance,
+            angle=angle,
+            guid=db_portal.guid,
+            latlng=db_portal.latlng)
         portals.append(portal)
 
     portals.sort(key=lambda x: x.distance)
