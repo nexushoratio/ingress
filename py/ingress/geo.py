@@ -25,6 +25,7 @@ def register_module_parsers(ctx):
     """Parser registration API."""
     bm_parser = ctx.shared_parsers['bm_parser']
     dt_parser = ctx.shared_parsers['dt_parser']
+    file_parser = ctx.shared_parsers['file_parser']
     glob_parser = ctx.shared_parsers['glob_parser']
 
     parser = ctx.subparsers.add_parser(
@@ -63,6 +64,13 @@ def register_module_parsers(ctx):
         description=trim.__doc__,
         help=trim.__doc__)
     parser.set_defaults(func=trim)
+
+    parser = ctx.subparsers.add_parser(
+        'cluster',
+        parents=[file_parser],
+        description=cluster.__doc__,
+        help=cluster.__doc__)
+    parser.set_defaults(func=cluster)
 
     parser = ctx.subparsers.add_parser(
         'make-donuts',
@@ -186,21 +194,24 @@ def donuts(args, dbc):
 def cluster(args, dbc):
     """Find clusters of portals together and save them in a file."""
     points_to_guids = _points_to_guids(dbc)
+    print len(points_to_guids)
 
 
 @attr.s  # pylint: disable=missing-docstring,too-few-public-methods
 class PointData(object):
-    point = attr.ib()
-    guids = attr.ib(default=attr.Factory(set))
+    point = attr.ib(init=False, default=None)
+    guids = attr.ib(init=False, default=attr.Factory(set))
 
 
 def _points_to_guids(dbc):
     """Create a mapping from latlngs to portal guids."""
     # We use a set because we may have two portals at the same latlng.
-    mapping = collections.defaultdict(set)
+    mapping = collections.defaultdict(PointData)
     for db_portal in dbc.session.query(database.Portal):
         point = _latlng_str_to_point(db_portal.latlng)
-        mapping[point.wkt].add(db_portal.guid)
+        data = mapping[point.wkt]
+        data.point = point
+        data.guids.add(db_portal.guid)
     return mapping
 
 
@@ -535,6 +546,11 @@ def _clean(dbc):
 def _latlng_str_to_floats(latlng_as_str):
     lat, lng = latlng_as_str.split(',')
     return float(lat), float(lng)
+
+
+def _latlng_str_to_point(latlng_as_str):
+    lat, lng = _latlng_str_to_floats(latlng_as_str)
+    return shapely.geometry.Point(lng, lat)
 
 
 def _distance(begin, end):
