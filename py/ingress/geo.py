@@ -13,6 +13,10 @@ import shapely
 import rtree
 import toposort
 
+from pygraph.algorithms import traversal as pytraversal
+from pygraph.classes import graph as pygraph
+from pygraph.classes import exceptions as pyexceptions
+
 from ingress import database
 from ingress import bookmarks
 from ingress import drawtools
@@ -192,28 +196,108 @@ def donuts(args, dbc):
             bookmarks.save_from_guids(guids, filename, dbc)
 
 
+MINIMAL_CLUSTER_SIZE = 5
+START_DISTANCE = 75
+MAX_DISTANCE = START_DISTANCE * 4 + 1
+
+
 def cluster(args, dbc):
     """Find clusters of portals together and save them in a file."""
     points_to_guids = _points_to_guids(dbc)
-    index = _rtree_index(points_to_guids)
-    print len(points_to_guids)
+    index, data = _rtree_index(points_to_guids)
+    graph = pygraph.graph()
+    graph.add_nodes(data.iterkeys())
+    clusters = set()
+
+    distance = START_DISTANCE
+    while distance < MAX_DISTANCE:
+        print 'Looking for distance %d' % distance
+        to_clean = set()
+
+        _add_edges(graph, index, data, distance)
+        for new_cluster in _extract_clusters(graph):
+            clusters.add((distance, new_cluster))
+            to_clean.update(new_cluster)
+
+        _clean_clustered_points(graph, index, data, to_clean)
+        distance *= 2
+
+    print len(clusters)
 
 
-def _make_rtree_friendly(stere_to_data):
-    for index, entry in stere_to_data:
-        point, data = entry
-        yield index, (point.x, point.y, point.x, point.y), data
+def _clean_clustered_points(graph, index, data, new_cluster):
+    for node in new_cluster:
+        node_data = data[node]
+        index.delete(node, node_data.coords)
+        graph.del_node(node)
+
+
+def _extract_clusters(graph):
+    visited = set()
+    for node in graph.nodes():
+        if node not in visited:
+            visited.add(node)
+        other_nodes = frozenset(pytraversal.traversal(graph, node, 'pre'))
+        visited.update(other_nodes)
+        if len(other_nodes) >= MINIMAL_CLUSTER_SIZE:
+            yield other_nodes
+
+
+def _add_edges(graph, index, data, max_distance):
+    for node in graph.nodes():
+        node_data = data[node]
+        test_count = 1
+        done = False
+        while not done:
+            other_nodes = list(index.nearest(node_data.coords, test_count))
+            furthest = data[other_nodes[-1]]
+            distance = node_data.point.distance(furthest.point)
+            done = distance > max_distance
+            test_count *= 2
+        for other_node in other_nodes:
+            if node != other_node:
+                other_data = data[other_node]
+                distance = node_data.point.distance(other_data.point)
+                if distance < max_distance:
+                    edge = (node, other_node)
+                    try:
+                        graph.add_edge(edge)
+                    except pyexceptions.AdditionError:
+                        pass
+
+
+@attr.s  # pylint: disable=missing-docstring,too-few-public-methods
+class PointData(object):
+    point = attr.ib(init=False, default=None)
+    coords = attr.ib(init=False, default=None)
+    guids = attr.ib(init=False, default=attr.Factory(set))
+
+
+def _capture_output_data(projected_data, output_data):
+    for index, entry in projected_data:
+        projected_point, latlng_data = entry
+        latlng_data.point = projected_point
+        latlng_coords = (projected_point.x, projected_point.y,
+                         projected_point.x, projected_point.y)
+        output_data[index] = latlng_data
+        result = index, latlng_data.coords, None
+        yield result
 
 
 def _closest_point(target, points):
-    print 'target:', target
+    @attr.s  # pylint: disable=missing-docstring,too-few-public-methods
+    class DistancePoint(object):
+        distance = attr.ib()
+        point = attr.ib()
+
     geod = pyproj.Geod(ellps='WGS84')
     tlat = target.y
     tlng = target.x
-    distances = ((geod.inv(p.x, p.y, tlng, tlat)[2], p) for p in points)
-    result = min(distances)
-    print 'distance from geographical centroid:', result[0]
-    return result[1]
+    distances = (DistancePoint(
+        distance=geod.inv(point.x, point.y, tlng, tlat)[2], point=point)
+                 for point in points)
+    result = min(distances, key=lambda x: x.distance)
+    return result.point
 
 
 def _rtree_index(points_to_guids):
@@ -221,10 +305,9 @@ def _rtree_index(points_to_guids):
     old_centroid = None
     points = list(data.point for data in points_to_guids.itervalues())
     new_centroid = points[0]
+    latlng = pyproj.Proj(proj='latlong')
     while new_centroid != old_centroid:
-        print 'new_centroid:', new_centroid
         old_centroid = new_centroid
-        latlng = pyproj.Proj(proj='latlong')
         stere = pyproj.Proj(
             proj='stere',
             lat_0=new_centroid.y,
@@ -237,27 +320,26 @@ def _rtree_index(points_to_guids):
                                                    latlng_multi_points)
         centroid = shapely.ops.transform(reverse, stere_multi_points.centroid)
         new_centroid = _closest_point(centroid, latlng_multi_points)
-    stere_data = enumerate(
-        (stere, points_to_guids[latlng.wkt])
-        for stere, latlng in zip(stere_multi_points, latlng_multi_points))
-    index = rtree.index.Index(_make_rtree_friendly(stere_data))
-    return index
 
+    stere_data = enumerate((stere, points_to_guids[latlng.wkt])
+                           for stere, latlng in itertools.izip(
+                               stere_multi_points, latlng_multi_points))
 
-@attr.s  # pylint: disable=missing-docstring,too-few-public-methods
-class PointData(object):
-    point = attr.ib(init=False, default=None)
-    guids = attr.ib(init=False, default=attr.Factory(set))
+    data = dict()
+    index = rtree.index.Index(_capture_output_data(stere_data, data))
+    return index, data
 
 
 def _points_to_guids(dbc):
     """Create a mapping from latlngs to portal guids."""
-    # We use a set because we may have two portals at the same latlng.
+    # We use a set for guids because we may have two portals at the same
+    # latlng.
     mapping = collections.defaultdict(PointData)
-    for db_portal in dbc.session.query(database.Portal):
+    for db_portal in dbc.session.query(database.Portal).limit(10000):
         point = _latlng_str_to_point(db_portal.latlng)
         data = mapping[point.wkt]
         data.point = point
+        data.coords = (point.x, point.y, point.x, point.y)
         data.guids.add(db_portal.guid)
     return mapping
 
