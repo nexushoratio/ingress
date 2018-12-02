@@ -23,6 +23,7 @@ from ingress import bookmarks
 from ingress import drawtools
 from ingress import google
 from ingress import json
+from ingress import zcta as zcta_lib
 
 MAX_AGE = 90 * 24 * 60 * 60
 FUDGE_FACTOR = 1.1
@@ -230,6 +231,7 @@ def cluster(args, dbc):
 def _finalize_and_save(filename, clusters, rtree_index):
     logging.info('_finalize_and_save: %d clusters into %s',
                  len(clusters), filename)
+    zcta = zcta_lib.Zcta()
     node_map_by_projected_coords = dict(
         (node.projected_point.coords[0], node)
         for node in rtree_index.node_map.itervalues())
@@ -252,7 +254,7 @@ def _finalize_and_save(filename, clusters, rtree_index):
                 'lat': latlng_centroid.y,
                 'lng': latlng_centroid.x,
             },
-            'code': 'TBD',
+            'code': zcta.code_from_point(latlng_centroid),
             'density': len(nodes) / hull.area,
             'distance': distance,
             'hull': [{
