@@ -245,17 +245,17 @@ def _finalize_and_save(filename, clusters, rtree_index):
         multi_point = shapely.geometry.MultiPoint(projected_points)
         latlng_centroid = shapely.ops.transform(rtree_index.reverse_transform,
                                                 multi_point.centroid)
-        hull = multi_point.convex_hull
+        projected_hull = multi_point.convex_hull
         latlng_hull = (node_map_by_projected_coords[coord]
                        for coord in multi_point.convex_hull.exterior.coords)
         cluster = {
-            'area': hull.area,
+            'area': projected_hull.area,
             'centroid': {
                 'lat': latlng_centroid.y,
                 'lng': latlng_centroid.x,
             },
             'code': zcta.code_from_point(latlng_centroid),
-            'density': len(nodes) / hull.area,
+            'density': len(nodes) / projected_hull.area,
             'distance': distance,
             'hull': [{
                 'lat': node.latlng_point.y,
