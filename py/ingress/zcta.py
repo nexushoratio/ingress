@@ -99,12 +99,13 @@ class Zcta(object):
         json.save(self._full_path(self.INDEX_JSON), hulls_by_code)
 
     def code_from_latlng(self, latlng):
-        """Figure out which ZCTA a particular location is in."""
+        """Given a latlng string, find the associated code."""
         lat, lng = latlng.split(',')
         point = shapely.geometry.Point(float(lng), float(lat))
-        return self._code_by_point(point)
+        return self.code_from_point(point)
 
     def code_from_point(self, point):
+        """Given a shapely Point, find the associated code."""
         code = self._point_in_any_code(point)
         if code is None:
             self._load_group(point)
