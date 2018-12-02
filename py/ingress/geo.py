@@ -230,16 +230,42 @@ def cluster(args, dbc):
 def _finalize_and_save(filename, clusters, rtree_index):
     logging.info('_finalize_and_save: %d clusters into %s',
                  len(clusters), filename)
+    node_map_by_projected_coords = dict(
+        (node.projected_point.coords[0], node)
+        for node in rtree_index.node_map.itervalues())
     clustered = list()
-    for cluster in clusters:
+    for distance, nodes in clusters:
         projected_points = [
-            rtree_index.node_map[idx].projected_point for idx in cluster[1]
+            rtree_index.node_map[idx].projected_point for idx in nodes
         ]
+        latlng_points = (rtree_index.node_map[idx].latlng_point
+                         for idx in nodes)
         multi_point = shapely.geometry.MultiPoint(projected_points)
-        centroid = shapely.ops.transform(rtree_index.reverse_transform,
-                                         multi_point.centroid)
-        # TODO: look up multi_points in the cluster to find the original
-    # clustered.append(...something useful here...)
+        latlng_centroid = shapely.ops.transform(rtree_index.reverse_transform,
+                                                multi_point.centroid)
+        hull = multi_point.convex_hull
+        latlng_hull = (node_map_by_projected_coords[coord]
+                       for coord in multi_point.convex_hull.exterior.coords)
+        cluster = {
+            'area': hull.area,
+            'centroid': {
+                'lat': latlng_centroid.y,
+                'lng': latlng_centroid.x,
+            },
+            'code': 'TBD',
+            'density': len(nodes) / hull.area,
+            'distance': distance,
+            'hull': [{
+                'lat': node.latlng_point.y,
+                'lng': node.latlng_point.x,
+            } for node in latlng_hull],
+            'points': [{
+                'lat': point.y,
+                'lng': point.x,
+            } for point in latlng_points],
+        }
+        clustered.append(cluster)
+
     json.save(filename, clustered)
     logging.info('_finalize_and_save: done')
 
@@ -373,7 +399,7 @@ def _rtree_index(node_map_by_wkt):
                                          stere_multi_points.centroid)
         new_centroid = _closest_point(centroid, latlng_multi_points)
 
-    logging.info('projecting around %d', new_centroid)
+    logging.info('projecting around %s', new_centroid)
     node_map_by_index = _node_map_by_index(
         enumerate(itertools.izip(stere_multi_points, latlng_multi_points)),
         node_map_by_wkt)
