@@ -3,6 +3,7 @@
 import collections
 import functools
 import itertools
+import logging
 import random
 import sys
 import time
@@ -21,9 +22,13 @@ from ingress import database
 from ingress import bookmarks
 from ingress import drawtools
 from ingress import google
+from ingress import json
 
 MAX_AGE = 90 * 24 * 60 * 60
 FUDGE_FACTOR = 1.1
+MINIMAL_CLUSTER_SIZE = 10
+START_DISTANCE = 75
+MAX_DISTANCE = START_DISTANCE * 4 + 1
 
 
 def register_module_parsers(ctx):
@@ -196,17 +201,11 @@ def donuts(args, dbc):
             bookmarks.save_from_guids(guids, filename, dbc)
 
 
-MINIMAL_CLUSTER_SIZE = 5
-START_DISTANCE = 75
-MAX_DISTANCE = START_DISTANCE * 4 + 1
-
-
 def cluster(args, dbc):
     """Find clusters of portals together and save them in a file."""
-    points_to_guids = _points_to_guids(dbc)
-    index, data = _rtree_index(points_to_guids)
+    rtree_index = _rtree_index(_node_map(dbc))
     graph = pygraph.graph()
-    graph.add_nodes(data.iterkeys())
+    graph.add_nodes(rtree_index.node_map.iterkeys())  # pylint: disable=no-member
     clusters = set()
 
     distance = START_DISTANCE
@@ -214,77 +213,114 @@ def cluster(args, dbc):
         print 'Looking for distance %d' % distance
         to_clean = set()
 
-        _add_edges(graph, index, data, distance)
+        _add_edges(graph, rtree_index.index, rtree_index.node_map, distance)
+        print 'Extracting clusters from graph...'
         for new_cluster in _extract_clusters(graph):
             clusters.add((distance, new_cluster))
             to_clean.update(new_cluster)
+        print 'Clusters extracted.'
 
-        _clean_clustered_points(graph, index, data, to_clean)
+        _clean_clustered_points(graph, rtree_index.index, rtree_index.node_map,
+                                to_clean)
         distance *= 2
 
-    print len(clusters)
+    _finalize_and_save(args.filename, clusters, rtree_index)
 
 
-def _clean_clustered_points(graph, index, data, new_cluster):
-    for node in new_cluster:
-        node_data = data[node]
-        index.delete(node, node_data.coords)
-        graph.del_node(node)
+def _finalize_and_save(filename, clusters, rtree_index):
+    logging.info('_finalize_and_save: %d clusters into %s',
+                 len(clusters), filename)
+    clustered = list()
+    for cluster in clusters:
+        projected_points = [
+            rtree_index.node_map[idx].projected_point for idx in cluster[1]
+        ]
+        multi_point = shapely.geometry.MultiPoint(projected_points)
+        centroid = shapely.ops.transform(rtree_index.reverse_transform,
+                                         multi_point.centroid)
+        # TODO: look up multi_points in the cluster to find the original
+    # clustered.append(...something useful here...)
+    json.save(filename, clustered)
+    logging.info('_finalize_and_save: done')
+
+
+def _clean_clustered_points(graph, index, node_map, new_cluster):
+    logging.info('_clean_clustered_points: %d nodes', len(new_cluster))
+    print 'Cleaning out clustered points...'
+    for node_index in new_cluster:
+        node = node_map[node_index]
+        index.delete(node_index, node.projected_coords)
+        graph.del_node(node_index)
+    logging.info('_clean_clustered_points: points left in graph: %d',
+                 len(graph.nodes()))
 
 
 def _extract_clusters(graph):
+    logging.info('entered _extract_clusters')
     visited = set()
     for node in graph.nodes():
-        if node not in visited:
-            visited.add(node)
+        if node in visited:
+            continue
+        visited.add(node)
         other_nodes = frozenset(pytraversal.traversal(graph, node, 'pre'))
         visited.update(other_nodes)
         if len(other_nodes) >= MINIMAL_CLUSTER_SIZE:
             yield other_nodes
+    logging.info('leaving _extract_clusters')
 
 
-def _add_edges(graph, index, data, max_distance):
-    for node in graph.nodes():
-        node_data = data[node]
-        test_count = 1
+def _add_edges(graph, index, node_map_by_index, max_distance):
+    logging.info('_add_edges for %d', max_distance)
+    node_count = 0
+    edge_count = 0
+    result_limit = 1
+    for node_index in graph.nodes():
+        node_count += 1
+        if node_count % 10000 == 0:
+            print 'at node count', node_count
+        node = node_map_by_index[node_index]
         done = False
         while not done:
-            other_nodes = list(index.nearest(node_data.coords, test_count))
-            furthest = data[other_nodes[-1]]
-            distance = node_data.point.distance(furthest.point)
+            other_nodes = list(
+                index.nearest(
+                    node.projected_coords, num_results=result_limit))
+            furthest = node_map_by_index[other_nodes[-1]]
+            distance = node.projected_point.distance(furthest.projected_point)
             done = distance > max_distance
-            test_count *= 2
-        for other_node in other_nodes:
-            if node != other_node:
-                other_data = data[other_node]
-                distance = node_data.point.distance(other_data.point)
+            if not done:
+                result_limit *= 2
+
+        for other_node_index in other_nodes:
+            if node_index != other_node_index:
+                other_node = node_map_by_index[other_node_index]
+                distance = node.projected_point.distance(
+                    other_node.projected_point)
                 if distance < max_distance:
-                    edge = (node, other_node)
+                    edge = (node_index, other_node_index)
                     try:
                         graph.add_edge(edge)
+                        edge_count += 1
                     except pyexceptions.AdditionError:
                         pass
+    logging.info('_add_edges: edges added: %d', edge_count)
 
 
 @attr.s  # pylint: disable=missing-docstring,too-few-public-methods
-class PointData(object):
-    point = attr.ib(init=False, default=None)
-    coords = attr.ib(init=False, default=None)
+class NodeData(object):
+    latlng_point = attr.ib(init=False, default=None)
+    latlng_point_wkt = attr.ib(init=False, default=None)
+    projected_point = attr.ib(init=False, default=None)
+    projected_point_wkt = attr.ib(init=False, default=None)
+    projected_coords = attr.ib(init=False, default=None)
+    # We use a set for guids because we may have two portals at the same
+    # latlng.
     guids = attr.ib(init=False, default=attr.Factory(set))
 
 
-def _capture_output_data(projected_data, output_data):
-    for index, entry in projected_data:
-        projected_point, latlng_data = entry
-        latlng_data.point = projected_point
-        latlng_coords = (projected_point.x, projected_point.y,
-                         projected_point.x, projected_point.y)
-        output_data[index] = latlng_data
-        result = index, latlng_data.coords, None
-        yield result
-
-
 def _closest_point(target, points):
+    # Find a known point that is the closed to the target point
+    logging.info('_closest_point: near %s', target)
+
     @attr.s  # pylint: disable=missing-docstring,too-few-public-methods
     class DistancePoint(object):
         distance = attr.ib()
@@ -297,51 +333,88 @@ def _closest_point(target, points):
         distance=geod.inv(point.x, point.y, tlng, tlat)[2], point=point)
                  for point in points)
     result = min(distances, key=lambda x: x.distance)
+    logging.info('_closest_point: found %s', result)
     return result.point
 
 
-def _rtree_index(points_to_guids):
-    # Find a good centroid to use for a projection, then use that for the index
+@attr.s  # pylint: disable=missing-docstring,too-few-public-methods
+class RtreeIndex(object):
+    index = attr.ib()
+    forward_transform = attr.ib()
+    reverse_transform = attr.ib()
+    node_map = attr.ib()
+
+
+def _rtree_index(node_map_by_wkt):
+    # First, find a good centroid to use for a projection, then use that
+    # projection for the index
+    logging.info('_rtree_index: nodes: %d', len(node_map_by_wkt))
+    nodes = list(node.latlng_point for node in node_map_by_wkt.itervalues())
     old_centroid = None
-    points = list(data.point for data in points_to_guids.itervalues())
-    new_centroid = points[0]
-    latlng = pyproj.Proj(proj='latlong')
+    new_centroid = nodes[0]
+    latlng_projection = pyproj.Proj(proj='latlong')
+
     while new_centroid != old_centroid:
+        logging.info('new_centroid: %s', new_centroid)
         old_centroid = new_centroid
-        stere = pyproj.Proj(
+        stere_projection = pyproj.Proj(
             proj='stere',
             lat_0=new_centroid.y,
             lon_0=new_centroid.x,
             lat_ts=new_centroid.y)
-        forward = functools.partial(pyproj.transform, latlng, stere)
-        reverse = functools.partial(pyproj.transform, stere, latlng)
-        latlng_multi_points = shapely.geometry.MultiPoint(points)
-        stere_multi_points = shapely.ops.transform(forward,
+        forward_transform = functools.partial(
+            pyproj.transform, latlng_projection, stere_projection)
+        reverse_transform = functools.partial(
+            pyproj.transform, stere_projection, latlng_projection)
+        latlng_multi_points = shapely.geometry.MultiPoint(nodes)
+        stere_multi_points = shapely.ops.transform(forward_transform,
                                                    latlng_multi_points)
-        centroid = shapely.ops.transform(reverse, stere_multi_points.centroid)
+        centroid = shapely.ops.transform(reverse_transform,
+                                         stere_multi_points.centroid)
         new_centroid = _closest_point(centroid, latlng_multi_points)
 
-    stere_data = enumerate((stere, points_to_guids[latlng.wkt])
-                           for stere, latlng in itertools.izip(
-                               stere_multi_points, latlng_multi_points))
+    logging.info('projecting around %d', new_centroid)
+    node_map_by_index = _node_map_by_index(
+        enumerate(itertools.izip(stere_multi_points, latlng_multi_points)),
+        node_map_by_wkt)
 
-    data = dict()
-    index = rtree.index.Index(_capture_output_data(stere_data, data))
-    return index, data
+    logging.info('building rtree index')
+    index = rtree.index.Index((idx, node.projected_coords, None)
+                              for idx, node in node_map_by_index.iteritems())
+    logging.info('built rtree index')
+    return RtreeIndex(
+        index=index,
+        forward_transform=forward_transform,
+        reverse_transform=reverse_transform,
+        node_map=node_map_by_index)
 
 
-def _points_to_guids(dbc):
+def _node_map_by_index(index_pair, node_map_by_wkt):
+    logging.info('entered _node_map_by_index')
+    node_map_by_index = dict()
+    for index, pair in index_pair:
+        stere, latlng = pair
+        node = node_map_by_wkt[latlng.wkt]
+        node.projected_point = stere
+        node.projected_point_wkt = stere.wkt
+        node.projected_coords = (stere.x, stere.y, stere.x, stere.y)
+        node_map_by_index[index] = node
+    logging.info('leaving _node_map_by_index')
+    return node_map_by_index
+
+
+def _node_map(dbc):
     """Create a mapping from latlngs to portal guids."""
-    # We use a set for guids because we may have two portals at the same
-    # latlng.
-    mapping = collections.defaultdict(PointData)
-    for db_portal in dbc.session.query(database.Portal).limit(10000):
+    logging.info('entered _node_map_by_index')
+    node_map = collections.defaultdict(NodeData)
+    for db_portal in dbc.session.query(database.Portal):
         point = _latlng_str_to_point(db_portal.latlng)
-        data = mapping[point.wkt]
-        data.point = point
-        data.coords = (point.x, point.y, point.x, point.y)
-        data.guids.add(db_portal.guid)
-    return mapping
+        node = node_map[point.wkt]
+        node.latlng_point = point
+        node.latlng_point_wkt = point.wkt
+        node.guids.add(db_portal.guid)
+    logging.info('_node_map: nodes mapped: %d', len(node_map))
+    return node_map
 
 
 def _points_from_sprinkles(donut, transform):
