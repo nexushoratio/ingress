@@ -188,7 +188,7 @@ def donuts(args, dbc):
     full_donuts, delta = _donuts(ordered_sprinkles, args.size)
     transformed_points = _points_from_sprinkles(full_donuts[0], transform)
     max_area = transformed_points.convex_hull.area * FUDGE_FACTOR
-    max_length = delta * FUDGE_FACTOR
+    max_length = delta * 2 * FUDGE_FACTOR
     print 'max_line:', max_length
     print 'max_area:', max_area
     bites = _bites(full_donuts, args.size, transform, max_length, max_area)
@@ -475,13 +475,17 @@ def _smaller_bites(bite, transform, max_length, max_area):
     transformed_points = _points_from_sprinkles(bite, transform)
     good = True
     if transformed_points.convex_hull.area > max_area:
-        print 'too big:', transformed_points.convex_hull.area, max_area
         good = False
     if len(transformed_points) > 1:
-        length = transformed_points.minimum_rotated_rectangle.length / len(
-            transformed_points)
+        if len(transformed_points) == 2:
+            hull = transformed_points.convex_hull
+        else:
+            hull = transformed_points.convex_hull.exterior
+
+        distances = (transformed_points.hausdorff_distance(
+            shapely.geometry.Point(coords)) for coords in hull.coords)
+        length = max(distances)
         if length > max_length:
-            print 'too long:', length, max_length
             good = False
 
     if len(transformed_points) == 1:
