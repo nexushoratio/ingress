@@ -203,6 +203,7 @@ def find_missing_labels(args, dbc):
             ftime = os.stat(filename)
             save(portals, filename)
             os.utime(filename, (ftime.st_atime, ftime.st_mtime))
+    print 'Portals missing labels: %d' % len(missing_portals)
 
 
 def merge(args, dbc):
