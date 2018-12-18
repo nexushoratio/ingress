@@ -63,9 +63,27 @@ def register_module_parsers(ctx):
 
     parser = ctx.subparsers.add_parser(
         'flatten',
-        parents=[bm_parser, file_parser],
+        parents=[bm_parser],
         description=flatten.__doc__,
         help=flatten.__doc__)
+
+    parser.add_argument(
+        '-s',
+        '--size',
+        action='store',
+        default=3 * 1024 * 1024,
+        type=int,
+        help='Rough upper limit on the size of each flattened output file.')
+
+    parser.add_argument(
+        '-p',
+        '--pattern',
+        action='store',
+        default='flattened-{size}-{count:0{width}d}.json',
+        help=(
+            'Pattern used to name the output files.  Uses PEP 3101 formatting '
+            'strings with the following fields:  size, width, count'))
+
     parser.set_defaults(func=flatten)
 
     parser = ctx.subparsers.add_parser(
@@ -139,9 +157,9 @@ def export(args, dbc):
 
 
 def flatten(args, dbc):
-    """Load portals from a bookmarks file and write out as a list."""
+    """Load portals from BOOKMARKS and write out as lists using PATTERN."""
     portals = load(args.bookmarks)
-    json.save(args.filename, portals.values())
+    json.save_by_size(portals.values(), args.size, args.pattern)
 
 
 def load(filename):
