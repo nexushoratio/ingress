@@ -241,11 +241,13 @@ def _finalize_and_save(filename, drawtools_filename, clusters, rtree_index):
         for node in rtree_index.node_map.itervalues())
     clustered = list()
     for distance, nodes in clusters:
+        guids = set()
+        for idx in nodes:
+            guids.update(rtree_index.node_map[idx].guids)
+
         projected_points = [
             rtree_index.node_map[idx].projected_point for idx in nodes
         ]
-        latlng_points = (rtree_index.node_map[idx].latlng_point
-                         for idx in nodes)
         multi_point = shapely.geometry.MultiPoint(projected_points)
         latlng_centroid = shapely.ops.transform(rtree_index.reverse_transform,
                                                 multi_point.centroid)
@@ -265,10 +267,7 @@ def _finalize_and_save(filename, drawtools_filename, clusters, rtree_index):
                 'lat': node.latlng_point.y,
                 'lng': node.latlng_point.x,
             } for node in latlng_hull],
-            'points': [{
-                'lat': point.y,
-                'lng': point.x,
-            } for point in latlng_points],
+            'portals': list(guids),
         }
         clustered.append(cluster)
 
