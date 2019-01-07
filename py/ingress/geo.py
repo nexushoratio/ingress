@@ -253,13 +253,13 @@ def _finalize_and_save(filename, drawtools_filename, clusters, rtree_index):
         latlng_hull = (node_map_by_projected_coords[coord]
                        for coord in multi_point.convex_hull.exterior.coords)
         cluster = {
-            'area': projected_hull.area,
+            'area': projected_hull.area / 1000000,
             'centroid': {
                 'lat': latlng_centroid.y,
                 'lng': latlng_centroid.x,
             },
             'code': zcta.code_from_point(latlng_centroid),
-            'density': len(nodes) / projected_hull.area,
+            'density': len(nodes) / projected_hull.area * 1000000,
             'distance': distance,
             'hull': [{
                 'lat': node.latlng_point.y,
