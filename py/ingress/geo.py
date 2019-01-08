@@ -241,39 +241,59 @@ def _finalize_and_save(filename, drawtools_filename, clusters, rtree_index):
         for node in rtree_index.node_map.itervalues())
     clustered = list()
     for distance, nodes in clusters:
-        guids = set()
-        for idx in nodes:
-            guids.update(rtree_index.node_map[idx].guids)
-
-        projected_points = [
-            rtree_index.node_map[idx].projected_point for idx in nodes
-        ]
-        multi_point = shapely.geometry.MultiPoint(projected_points)
-        latlng_centroid = shapely.ops.transform(rtree_index.reverse_transform,
-                                                multi_point.centroid)
-        projected_hull = multi_point.convex_hull
-        latlng_hull = (node_map_by_projected_coords[coord]
-                       for coord in multi_point.convex_hull.exterior.coords)
-        cluster = {
-            'area': projected_hull.area / 1000000,
-            'centroid': {
-                'lat': latlng_centroid.y,
-                'lng': latlng_centroid.x,
-            },
-            'code': zcta.code_from_point(latlng_centroid),
-            'density': len(nodes) / projected_hull.area * 1000000,
-            'distance': distance,
-            'hull': [{
-                'lat': node.latlng_point.y,
-                'lng': node.latlng_point.x,
-            } for node in latlng_hull],
-            'portals': list(guids),
-        }
-        clustered.append(cluster)
+        clustered.append(
+            _cluster_entry(distance, nodes, node_map_by_projected_coords, zcta,
+                           rtree_index))
 
     json.save(filename, clustered)
     _clustered_to_drawtools(drawtools_filename, clustered)
     logging.info('_finalize_and_save: done')
+
+
+def _cluster_entry(distance, nodes, node_map_by_projected_coords, zcta,
+                   rtree_index):
+    guids = set()
+    for idx in nodes:
+        logging.info('rtree_index.node_map: %s', rtree_index.node_map[idx])
+        guids.update(rtree_index.node_map[idx].guids)
+
+    local_rtree = rtree.index.Index(
+        (idx, rtree_index.node_map[idx].projected_coords, None)
+        for idx in nodes)
+
+    multi_point = shapely.geometry.MultiPoint(
+        [rtree_index.node_map[idx].projected_point for idx in nodes])
+    latlng_centroid = shapely.ops.transform(rtree_index.reverse_transform,
+                                            multi_point.centroid)
+
+    central_idx = list(
+        local_rtree.nearest(
+            (multi_point.centroid.x, multi_point.centroid.y,
+             multi_point.centroid.x, multi_point.centroid.y),
+            num_results=len(nodes) / 2))[-1]
+    central_guid = list(rtree_index.node_map[idx].guids)[0]
+
+    projected_hull = multi_point.convex_hull
+    latlng_hull = (node_map_by_projected_coords[coord]
+                   for coord in projected_hull.exterior.coords)
+    return {
+        'area': projected_hull.area / 1000000,
+        'centroid': {
+            'lat': latlng_centroid.y,
+            'lng': latlng_centroid.x,
+        },
+        'name': central_guid,
+        'code': zcta.code_from_point(latlng_centroid),
+        # consider dropping density and calculate on client instead
+        'density': len(nodes) / projected_hull.area * 1000000,
+        'distance': distance,
+        'hull': [{
+            'lat': node.latlng_point.y,
+            'lng': node.latlng_point.x,
+        } for node in latlng_hull],
+        'perimeter': projected_hull.exterior.length,
+        'portals': sorted(guids),
+    }
 
 
 def _clustered_to_drawtools(filename, clustered):
