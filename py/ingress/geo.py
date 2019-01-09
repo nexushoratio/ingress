@@ -228,12 +228,12 @@ def cluster(args, dbc):
                                 to_clean)
         distance *= 2
 
-    _finalize_and_save(args.filename, clusters, rtree_index)
+    clustered = _finalize(clusters, rtree_index)
+    json.save(args.filename, clustered)
 
 
-def _finalize_and_save(filename, clusters, rtree_index):
-    logging.info('_finalize_and_save: %d clusters into %s',
-                 len(clusters), filename)
+def _finalize(clusters, rtree_index):
+    logging.info('_finalize: %d clusters', len(clusters))
     zcta = zcta_lib.Zcta()
     node_map_by_projected_coords = dict(
         (node.projected_point.coords[0], node)
@@ -244,8 +244,8 @@ def _finalize_and_save(filename, clusters, rtree_index):
             _cluster_entry(distance, nodes, node_map_by_projected_coords, zcta,
                            rtree_index))
 
-    json.save(filename, clustered)
-    logging.info('_finalize_and_save: done')
+    logging.info('_finalize: done')
+    return clustered
 
 
 def _cluster_entry(distance, nodes, node_map_by_projected_coords, zcta,
