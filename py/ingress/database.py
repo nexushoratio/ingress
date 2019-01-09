@@ -40,6 +40,15 @@ class Portal(Base):  # pylint: disable=missing-docstring
         logging.debug('updated')
 
 
+class ClusterLeader(Base):  # pylint: disable=missing-docstring
+    __tablename__ = 'cluster_leaders'
+
+    guid = sqlalchemy.Column(
+        sqlalchemy.ForeignKey(
+            'portals.guid', ondelete='CASCADE'),
+        primary_key=True)
+
+
 class Leg(Base):  # pylint: disable=missing-docstring
     __tablename__ = 'legs'
 
