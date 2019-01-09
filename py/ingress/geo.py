@@ -211,6 +211,9 @@ def cluster(args, dbc):
     graph = pygraph.graph()
     graph.add_nodes(rtree_index.node_map.iterkeys())  # pylint: disable=no-member
     clusters = set()
+    leaders = frozenset(
+        row.guid for row in dbc.session.query(database.ClusterLeader))
+    initial_leaders = leaders.copy()
 
     distance = START_DISTANCE
     while distance < MAX_DISTANCE:
@@ -228,11 +231,24 @@ def cluster(args, dbc):
                                 to_clean)
         distance *= 2
 
-    clustered = _finalize(clusters, rtree_index)
+    clustered = _finalize(clusters, leaders, rtree_index)
     json.save(args.filename, clustered)
+    final_leaders = set(cluster['leader'] for cluster in clustered)
+    old_leaders = initial_leaders.difference(final_leaders)
+    new_leaders = final_leaders.difference(initial_leaders)
+    logging.info('old_leaders: %s', old_leaders)
+    logging.info('new_leaders: %s', new_leaders)
+    for guid in old_leaders:
+        dbc.session.query(database.ClusterLeader).filter(
+            database.ClusterLeader.guid == guid).delete()
+
+    for guid in new_leaders:
+        db_cluster_leader = database.ClusterLeader(guid=guid)
+        dbc.session.add(db_cluster_leader)
+    dbc.session.commit()
 
 
-def _finalize(clusters, rtree_index):
+def _finalize(clusters, leaders, rtree_index):
     logging.info('_finalize: %d clusters', len(clusters))
     zcta = zcta_lib.Zcta()
     node_map_by_projected_coords = dict(
@@ -242,34 +258,60 @@ def _finalize(clusters, rtree_index):
     for distance, nodes in clusters:
         clustered.append(
             _cluster_entry(distance, nodes, node_map_by_projected_coords, zcta,
-                           rtree_index))
+                           leaders, rtree_index))
 
     logging.info('_finalize: done')
     return clustered
 
 
 def _cluster_entry(distance, nodes, node_map_by_projected_coords, zcta,
-                   rtree_index):
-    guids = set()
-    for idx in nodes:
-        logging.info('rtree_index.node_map: %s', rtree_index.node_map[idx])
-        guids.update(rtree_index.node_map[idx].guids)
-
-    local_rtree = rtree.index.Index(
-        (idx, rtree_index.node_map[idx].projected_coords, None)
-        for idx in nodes)
-
+                   leaders, rtree_index):
     multi_point = shapely.geometry.MultiPoint(
         [rtree_index.node_map[idx].projected_point for idx in nodes])
+
     latlng_centroid = shapely.ops.transform(rtree_index.reverse_transform,
                                             multi_point.centroid)
 
-    central_idx = list(
-        local_rtree.nearest(
-            (multi_point.centroid.x, multi_point.centroid.y,
-             multi_point.centroid.x, multi_point.centroid.y),
-            num_results=len(nodes) / 2))[-1]
-    central_guid = list(rtree_index.node_map[idx].guids)[0]
+    guids = set()
+    guid_map = dict()
+    for idx in nodes:
+        guids.update(rtree_index.node_map[idx].guids)
+        for guid in rtree_index.node_map[idx].guids:
+            guid_map[guid] = idx
+    possible_leaders = guids.intersection(leaders)
+
+    if not possible_leaders:
+        logging.info('finding new leader')
+        local_rtree = rtree.index.Index(
+            (idx, rtree_index.node_map[idx].projected_coords, None)
+            for idx in nodes)
+
+        leader_idx = list(
+            local_rtree.nearest(
+                (multi_point.centroid.x, multi_point.centroid.y,
+                 multi_point.centroid.x, multi_point.centroid.y),
+                num_results=len(nodes) / 2))[-1]
+
+        leader_guid = list(rtree_index.node_map[leader_idx].guids)[0]
+    elif len(possible_leaders) == 1:
+        logging.info('keeping existing leader: %s', possible_leaders)
+        leader_guid = possible_leaders.pop()
+    else:
+        logging.info('selecting leader from: %s', possible_leaders)
+        local_rtree = rtree.index.Index(
+            (guid_map[guid],
+             rtree_index.node_map[guid_map[guid]].projected_coords, None)
+            for guid in possible_leaders)
+
+        leader_idx = list(
+            local_rtree.nearest(
+                (multi_point.centroid.x, multi_point.centroid.y,
+                 multi_point.centroid.x, multi_point.centroid.y),
+                num_results=len(nodes) / 2))[-1]
+
+        leader_guid = list(rtree_index.node_map[leader_idx].guids)[0]
+
+    logging.info('selected leader: %s', leader_guid)
 
     projected_hull = multi_point.convex_hull
     latlng_hull = (node_map_by_projected_coords[coord]
@@ -280,7 +322,7 @@ def _cluster_entry(distance, nodes, node_map_by_projected_coords, zcta,
             'lat': latlng_centroid.y,
             'lng': latlng_centroid.x,
         },
-        'leader': central_guid,
+        'leader': leader_guid,
         'code': zcta.code_from_point(latlng_centroid),
         # consider dropping density and calculate on client instead
         'density': len(nodes) / projected_hull.area * 1000000,
