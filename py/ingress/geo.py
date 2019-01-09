@@ -78,7 +78,7 @@ def register_module_parsers(ctx):
 
     parser = ctx.subparsers.add_parser(
         'cluster',
-        parents=[dt_parser, file_parser],
+        parents=[file_parser],
         description=cluster.__doc__,
         help=cluster.__doc__)
     parser.set_defaults(func=cluster)
@@ -205,8 +205,7 @@ def donuts(args, dbc):
 def cluster(args, dbc):
     """Find clusters of portals together and save the results.
 
-    The clustering information is saved into FILENAME.  The boundaries
-    will be saved into DRAWTOOLS.
+    The clustering results are saved into FILENAME.
     """
     rtree_index = _rtree_index(_node_map(dbc))
     graph = pygraph.graph()
@@ -229,10 +228,10 @@ def cluster(args, dbc):
                                 to_clean)
         distance *= 2
 
-    _finalize_and_save(args.filename, args.drawtools, clusters, rtree_index)
+    _finalize_and_save(args.filename, clusters, rtree_index)
 
 
-def _finalize_and_save(filename, drawtools_filename, clusters, rtree_index):
+def _finalize_and_save(filename, clusters, rtree_index):
     logging.info('_finalize_and_save: %d clusters into %s',
                  len(clusters), filename)
     zcta = zcta_lib.Zcta()
@@ -246,7 +245,6 @@ def _finalize_and_save(filename, drawtools_filename, clusters, rtree_index):
                            rtree_index))
 
     json.save(filename, clustered)
-    _clustered_to_drawtools(drawtools_filename, clustered)
     logging.info('_finalize_and_save: done')
 
 
@@ -294,21 +292,6 @@ def _cluster_entry(distance, nodes, node_map_by_projected_coords, zcta,
         'perimeter': projected_hull.exterior.length,
         'portals': sorted(guids),
     }
-
-
-def _clustered_to_drawtools(filename, clustered):
-    color_map = {
-        START_DISTANCE: '#de2d26',
-        START_DISTANCE * 2: '#fc9272',
-        START_DISTANCE * 4: '#fee0d2',
-    }
-
-    hulls = ({
-        'color': color_map[item['distance']],
-        'hull': item['hull']
-    } for item in clustered)
-
-    drawtools.save_clusters(filename, hulls)
 
 
 def _clean_clustered_points(graph, index, node_map, new_cluster):

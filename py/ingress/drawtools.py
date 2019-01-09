@@ -40,19 +40,6 @@ def save_bounds(filename, collections):
     json.save(filename, hulls)
 
 
-def save_clusters(filename, clusters):
-    """Save an iterable of colors and hulls in nearly drawtools like format."""
-    hulls = list()
-    for cluster in clusters:
-        hulls.append({
-            'type': 'polygon',
-            'color': cluster['color'],
-            'latLngs': cluster['hull'],
-        })
-
-    json.save(filename, hulls)
-
-
 def load_polygons(filename):
     """Load items from a drawtools file into a shapely.geometry.MultiPolygon."""
     outlines = json.load(filename)
