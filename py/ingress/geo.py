@@ -280,7 +280,7 @@ def _cluster_entry(distance, nodes, node_map_by_projected_coords, zcta,
             'lat': latlng_centroid.y,
             'lng': latlng_centroid.x,
         },
-        'name': central_guid,
+        'leader': central_guid,
         'code': zcta.code_from_point(latlng_centroid),
         # consider dropping density and calculate on client instead
         'density': len(nodes) / projected_hull.area * 1000000,
