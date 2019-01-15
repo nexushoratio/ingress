@@ -65,7 +65,7 @@ def _rtree_index(node_map_by_wkt):
 
 def _node_map(dbc):
     """Create a mapping from latlngs to portal guids."""
-    logging.info('entered _node_map_by_index')
+    logging.info('entered _node_map')
     node_map = collections.defaultdict(NodeData)
     for db_portal in dbc.session.query(database.Portal):
         point = _latlng_str_to_point(db_portal.latlng)
