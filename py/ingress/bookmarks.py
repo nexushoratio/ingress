@@ -5,8 +5,11 @@ import itertools
 import logging
 import os
 
+import shapely
+
 from ingress import database
 from ingress import json
+from ingress import rtree
 from ingress import zcta as zcta_lib
 
 
@@ -59,6 +62,13 @@ def register_module_parsers(ctx):
         parents=[bm_parser],
         description=export.__doc__,
         help=export.__doc__)
+    parser.add_argument(
+        '-s',
+        '--samples',
+        action='store',
+        default=None,
+        type=int,
+        help='Roughly how many portals should be in the output.')
     parser.set_defaults(func=export)
 
     parser = ctx.subparsers.add_parser(
@@ -152,8 +162,25 @@ def unimport(args, dbc):
 
 def export(args, dbc):
     """Export all portals as a bookmarks file."""
-    guids = [result[0] for result in dbc.session.query(database.Portal.guid)]
-    save_from_guids(guids, args.bookmarks, dbc)
+    if args.samples is None:
+        guids = [
+            result[0] for result in dbc.session.query(database.Portal.guid)
+        ]
+        save_from_guids(guids, args.bookmarks, dbc)
+    else:
+        rtree_index = rtree.rtree_index(dbc)
+        hull_indices = _hull_indexes(rtree_index)
+        # hull_indices will always be in the sample
+        limit = max(len(hull_indices), args.samples)
+        count = limit - len(hull_indices)
+        node_map = dict(rtree_index.node_map)
+        guids = set()
+        for index in hull_indices:
+            guids.update(node_map[index].guids)
+            del node_map[index]
+        for node in node_map.values()[:count]:
+            guids.update(node.guids)
+        save_from_guids(guids, args.bookmarks, dbc)
 
 
 def flatten(args, dbc):
@@ -257,3 +284,22 @@ def new():
         },
     }
     return bookmarks
+
+
+def _hull_indexes(rtree_index):
+    # pylint 1.6.5 cannot recognize that node_map is a dict.  This is due
+    # to it being an attr.ib().  So explicitly cast it to be a dict.
+    node_map = dict(rtree_index.node_map)
+
+    multi_points = shapely.geometry.MultiPoint(
+        [node.projected_point for node in node_map.values()])
+    hull_points = set(multi_points.convex_hull.exterior.coords)
+
+    hull_indexes = set()
+    for hull_point in hull_points:
+        indexes = set(
+            rtree_index.index.nearest((hull_point[0], hull_point[1],
+                                       hull_point[0], hull_point[1])))
+        hull_indexes.update(indexes)
+
+    return frozenset(hull_indexes)
