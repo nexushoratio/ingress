@@ -1,5 +1,10 @@
 """Traveling salesman problem optimizers.
 
+This file is under the MIT License.
+
+It it a Python port of Geir K. Engdahl's Optimap, originally in JavaScript.
+https://code.google.com/archive/p/google-maps-tsp-solver/
+
 Tested against some of the TSPLIBs asymmetric test data.
 https://www.iwr.uni-heidelberg.de/groups/comopt/software/TSPLIB95/
 
