@@ -3,7 +3,7 @@ An old Ingress command line tool I used to work on.
 
 Back when I played a lot of [Ingress](https://ingress.com/), I developed a tool to track new portals in the nine county [San Francisco Bay Area](https://en.wikipedia.org/wiki/San_Francisco_Bay_Area).
 
-The game has some badges that can be obtained by visiting and capturing unique Portals (GPS points of interest in the game).  At the time, information on which Portals a player interacted with was not exposed in the game.  Also, Portals were constantly being added, removed, merged, moved, and edited in the game.  So I wrote a tool to help players track it.
+The game has some badges that can be obtained by visiting and capturing unique Portals (GPS points of interest in the game).  At the time, information on which Portals a player interacted with was not exposed in the game (it is now).  Also, Portals were constantly being added, removed, merged, moved, and edited in the game.  So I wrote a tool to help players track it.
 
 My code consisted of multiple parts:
 1. A plugin for [Ingress Intel Total Conversion, aka IITC](https://iitc.me/)
@@ -12,7 +12,7 @@ My code consisted of multiple parts:
 
 ## IITC
 
-IITC itself was a [userscript](https://en.wikipedia.org/wiki/Userscript) for interacting with the Ingress [Intel map](https://intel.ingress.com/).  In consists of a main script that provided base features, then a bunch of feature specific add-ons (in the form of additional userscripts).  A couple of important add-ons here were *Bookmarks* and *Pan control*.
+IITC itself is a [userscript](https://en.wikipedia.org/wiki/Userscript) for interacting with the Ingress [Intel map](https://intel.ingress.com/).  In consists of a main script that provided base features, then a bunch of feature specific add-ons (in the form of additional userscripts).  A couple of important add-ons here were *Bookmarks* and *Pan control*.
 
 I wrote another add-on that simply specified a rectangular boundary for the Bay Area and then crawl it.  It would snap to the north-western corner, wait for all of the portal data to load, then add all present to the bookmarks.  It would then move east, with about 10% overlap, and repeat.  Once it reached the eastern boundary, it would return to the western boundary, go south with overlap, and repeat the scan process.  If let alone, the bookmarks would get too big to fit into memory, so once a certain number of portals were captured, it would pause.  I would then export the batch of bookmarks into a JSON file, clear them out, and resume.  This process would continue until it reach the south eastern corner.
 
@@ -64,4 +64,4 @@ Since the data was mostly static, I uploaded it to GAS as code.  Basically, a JS
 
 This was a fun project.  I probably spent more time on this than playing the game itself.
 
-This is all Python2.  This, along with older libraries, and the fact that IITC itself looks defunct, it would probably take a lot of work to get this working again.  But, here for posterity.
+This is all Python2.  This, along with older libraries, ~~and the fact that IITC itself looks defunct~~ (I have been told by a few folks that there is a Community Edition fork of [IITC](https://iitc.app/)), it would probably take a lot of work to get this working again.  But, here for posterity.
