@@ -8,8 +8,8 @@ import logging
 import pprint
 import socket
 import time
-import urllib
-import urllib2
+import urllib.request, urllib.parse, urllib.error
+import urllib.request, urllib.error, urllib.parse
 
 import attr
 
@@ -198,15 +198,15 @@ def _call_api(base_url, parameters):
     so take care if used for anything else.
     """
     parameters['key'] = API_KEY
-    url = base_url + '?' + urllib.urlencode(parameters)
+    url = base_url + '?' + urllib.parse.urlencode(parameters)
     attempts = 0
     success = False
     while not success and attempts < 3:
         attempts += 1
         try:
-            response_data = urllib2.urlopen(url, timeout=30).read()
+            response_data = urllib.request.urlopen(url, timeout=30).read()
             result = json.loads(response_data)
-        except (ValueError, urllib2.URLError, http.client.BadStatusLine,
+        except (ValueError, urllib.error.URLError, http.client.BadStatusLine,
                 socket.error) as err:
             result = {'error_message': str(err), 'status': 'NOTOK'}
         success = result['status'] in ('OK', 'ZERO_RESULTS')
