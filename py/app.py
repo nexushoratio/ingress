@@ -76,7 +76,7 @@ def run(func):
     os.symlink(long_pathname, short_pathname)
     ret = func(parser)
     logging.info('Max memory used: %s',
-                 humanize.binary_size(
+                 humanize.naturalsize(
                      resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
     logging.info('Finished. (%d)', ret or 0)
     return ret
