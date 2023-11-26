@@ -1,6 +1,6 @@
 """RTree functions that are shared between modules."""
 
-from __future__ import absolute_import
+
 
 import collections
 import functools
