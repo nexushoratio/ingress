@@ -100,7 +100,7 @@ def register_module_parsers(ctx):
         '--bites',
         action='store',
         type=int,
-        default=sys.maxint,
+        default=sys.maxsize,
         help='Limit the number of bites.')
     parser.add_argument(
         '-p',
