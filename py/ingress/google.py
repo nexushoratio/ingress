@@ -2,7 +2,7 @@
 
 from __future__ import absolute_import
 
-import httplib
+import http.client
 import json
 import logging
 import pprint
@@ -206,7 +206,7 @@ def _call_api(base_url, parameters):
         try:
             response_data = urllib2.urlopen(url, timeout=30).read()
             result = json.loads(response_data)
-        except (ValueError, urllib2.URLError, httplib.BadStatusLine,
+        except (ValueError, urllib2.URLError, http.client.BadStatusLine,
                 socket.error) as err:
             result = {'error_message': str(err), 'status': 'NOTOK'}
         success = result['status'] in ('OK', 'ZERO_RESULTS')
