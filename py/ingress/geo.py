@@ -412,7 +412,7 @@ def _bites(full_donuts, count, transform, max_length, max_area):
         bite_count = len(donut) / count + bool(len(donut) % count)
         overlap = 1.0 * ((bite_count * count) - len(donut)) / bite_count
         donut *= 2
-        for nibble in xrange(bite_count):
+        for nibble in range(bite_count):
             start = int(round(count - overlap) * nibble)
             stop = start + count
             bite = donut[start:stop]

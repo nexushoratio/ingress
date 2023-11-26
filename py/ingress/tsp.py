@@ -121,7 +121,7 @@ def _path_cost(path, cost):
 
 
 def _swappables(node_count, sw_count):
-    swaps = itertools.combinations(range(node_count), sw_count)
+    swaps = itertools.combinations(list(range(node_count)), sw_count)
     for temp_swap in swaps:
         swap = [None]
         swap.extend(temp_swap)

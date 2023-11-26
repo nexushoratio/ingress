@@ -58,7 +58,7 @@ class Zcta(object):
         logging.info('%d area', shapefile_reader.numRecords)
         print((shapefile_reader.numRecords))
 
-        for record_number in xrange(shapefile_reader.numRecords):
+        for record_number in range(shapefile_reader.numRecords):
             shells = list()
             holes = list()
             shape_record = shapefile_reader.shapeRecord(record_number)
