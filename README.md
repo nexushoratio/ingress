@@ -65,3 +65,17 @@ Since the data was mostly static, I uploaded it to GAS as code.  Basically, a JS
 This was a fun project.  I probably spent more time on this than playing the game itself.
 
 This is all Python2.  This, along with older libraries, ~~and the fact that IITC itself looks defunct~~ (I have been told by a few folks that there is a Community Edition fork of [IITC](https://iitc.app/)), it would probably take a lot of work to get this working again.  But, here for posterity.
+
+## Update
+
+Ok, maybe I will....
+
+Lately I have been playing a bit more Ingress, and have been wanting to write some code to help me plan some things.  So I poked a bit, and really, it does not look like it will be too hard to upgrade after all.
+
+After running the *2to3* program against the code, there are really only two libraries I could not find to install via `apt install` on my Debian system:
+* pygraph
+* kmldom
+
+Out side of that, it at least started and gave me appropriate output when I ran `ingress --help`.
+
+So, let's give a try and see where we end up!
