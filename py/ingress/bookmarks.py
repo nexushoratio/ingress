@@ -238,7 +238,7 @@ def find_missing_labels(args, dbc):
         missing_guids = set()
         portals = load(filename)
         for portal in portals.itervalues():
-            if not portal.has_key('label'):
+            if 'label' not in portal:
                 missing_guids.add(portal['guid'])
         if missing_guids:
             for guid in missing_guids:
