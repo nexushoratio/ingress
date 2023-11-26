@@ -448,7 +448,7 @@ def _smaller_bites(bite, transform, max_length, max_area):
     else:
         smaller_bites = _smaller_bites(bite[:-1], transform, max_length,
                                        max_area)
-        yield smaller_bites.next()
+        yield next(smaller_bites)
         rest = list()
         for sprinkles in smaller_bites:
             rest.extend(sprinkles)
