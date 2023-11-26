@@ -13,9 +13,9 @@ import pyproj
 import shapely
 import toposort
 
-from pygraph.algorithms import traversal as pytraversal
-from pygraph.classes import graph as pygraph
-from pygraph.classes import exceptions as pyexceptions
+# from pygraph.algorithms import traversal as pytraversal
+# from pygraph.classes import graph as pygraph
+# from pygraph.classes import exceptions as pyexceptions
 
 from ingress import database
 from ingress import bookmarks
