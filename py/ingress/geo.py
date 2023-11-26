@@ -699,7 +699,7 @@ def _get_reasonable_google_leg(begin, end, mode):
         google_leg.end_latlng = end
         google_leg.mode = 'walking'
         google_leg.duration = crow_flies  # seems like a good guess
-        google_leg.polyline = unicode(
+        google_leg.polyline = str(
             google.encode_polyline((_latlng_str_to_floats(begin),
                                     _latlng_str_to_floats(end))))
 

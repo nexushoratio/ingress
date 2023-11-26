@@ -24,7 +24,7 @@ def register_module_parsers(ctx):
         '-c',
         '--code',
         action='store',
-        type=unicode,
+        type=str,
         required=True,
         help='The location code.')
 
@@ -33,7 +33,7 @@ def register_module_parsers(ctx):
         '-c',
         '--code',
         action='store',
-        type=unicode,
+        type=str,
         help='The location code.')
 
     label_parser = ctx.argparse.ArgumentParser(add_help=False)
@@ -41,7 +41,7 @@ def register_module_parsers(ctx):
         '-l',
         '--label',
         action='store',
-        type=unicode,
+        type=str,
         help='Label for the location code.')
 
     keep_write_parser = ctx.argparse.ArgumentParser(add_help=False)
