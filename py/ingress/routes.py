@@ -4,7 +4,7 @@ import collections
 import os
 
 import humanize
-import kmldom
+# import kmldom
 import toposort
 
 from ingress import bookmarks
