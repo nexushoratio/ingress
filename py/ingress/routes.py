@@ -41,7 +41,7 @@ def route(args, dbc):
     """Calculate an optimal route between portals listed in a bookmarks file."""
     mode_cost_map = dict()
     portals = bookmarks.load(args.bookmarks)
-    portal_keys = portals.keys()
+    portal_keys = list(portals.keys())
     portal_keys.append(portal_keys[0])
     optimized_info = tsp.optimize(
         portal_keys,

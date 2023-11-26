@@ -90,7 +90,7 @@ def latlng_to_address(latlng, **args):
     })  # yapf: disable
     answers = [(LOCATION_TYPE_SCORES['UNKNOWN'], 'No known street address')]
     result = _call_api(GEOCODE_BASE_URL, args)
-    for key, value in result['plus_code'].iteritems():
+    for key, value in list(result['plus_code'].items()):
         score = LOCATION_TYPE_SCORES['PLUS'] + PLUS_CODE_SCORES[key]
         answers.append((score, value))
     logging.info('latlng_to_address: %s', pprint.pformat(result))

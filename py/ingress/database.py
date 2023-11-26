@@ -35,7 +35,7 @@ class Portal(Base):  # pylint: disable=missing-docstring
     def update(self, **kwargs):
         """Update a row using kwargs just like the initial creation did."""
         logging.debug('updating with: %s', kwargs)
-        for key, value in kwargs.iteritems():
+        for key, value in list(kwargs.items()):
             setattr(self, key, value)
         logging.debug('updated')
 

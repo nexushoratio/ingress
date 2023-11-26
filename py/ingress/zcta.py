@@ -89,12 +89,12 @@ class Zcta(object):
             multi_polygons_by_code[code[:2]][code] = multi_polygon.wkt
 
         hulls_by_code = dict()
-        for code, multi_polygons in multi_polygons_by_code.iteritems():
+        for code, multi_polygons in list(multi_polygons_by_code.items()):
             basename = '%s.json' % code
             json.save(self._full_path(basename), multi_polygons)
             hulls_by_code[code] = shapely.ops.unary_union([
                 shapely.wkt.loads(multi_polygon_wkt)
-                for multi_polygon_wkt in multi_polygons.itervalues()
+                for multi_polygon_wkt in list(multi_polygons.values())
             ]).convex_hull.wkt
         json.save(self._full_path(self.INDEX_JSON), hulls_by_code)
 
@@ -129,20 +129,20 @@ class Zcta(object):
         if self._code_index is None:
             self._load_code_index()
 
-        for code, polygon in self._code_index.iteritems():
+        for code, polygon in list(self._code_index.items()):
             if code not in self._groups_loaded:
                 if point.intersects(polygon):
                     self._groups_loaded.add(code)
                     basename = '%s.json' % code
                     group = json.load(self._full_path(basename))
-                    for key, value in group.iteritems():
+                    for key, value in list(group.items()):
                         area = shapely.wkt.loads(value)
                         self._codes.append((key, area))
 
     def _load_code_index(self):
         wkt = json.load(self._full_path(self.INDEX_JSON))
         self._code_index = dict()
-        for code, polygon in wkt.iteritems():
+        for code, polygon in list(wkt.items()):
             self._code_index[code] = shapely.wkt.loads(polygon)
 
     def _full_path(self, file_name):

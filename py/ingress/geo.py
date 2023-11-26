@@ -129,7 +129,7 @@ def bounds(args, dbc):
     for filename in itertools.chain(*args.glob):
         data = bookmarks.load(filename)
         points = list()
-        for bookmark in data.itervalues():
+        for bookmark in list(data.values()):
             latlng = _latlng_str_to_floats(bookmark['latlng'])
             lnglat = (latlng[1], latlng[0])
             point = shapely.geometry.Point(lnglat)
@@ -148,7 +148,7 @@ def trim(args, dbc):
     collection = drawtools.load_polygons(args.drawtools)
 
     to_delete = set()
-    for guid, portal in portals.iteritems():
+    for guid, portal in list(portals.items()):
         latlng = _latlng_str_to_floats(portal['latlng'])
         lnglat = (latlng[1], latlng[0])
         point = shapely.geometry.Point(lnglat)
@@ -209,7 +209,7 @@ def cluster(args, dbc):
     """
     rtree_index = rtree.rtree_index(dbc)
     graph = pygraph.graph()
-    graph.add_nodes(rtree_index.node_map.iterkeys())  # pylint: disable=no-member
+    graph.add_nodes(iter(list(rtree_index.node_map.keys())))  # pylint: disable=no-member
     clusters = set()
     leaders = frozenset(
         row.guid for row in dbc.session.query(database.ClusterLeader))
@@ -253,7 +253,7 @@ def _finalize(clusters, leaders, rtree_index):
     zcta = zcta_lib.Zcta()
     node_map_by_projected_coords = dict(
         (node.projected_point.coords[0], node)
-        for node in rtree_index.node_map.itervalues())
+        for node in list(rtree_index.node_map.values()))
     clustered = list()
     for distance, nodes in clusters:
         clustered.append(
@@ -523,8 +523,8 @@ def _order_by_distance(point, dbc):
 
 
 def _portal_combos(portals):
-    for begin_portal in portals.itervalues():
-        for end_portal in portals.itervalues():
+    for begin_portal in list(portals.values()):
+        for end_portal in list(portals.values()):
             if begin_portal['guid'] != end_portal['guid']:
                 for mode in ('walking', 'driving'):
                     yield begin_portal, end_portal, mode
@@ -539,7 +539,7 @@ def _update_addresses(dbc, portals):
     now = time.time()
     needed = set()
     latlng_groups = _grouper((portal['latlng']
-                              for portal in portals.itervalues()), 64)
+                              for portal in list(portals.values())), 64)
     for latlng_group in latlng_groups:
         filtered_latlng_group = [x for x in latlng_group if x is not None]
         needed.update(filtered_latlng_group)
@@ -572,7 +572,7 @@ def _update_paths(dbc, portals):
         for begin_portal, end_portal, mode in filtered_combo_group:
             needed.add((begin_portal['latlng'], end_portal['latlng'], mode))
             queries[mode].add(begin_portal['latlng'])
-        for mode, begin_portals in queries.iteritems():
+        for mode, begin_portals in list(queries.items()):
             for row in dbc.session.query(database.Path).filter(
                     database.Path.mode == mode,
                     database.Path.begin_latlng.in_(begin_portals)):

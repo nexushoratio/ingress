@@ -23,7 +23,7 @@ def _rtree_index(node_map_by_wkt):
     # First, find a good centroid to use for a projection, then use that
     # projection for the index
     logging.info('_rtree_index: nodes: %d', len(node_map_by_wkt))
-    nodes = list(node.latlng_point for node in node_map_by_wkt.itervalues())
+    nodes = list(node.latlng_point for node in list(node_map_by_wkt.values()))
     old_centroid = None
     new_centroid = nodes[0]
     latlng_projection = pyproj.Proj(proj='latlong')
@@ -54,7 +54,7 @@ def _rtree_index(node_map_by_wkt):
 
     logging.info('building rtree index')
     index = rtree.index.Index((idx, node.projected_coords, None)
-                              for idx, node in node_map_by_index.iteritems())
+                              for idx, node in list(node_map_by_index.items()))
     logging.info('built rtree index')
     return RtreeIndex(
         index=index,

@@ -117,7 +117,7 @@ def import_bookmarks(args, dbc):
     timestamp = os.stat(args.bookmarks).st_mtime
 
     zcta = zcta_lib.Zcta()
-    for portal in portals.itervalues():
+    for portal in list(portals.values()):
         portal['last_seen'] = timestamp
         portal['code'] = zcta.code_from_latlng(portal['latlng'])
 
@@ -178,7 +178,7 @@ def export(args, dbc):
         for index in hull_indices:
             guids.update(node_map[index].guids)
             del node_map[index]
-        for node in node_map.values()[:count]:
+        for node in list(node_map.values())[:count]:
             guids.update(node.guids)
         save_from_guids(guids, args.bookmarks, dbc)
 
@@ -186,7 +186,7 @@ def export(args, dbc):
 def flatten(args, dbc):
     """Load portals from BOOKMARKS and write out as lists using PATTERN."""
     portals = load(args.bookmarks)
-    json.save_by_size(portals.values(), args.size, args.pattern)
+    json.save_by_size(list(portals.values()), args.size, args.pattern)
 
 
 def load(filename):
@@ -194,9 +194,9 @@ def load(filename):
     bookmarks = json.load(filename)
     portals_by_folder = bookmarks['portals']
     portals = dict()
-    for folder in portals_by_folder.itervalues():
+    for folder in list(portals_by_folder.values()):
         portals_in_folder = folder['bkmrk']
-        for portal in portals_in_folder.itervalues():
+        for portal in list(portals_in_folder.values()):
             guid = portal['guid']
             portals[guid] = portal
 
@@ -237,7 +237,7 @@ def find_missing_labels(args, dbc):
     for filename in itertools.chain(*args.glob):
         missing_guids = set()
         portals = load(filename)
-        for portal in portals.itervalues():
+        for portal in list(portals.values()):
             if 'label' not in portal:
                 missing_guids.add(portal['guid'])
         if missing_guids:
@@ -292,7 +292,7 @@ def _hull_indexes(rtree_index):
     node_map = dict(rtree_index.node_map)
 
     multi_points = shapely.geometry.MultiPoint(
-        [node.projected_point for node in node_map.values()])
+        [node.projected_point for node in list(node_map.values())])
     hull_points = set(multi_points.convex_hull.exterior.coords)
 
     hull_indexes = set()

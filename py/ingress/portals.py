@@ -79,7 +79,7 @@ def show(args, dbc):
     text_output = list()
     text_output.append('%d portals %s between %s and %s\n\n' %
                        (len(dates), args.field, dates[0], dates[-1]))
-    for group in sorted(groups.keys(), reverse=args.order == 'descend'):
+    for group in sorted(list(groups.keys()), reverse=args.order == 'descend'):
         line = '%s: %s\n\n' % (args.group_by.capitalize(), group)
         groups[group].sort(key=lambda x: x['label'])
         for portal in groups[group]:
@@ -92,9 +92,9 @@ def show(args, dbc):
 
 
 def _save_cleaned_bookmarks(portals, known_columns, filename):
-    for portal in portals.itervalues():
+    for portal in list(portals.values()):
         keys_to_delete = set()
-        for key in portal.iterkeys():
+        for key in list(portal.keys()):
             if key not in known_columns:
                 keys_to_delete.add(key)
         for key in keys_to_delete:
