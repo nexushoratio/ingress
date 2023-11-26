@@ -49,7 +49,7 @@ def _rtree_index(node_map_by_wkt):
 
     logging.info('projecting around %s', new_centroid)
     node_map_by_index = _node_map_by_index(
-        enumerate(itertools.izip(stere_multi_points, latlng_multi_points)),
+        enumerate(zip(stere_multi_points, latlng_multi_points)),
         node_map_by_wkt)
 
     logging.info('building rtree index')

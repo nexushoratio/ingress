@@ -532,7 +532,7 @@ def _portal_combos(portals):
 
 def _grouper(iterable, size):
     args = [iter(iterable)] * size
-    return itertools.izip_longest(*args)
+    return itertools.zip_longest(*args)
 
 
 def _update_addresses(dbc, portals):
