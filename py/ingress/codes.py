@@ -121,18 +121,18 @@ def getter(args, dbc):
             keep = None
         query = query.filter(database.Code.keep == keep)
     for db_code in query:
-        print '%(code)8s | %(keep)4s | %(label)s' % {
+        print(('%(code)8s | %(keep)4s | %(label)s' % {
             'code': db_code.code,
             'keep': db_code.keep,
             'label': db_code.label,
-        }
+        }))
 
 
 def deleter(args, dbc):
     """Delete a location code."""
     code = dbc.session.query(database.Code).get(args.code)
     if code is not None:
-        print 'deleting...'
+        print('deleting...')
         dbc.session.delete(code)
         dbc.session.commit()
 
@@ -150,12 +150,12 @@ def pruner(args, dbc):
     for db_portal in dbc.session.query(database.Portal):
         code = db_portal.code
         if code not in all_codes:
-            print 'New code: %s' % code
+            print(('New code: %s' % code))
             dbc.session.add(database.Code(code=code))
             all_codes.add(code)
         if args.mode != 'new-codes-only':
             if code in delete_codes:
-                print 'Pruning %s - %s' % (db_portal.guid, db_portal.label)
+                print(('Pruning %s - %s' % (db_portal.guid, db_portal.label)))
                 dbc.session.delete(db_portal)
 
     if args.mode == 'dry-run':

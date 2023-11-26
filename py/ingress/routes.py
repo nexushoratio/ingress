@@ -233,8 +233,8 @@ def _save_as_kml(basename, path, duration):
         else:
             raise Exception('Unknown type: %s' % type_)
 
-    with open('%s-rt.kml' % basename, 'w') as f_kml:
-        print >> f_kml, kmldom.SerializePretty(kml)
+    # with open('%s-rt.kml' % basename, 'w') as f_kml:
+    #     print(kmldom.SerializePretty(kml), file=f_kml)
 
 
 def _save_as_bookmarks(basename, path):

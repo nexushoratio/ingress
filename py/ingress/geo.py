@@ -158,7 +158,7 @@ def trim(args, dbc):
         del portals[guid]
 
     if to_delete:
-        print 'deleting:', to_delete
+        print(('deleting:', to_delete))
         bookmarks.save(portals, args.bookmarks)
 
 
@@ -189,10 +189,10 @@ def donuts(args, dbc):
     transformed_points = _points_from_sprinkles(full_donuts[0], transform)
     max_area = transformed_points.convex_hull.area * FUDGE_FACTOR
     max_length = delta * 2 * FUDGE_FACTOR
-    print 'max_line:', max_length
-    print 'max_area:', max_area
+    print(('max_line:', max_length))
+    print(('max_area:', max_area))
     bites = _bites(full_donuts, args.size, transform, max_length, max_area)
-    print 'There are %d donut bites.' % len(bites)
+    print(('There are %d donut bites.' % len(bites)))
     width = len(str(len(bites)))
     for nibble, bite in enumerate(bites):
         if nibble < args.bites:
@@ -217,15 +217,15 @@ def cluster(args, dbc):
 
     distance = START_DISTANCE
     while distance < MAX_DISTANCE:
-        print 'Looking for distance %d' % distance
+        print(('Looking for distance %d' % distance))
         to_clean = set()
 
         _add_edges(graph, rtree_index.index, rtree_index.node_map, distance)
-        print 'Extracting clusters from graph...'
+        print('Extracting clusters from graph...')
         for new_cluster in _extract_clusters(graph):
             clusters.add((distance, new_cluster))
             to_clean.update(new_cluster)
-        print 'Clusters extracted.'
+        print('Clusters extracted.')
 
         _clean_clustered_points(graph, rtree_index.index, rtree_index.node_map,
                                 to_clean)
@@ -338,7 +338,7 @@ def _cluster_entry(distance, nodes, node_map_by_projected_coords, zcta,
 
 def _clean_clustered_points(graph, index, node_map, new_cluster):
     logging.info('_clean_clustered_points: %d nodes', len(new_cluster))
-    print 'Cleaning out clustered points...'
+    print('Cleaning out clustered points...')
     for node_index in new_cluster:
         node = node_map[node_index]
         index.delete(node_index, node.projected_coords)
@@ -369,7 +369,7 @@ def _add_edges(graph, index, node_map_by_index, max_distance):
     for node_index in graph.nodes():
         node_count += 1
         if node_count % 10000 == 0:
-            print 'at node count', node_count
+            print(('at node count', node_count))
         node = node_map_by_index[node_index]
         done = False
         while not done:
@@ -548,7 +548,7 @@ def _update_addresses(dbc, portals):
         have = set(row.latlng for row in rows)
         needed.difference_update(have)
 
-    print 'Addresses needed: %d' % len(needed)
+    print(('Addresses needed: %d' % len(needed)))
     for latlng in needed:
         street_address = google.latlng_to_address(latlng)
         db_address = database.Address(
@@ -604,7 +604,7 @@ def _update_path_legs(dbc, portals):
 def _ensure_path_legs(dbc, path_ids):
     path_ids = list(path_ids)
     random.shuffle(path_ids)
-    print 'Paths to check: %d' % len(path_ids)
+    print(('Paths to check: %d' % len(path_ids)))
     for count, path_id in enumerate(path_ids):
         _ensure_path_legs_by_path_id(dbc, count, path_id)
 
@@ -612,8 +612,8 @@ def _ensure_path_legs(dbc, path_ids):
 def _ensure_path_legs_by_path_id(dbc, count, path_id):
     db_path = dbc.session.query(database.Path).get(path_id)
 
-    print '%4d path_id: %4d|%23s|%23s' % (count, path_id, db_path.begin_latlng,
-                                          db_path.end_latlng)
+    print(('%4d path_id: %4d|%23s|%23s' % (count, path_id, db_path.begin_latlng,
+                                          db_path.end_latlng)))
 
     now = time.time()
     path_complete = False
@@ -627,7 +627,7 @@ def _ensure_path_legs_by_path_id(dbc, count, path_id):
         if legs:
             sorted_legs = list(toposort.toposort(legs))
             if len(sorted_legs[0]) > 1:
-                print 'There is a hole for path %d.  Clearing.' % path_id
+                print(('There is a hole for path %d.  Clearing.' % path_id))
                 dbc.session.query(database.PathLeg).filter(
                     database.PathLeg.path_id == path_id).delete()
                 dbc.session.commit()
@@ -703,10 +703,10 @@ def _get_reasonable_google_leg(begin, end, mode):
             google.encode_polyline((_latlng_str_to_floats(begin),
                                     _latlng_str_to_floats(end))))
 
-    print 'wanted: %23s %23s %7s %5d' % (begin, end, mode, crow_flies)
-    print 'got:    %23s %23s %7s %5d' % (
+    print(('wanted: %23s %23s %7s %5d' % (begin, end, mode, crow_flies)))
+    print(('got:    %23s %23s %7s %5d' % (
         google_leg.begin_latlng, google_leg.end_latlng, google_leg.mode,
-        _distance(google_leg.begin_latlng, google_leg.end_latlng))
+        _distance(google_leg.begin_latlng, google_leg.end_latlng))))
     return google_leg
 
 
@@ -716,16 +716,16 @@ def _clean(dbc):
     rows = dbc.session.query(database.Address).filter(
         database.Address.date < oldest_allowed)
     for row in rows:
-        print 'Deleting ', row.date, row.address
+        print(('Deleting ', row.date, row.address))
         dbc.session.delete(row)
     rows = dbc.session.query(database.Leg).filter(
         database.Leg.date < oldest_allowed)
     for row in rows:
-        print 'Delete ', row
+        print(('Delete ', row))
     rows = dbc.session.query(database.Path).filter(
         database.Path.date < oldest_allowed)
     for row in rows:
-        print 'Delete ', row
+        print(('Delete ', row))
     dbc.session.commit()
 
 

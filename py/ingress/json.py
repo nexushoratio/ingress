@@ -86,5 +86,5 @@ def save_by_size(data, size, pattern):
             if subsize > rough_limit:
                 break
         filename = pattern.format(size=size, width=width, count=count)
-        print filename
+        print(filename)
         save(filename, subdata)

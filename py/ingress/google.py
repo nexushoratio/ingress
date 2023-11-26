@@ -100,7 +100,7 @@ def latlng_to_address(latlng, **args):
             answers.append((score, entry['formatted_address']))
     answers.sort()
     answer = answers[0]
-    print '%s: %s (%d)' % (latlng, answer[1], answer[0])
+    print(('%s: %s (%d)' % (latlng, answer[1], answer[0])))
     return answer[1]
 
 
@@ -217,7 +217,7 @@ def _call_api(base_url, parameters):
     if result['status'] == 'OK':
         return result
     elif result['status'] == 'ZERO_RESULTS':
-        print 'strange results:'
+        print('strange results:')
         pprint.pprint(result)
         return result
     elif result['status'] == 'NOTOK':

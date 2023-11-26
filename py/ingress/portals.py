@@ -87,7 +87,7 @@ def show(args, dbc):
                      'pll=%(latlng)s\n\n') % portal
         text_output.append(line)
 
-    print '=======\n\n'.join(text_output).encode('utf8')
+    print(('=======\n\n'.join(text_output).encode('utf8')))
     _save_cleaned_bookmarks(portals, known_columns, args.bookmarks)
 
 
