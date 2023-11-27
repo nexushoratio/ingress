@@ -48,7 +48,10 @@ def main(app_parser):
     args = parser.parse_args()
     dbc = database.Database()
     logging.debug('Calling %s with %s', args.name, args)
-    args.func(args, dbc)
+    try:
+        args.func(args, dbc)
+    except AttributeError:
+        parser.print_help()
 
 
 if __name__ == '__main__':
