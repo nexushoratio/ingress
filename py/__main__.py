@@ -26,7 +26,8 @@ class Context(object):
 
 def main(app_parser):
     """Main."""
-    parser = argparse.ArgumentParser(parents=[app_parser], description=__doc__)
+    parser = argparse.ArgumentParser(
+        parents=[app_parser], description=__doc__, add_help=False)
 
     subparsers = parser.add_subparsers(
         title='Commands', dest='name',

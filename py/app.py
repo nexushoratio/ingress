@@ -43,7 +43,9 @@ def run(func):
     Return value of func
   """
     parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument(
+    group = parser.add_argument_group('Global flags')
+    group.add_argument('-h', '--help', action='help')
+    group.add_argument(
         '-L',
         '--loglevel',
         action=LogAction,
