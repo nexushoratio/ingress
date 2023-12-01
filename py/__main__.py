@@ -29,7 +29,7 @@ def main(app_parser):
     parser = argparse.ArgumentParser(parents=[app_parser], description=__doc__)
 
     subparsers = parser.add_subparsers(
-        title='commands', dest='name', help='subparser help')
+        title='Commands', dest='name', help='subparser help')
     ctx = Context(
         argparse=argparse, shared_parsers=dict(), subparsers=subparsers)
 
