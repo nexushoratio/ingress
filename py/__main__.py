@@ -30,7 +30,8 @@ def main(app_parser):
 
     subparsers = parser.add_subparsers(
         title='Commands', dest='name',
-        metavar='<command>', help='<command description>')
+        metavar='<command>', help='<command description>',
+        description='For more details: %(prog)s <command> --help')
     ctx = Context(
         argparse=argparse, shared_parsers=dict(), subparsers=subparsers)
 
