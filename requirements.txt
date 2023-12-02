@@ -1,0 +1,8 @@
+attrs==22.2.0
+humanize==4.9.0
+pyproj==3.4.1
+pyshp==2.3.1
+Rtree==1.0.1
+Shapely==1.8.5
+SQLAlchemy==1.4.46
+toposort==1.9
