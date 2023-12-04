@@ -24,8 +24,8 @@ class Context(object):
     subparsers = attr.ib()
 
 
-def main(app_parser):
-    """Main."""
+def ingress_app(app_parser):
+    """Ingress."""
     parser = argparse.ArgumentParser(
         parents=[app_parser], description=__doc__, add_help=False)
 
@@ -57,4 +57,8 @@ def main(app_parser):
         parser.print_help()
 
 
-app.run(main)
+def main():
+    app.run(ingress_app)
+
+if __name__ == '__main__':
+    main()
