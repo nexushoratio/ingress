@@ -1,0 +1,38 @@
+[project]
+name = 'ingress'
+description = 'A command line tool for working with Ingress data.'
+license = {file = 'LICENSE'}
+keywords = ['ingress', 'game', 'cli']
+classifiers = [
+  'Topic :: Games/Entertainment',
+  'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
+  'Operating System :: POSIX',
+]
+authors = [
+  {name = 'Mike Castle', email = 'dalgoda@gmail.com'},
+]
+dependencies = [
+  'nexushoratio>=1',
+  'attrs>=22.2.0',
+  'pyproj>=3.4.1',
+  'pyshp>=2.3.1',
+  'Rtree>=1.0.1',
+  'Shapely>=1.8.5',
+  'SQLAlchemy>=1.4.46',
+  'toposort>=1.9',
+]
+dynamic = ['version']
+
+[project.scripts]
+ingress = 'ingress.__main__:main'
+
+[project.urls]
+Repository = 'https://github.com/nexushoratio/ingress'
+Issues = 'https://github.com/nexushoratio/ingress/issues'
+
+[build-system]
+requires = ['setuptools', 'setuptools-scm']
+build-backend = 'setuptools.build_meta'
+
+[tool.setuptools_scm]
+
