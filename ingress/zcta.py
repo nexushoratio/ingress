@@ -34,7 +34,7 @@ import shapely.speedups
 from ingress import json
 
 
-class Zcta(object):
+class Zcta:
     """Deal with all things ZCTA."""
     BASE_PATH = (os.sep, 'home', 'nexus', 'zcta')
     SHAPEFILE = 'cb_2017_us_zcta510_500k'

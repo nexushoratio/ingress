@@ -50,7 +50,7 @@ class NetworkError(Error):
 
 
 @attr.s  # pylint: disable=missing-docstring,too-few-public-methods
-class Directions(object):
+class Directions:
     begin_latlng = attr.ib()
     end_latlng = attr.ib()
     duration = attr.ib()

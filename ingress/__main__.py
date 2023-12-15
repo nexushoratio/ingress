@@ -18,7 +18,7 @@ from ingress import routes
 
 
 @attr.s  # pylint: disable=missing-docstring,too-few-public-methods
-class Context(object):
+class Context:
     argparse = attr.ib()
     shared_parsers = attr.ib()
     subparsers = attr.ib()

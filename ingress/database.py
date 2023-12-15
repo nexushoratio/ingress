@@ -122,7 +122,7 @@ class Code(Base):  # pylint: disable=missing-docstring
     keep = sqlalchemy.Column(sqlalchemy.Boolean)
 
 
-class Database(object):
+class Database:
     def __init__(self):
 
         sql_logger = logging.getLogger('sqlalchemy')
