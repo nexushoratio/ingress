@@ -50,9 +50,10 @@ def ingress_app(app_parser):
 
     args = parser.parse_args()
     dbc = database.Database()
+    args.dbc = dbc
     logging.debug('Calling %s with %s', args.name, args)
     try:
-        args.func(args, dbc)
+        args.func(args)
     except AttributeError:
         parser.print_help()
 

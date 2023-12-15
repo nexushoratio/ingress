@@ -111,8 +111,9 @@ def register_module_parsers(ctx):
     parser.set_defaults(func=merge)
 
 
-def import_bookmarks(args, dbc):
+def import_bookmarks(args):
     """Update the database with portals listed in a bookmarks file."""
+    dbc = args.dbc
     portals = load(args.bookmarks)
     timestamp = os.stat(args.bookmarks).st_mtime
 
@@ -149,8 +150,9 @@ def import_bookmarks(args, dbc):
     dbc.session.commit()
 
 
-def unimport(args, dbc):
+def unimport(args):
     """Remove portals listed in a bookmarks file from the database."""
+    dbc = args.dbc
     portals = load(args.bookmarks)
     for db_portal in dbc.session.query(database.Portal).filter(
             database.Portal.guid.in_(portals)):
@@ -160,8 +162,9 @@ def unimport(args, dbc):
     dbc.session.commit()
 
 
-def export(args, dbc):
+def export(args):
     """Export all portals as a bookmarks file."""
+    dbc = args.dbc
     if args.samples is None:
         guids = [
             result[0] for result in dbc.session.query(database.Portal.guid)
@@ -183,7 +186,7 @@ def export(args, dbc):
         save_from_guids(guids, args.bookmarks, dbc)
 
 
-def flatten(args, dbc):
+def flatten(args):
     """Load portals from BOOKMARKS and write out as lists using PATTERN."""
     portals = load(args.bookmarks)
     json.save_by_size(list(portals.values()), args.size, args.pattern)
@@ -225,7 +228,7 @@ def save_from_guids(guids, filename, dbc):
     save(portals, filename)
 
 
-def find_missing_labels(args, dbc):
+def find_missing_labels(args):
     """Look through globs of bookmarks for missing labels.
 
     It will remove portals with missing labels from the bookmarks and
@@ -251,7 +254,7 @@ def find_missing_labels(args, dbc):
     print(('Portals missing labels: %d' % len(missing_portals)))
 
 
-def merge(args, dbc):
+def merge(args):
     """Merge multiple bookmarks files into one.
 
     Inputs will be the files specified by the glob arguments.  The

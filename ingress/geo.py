@@ -113,17 +113,17 @@ def register_module_parsers(ctx):
     parser.set_defaults(func=donuts)
 
 
-def update(args, dbc):
+def update(args):
     """Update the locations and directions for portals in a bookmarks file."""
     portals = bookmarks.load(args.bookmarks)
-    _clean(dbc)
+    _clean(args.dbc)
     if args.addresses:
-        _update_addresses(dbc, portals)
+        _update_addresses(args.dbc, portals)
     if args.directions:
-        _update_directions(dbc, portals)
+        _update_directions(args.dbc, portals)
 
 
-def bounds(args, dbc):
+def bounds(args):
     """Create a drawtools file outlining portals in multiple bookmarks files."""
     collections = list()
     for filename in itertools.chain(*args.glob):
@@ -139,7 +139,7 @@ def bounds(args, dbc):
     drawtools.save_bounds(args.drawtools, collections)
 
 
-def trim(args, dbc):
+def trim(args):
     """Trim a bookmarks file to only include portals inside a bounds."""
     if shapely.speedups.available:
         shapely.speedups.enable()
@@ -162,7 +162,7 @@ def trim(args, dbc):
         bookmarks.save(portals, args.bookmarks)
 
 
-def donuts(args, dbc):
+def donuts(args):
     """Automatically group portals into COUNT sized bookmarks files.
 
     The idea is to provide a series of bookmarks that would be suitably
@@ -178,6 +178,7 @@ def donuts(args, dbc):
     example, it will try to avoid having a bite be the entire donut
     because it reaches out to a sparsely populated area.
     """
+    dbc = args.dbc
     point = drawtools.load_point(args.drawtools)
     transform = functools.partial(
         pyproj.transform,
@@ -202,11 +203,12 @@ def donuts(args, dbc):
             bookmarks.save_from_guids(guids, filename, dbc)
 
 
-def cluster(args, dbc):
+def cluster(args):
     """Find clusters of portals together and save the results.
 
     The clustering results are saved into FILENAME.
     """
+    dbc = args.dbc
     rtree_index = rtree.rtree_index(dbc)
     graph = pygraph.graph()
     graph.add_nodes(iter(list(rtree_index.node_map.keys())))  # pylint: disable=no-member
@@ -501,7 +503,8 @@ class PortalGeo(object):
     latlng = attr.ib()
 
 
-def _order_by_distance(point, dbc):
+def _order_by_distance(point):
+    dbc = args.dbc
     geod = pyproj.Geod(ellps='WGS84')
     lat = point.y
     lng = point.x

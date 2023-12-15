@@ -95,8 +95,9 @@ def register_module_parsers(ctx):
     parser.set_defaults(func=pruner)
 
 
-def setter(args, dbc):
+def setter(args):
     """Sets a location code, creating it if necessary."""
+    dbc = args.dbc
     db_code = dbc.session.query(database.Code).get(args.code)
     if db_code is None:
         db_code = database.Code(code=args.code)
@@ -108,8 +109,9 @@ def setter(args, dbc):
     dbc.session.commit()
 
 
-def getter(args, dbc):
+def getter(args):
     """Display one or more location codes."""
+    dbc = args.dbc
     query = dbc.session.query(database.Code)
     if args.code is not None:
         query = query.filter(database.Code.code == args.code)
@@ -128,8 +130,9 @@ def getter(args, dbc):
         }))
 
 
-def deleter(args, dbc):
+def deleter(args):
     """Delete a location code."""
+    dbc = args.dbc
     code = dbc.session.query(database.Code).get(args.code)
     if code is not None:
         print('deleting...')
@@ -137,8 +140,9 @@ def deleter(args, dbc):
         dbc.session.commit()
 
 
-def pruner(args, dbc):
+def pruner(args):
     """Prune portals based upon keep status of location codes."""
+    dbc = args.dbc
     all_codes = set()
     delete_codes = set()
     # Probably better done as a join

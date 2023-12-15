@@ -60,9 +60,8 @@ def save(db_name, data):
     os.rename(tmp_filename, db_name)
 
 
-def clean(args, dbc):
+def clean(args):
     """Clean and format a json file."""
-    del dbc
     data = load(args.filename)
     save(args.filename, data)
 

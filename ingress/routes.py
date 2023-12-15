@@ -37,8 +37,9 @@ def register_module_parsers(ctx):
     parser.set_defaults(func=route)
 
 
-def route(args, dbc):
+def route(args):
     """Calculate an optimal route between portals listed in a bookmarks file."""
+    dbc = args.dbc
     mode_cost_map = dict()
     portals = bookmarks.load(args.bookmarks)
     portal_keys = list(portals.keys())

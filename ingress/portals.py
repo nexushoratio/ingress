@@ -47,11 +47,12 @@ def register_module_parsers(ctx):
     parser.set_defaults(func=show)
 
 
-def show(args, dbc):
+def show(args):
     """Show portals sorted by date.
 
     They will be exported to a bookmarks file.
     """
+    dbc = args.dbc
     start = args.start or 0
     stop = args.stop or float('inf')
     query = dbc.session.query(database.Portal)
