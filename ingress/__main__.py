@@ -4,7 +4,7 @@
 import argparse
 import logging
 
-from nexushoratio import app
+from mundane import app
 import attr
 
 from ingress import bookmarks
