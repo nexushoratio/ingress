@@ -12,19 +12,18 @@ from ingress import json
 from ingress import rtree
 from ingress import zcta as zcta_lib
 
-
-def register_shared_parsers(ctx):
-    """Parser registration API."""
-    bm_parser = ctx.argparse.ArgumentParser(add_help=False)
-    bm_parser.add_argument(
+def mundane_shared_flags(ctx: 'mundane.ArgparserApp'):
+    """Register shared flags."""
+    parser = ctx.new_shared_parser('bookmarks')
+    parser.add_argument(
         '-b',
         '--bookmarks',
         action='store',
         required=True,
         help='IITC bookmarks json file to use')
 
-    glob_parser = ctx.argparse.ArgumentParser(add_help=False)
-    glob_parser.add_argument(
+    parser = ctx.new_shared_parser('glob')
+    parser.add_argument(
         '-g',
         '--glob',
         action='append',
@@ -33,35 +32,16 @@ def register_shared_parsers(ctx):
         help=('A filename glob that will be matched by the program'
               ' instead of the shell.  May be specified multiple times.'))
 
-    ctx.shared_parsers['bm_parser'] = bm_parser
-    ctx.shared_parsers['glob_parser'] = glob_parser
 
+def mundane_commands(ctx: 'mundane.ArgparserApp'):
+    """Register commands."""
+    bm_flags = ctx.get_shared_parser('bookmarks')
+    glob_flags = ctx.get_shared_parser('glob')
 
-def register_module_parsers(ctx):
-    """Parser registration API."""
-    bm_parser = ctx.shared_parsers['bm_parser']
-    glob_parser = ctx.shared_parsers['glob_parser']
-    file_parser = ctx.shared_parsers['file_parser']
+    ctx.register_command(ingest, parents=[bm_flags])
+    ctx.register_command(expunge, parents=[bm_flags])
 
-    parser = ctx.subparsers.add_parser(
-        'import',
-        parents=[bm_parser],
-        description=import_bookmarks.__doc__,
-        help=import_bookmarks.__doc__)
-    parser.set_defaults(func=import_bookmarks)
-
-    parser = ctx.subparsers.add_parser(
-        'unimport',
-        parents=[bm_parser],
-        description=unimport.__doc__,
-        help=unimport.__doc__)
-    parser.set_defaults(func=unimport)
-
-    parser = ctx.subparsers.add_parser(
-        'export',
-        parents=[bm_parser],
-        description=export.__doc__,
-        help=export.__doc__)
+    parser = ctx.register_command(export, parents=[bm_flags])
     parser.add_argument(
         '-s',
         '--samples',
@@ -69,14 +49,8 @@ def register_module_parsers(ctx):
         default=None,
         type=int,
         help='Roughly how many portals should be in the output.')
-    parser.set_defaults(func=export)
 
-    parser = ctx.subparsers.add_parser(
-        'flatten',
-        parents=[bm_parser],
-        description=flatten.__doc__,
-        help=flatten.__doc__)
-
+    parser = ctx.register_command(flatten, parents=[bm_flags])
     parser.add_argument(
         '-s',
         '--size',
@@ -84,7 +58,6 @@ def register_module_parsers(ctx):
         default=3 * 1024 * 1024,
         type=int,
         help='Rough upper limit on the size of each flattened output file.')
-
     parser.add_argument(
         '-p',
         '--pattern',
@@ -94,24 +67,11 @@ def register_module_parsers(ctx):
             'Pattern used to name the output files.  Uses PEP 3101 formatting '
             'strings with the following fields:  size, width, count'))
 
-    parser.set_defaults(func=flatten)
-
-    parser = ctx.subparsers.add_parser(
-        'find-missing-labels',
-        parents=[bm_parser, glob_parser],
-        description=find_missing_labels.__doc__,
-        help=find_missing_labels.__doc__)
-    parser.set_defaults(func=find_missing_labels)
-
-    parser = ctx.subparsers.add_parser(
-        'merge-bookmarks',
-        parents=[bm_parser, glob_parser],
-        description=merge.__doc__,
-        help=merge.__doc__)
-    parser.set_defaults(func=merge)
+    ctx.register_command(find_missing_labels, parents=[bm_flags, glob_flags])
+    ctx.register_command(merge, parents=[bm_flags, glob_flags])
 
 
-def import_bookmarks(args):
+def ingest(args: 'argparse.Namespace') -> int:
     """Update the database with portals listed in a bookmarks file."""
     dbc = args.dbc
     portals = load(args.bookmarks)
@@ -150,7 +110,7 @@ def import_bookmarks(args):
     dbc.session.commit()
 
 
-def unimport(args):
+def expunge(args: 'argparse.Namespace') -> int:
     """Remove portals listed in a bookmarks file from the database."""
     dbc = args.dbc
     portals = load(args.bookmarks)
@@ -162,7 +122,7 @@ def unimport(args):
     dbc.session.commit()
 
 
-def export(args):
+def export(args: 'argparse.Namespace') -> int:
     """Export all portals as a bookmarks file."""
     dbc = args.dbc
     if args.samples is None:
@@ -186,7 +146,7 @@ def export(args):
         save_from_guids(guids, args.bookmarks, dbc)
 
 
-def flatten(args):
+def flatten(args: 'argparse.Namespace') -> int:
     """Load portals from BOOKMARKS and write out as lists using PATTERN."""
     portals = load(args.bookmarks)
     json.save_by_size(list(portals.values()), args.size, args.pattern)
@@ -228,7 +188,7 @@ def save_from_guids(guids, filename, dbc):
     save(portals, filename)
 
 
-def find_missing_labels(args):
+def find_missing_labels(args: 'argparse.Namespace') -> int:
     """Look through globs of bookmarks for missing labels.
 
     It will remove portals with missing labels from the bookmarks and
@@ -254,7 +214,7 @@ def find_missing_labels(args):
     print(('Portals missing labels: %d' % len(missing_portals)))
 
 
-def merge(args):
+def merge(args: 'argparse.Namespace') -> int:
     """Merge multiple bookmarks files into one.
 
     Inputs will be the files specified by the glob arguments.  The

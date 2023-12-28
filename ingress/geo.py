@@ -32,18 +32,15 @@ START_DISTANCE = 75
 MAX_DISTANCE = START_DISTANCE * 4 + 1
 
 
-def register_module_parsers(ctx):
+def mundane_commands(ctx: 'mundane.ArgparserApp'):
     """Parser registration API."""
-    bm_parser = ctx.shared_parsers['bm_parser']
-    dt_parser = ctx.shared_parsers['dt_parser']
-    file_parser = ctx.shared_parsers['file_parser']
-    glob_parser = ctx.shared_parsers['glob_parser']
+    bm_flags = ctx.get_shared_parser('bookmarks')
+    dt_flags = ctx.get_shared_parser('drawtools')
+    file_flags = ctx.get_shared_parser('file')
+    glob_flags = ctx.get_shared_parser('glob')
 
-    parser = ctx.subparsers.add_parser(
-        'update',
-        parents=[bm_parser],
-        description=update.__doc__,
-        help=update.__doc__)
+
+    parser = ctx.register_command(update, parents=[bm_flags])
     parser.add_argument(
         '--noaddresses',
         action='store_false',
@@ -60,34 +57,13 @@ def register_module_parsers(ctx):
         '--directions',
         action='store_true',
         help='Enable updating directions..')
-    parser.set_defaults(func=update)
 
-    parser = ctx.subparsers.add_parser(
-        'bounds',
-        parents=[dt_parser, glob_parser],
-        description=bounds.__doc__,
-        help=bounds.__doc__)
-    parser.set_defaults(func=bounds)
+    ctx.register_command(bounds, parents=[dt_flags, glob_flags])
+    ctx.register_command(trim, parents=[bm_flags, dt_flags])
 
-    parser = ctx.subparsers.add_parser(
-        'trim',
-        parents=[bm_parser, dt_parser],
-        description=trim.__doc__,
-        help=trim.__doc__)
-    parser.set_defaults(func=trim)
+    ctx.register_command(cluster, parents=[file_flags])
 
-    parser = ctx.subparsers.add_parser(
-        'cluster',
-        parents=[file_parser],
-        description=cluster.__doc__,
-        help=cluster.__doc__)
-    parser.set_defaults(func=cluster)
-
-    parser = ctx.subparsers.add_parser(
-        'make-donuts',
-        parents=[dt_parser],
-        description=donuts.__doc__,
-        help=donuts.__doc__)
+    parser = ctx.register_command(donuts, parents=[dt_flags])
     parser.add_argument(
         '-s',
         '--size',
@@ -110,10 +86,9 @@ def register_module_parsers(ctx):
         help=(
             'Pattern used to name the output files.  Uses PEP 3101 formatting'
             ' strings with the following fields:  size, width, bite'))
-    parser.set_defaults(func=donuts)
 
 
-def update(args):
+def update(args: 'argparse.Namespace') -> int:
     """Update the locations and directions for portals in a bookmarks file."""
     portals = bookmarks.load(args.bookmarks)
     _clean(args.dbc)
@@ -123,7 +98,7 @@ def update(args):
         _update_directions(args.dbc, portals)
 
 
-def bounds(args):
+def bounds(args: 'argparse.Namespace') -> int:
     """Create a drawtools file outlining portals in multiple bookmarks files."""
     collections = list()
     for filename in itertools.chain(*args.glob):
@@ -139,8 +114,8 @@ def bounds(args):
     drawtools.save_bounds(args.drawtools, collections)
 
 
-def trim(args):
-    """Trim a bookmarks file to only include portals inside a bounds."""
+def trim(args: 'argparse.Namespace') -> int:
+    """Trim a bookmarks file to only include portals inside a boundary."""
     if shapely.speedups.available:
         shapely.speedups.enable()
 
@@ -162,7 +137,7 @@ def trim(args):
         bookmarks.save(portals, args.bookmarks)
 
 
-def donuts(args):
+def donuts(args: 'argparse.Namespace') -> int:
     """Automatically group portals into COUNT sized bookmarks files.
 
     The idea is to provide a series of bookmarks that would be suitably
@@ -203,7 +178,7 @@ def donuts(args):
             bookmarks.save_from_guids(guids, filename, dbc)
 
 
-def cluster(args):
+def cluster(args: 'argparse.Namespace') -> int:
     """Find clusters of portals together and save the results.
 
     The clustering results are saved into FILENAME.

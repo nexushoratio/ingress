@@ -18,15 +18,11 @@ COLORS = {
 }
 
 
-def register_module_parsers(ctx):
-    """Parser registration API."""
-    bm_parser = ctx.shared_parsers['bm_parser']
+def mundane_commands(ctx: 'mundane.ArgparserApp'):
+    """Register commands."""
+    bm_flags = ctx.get_shared_parser('bookmarks')
 
-    parser = ctx.subparsers.add_parser(
-        'routes',
-        parents=[bm_parser],
-        description=route.__doc__,
-        help=route.__doc__)
+    parser = ctx.register_command(route, parents=[bm_flags])
     parser.add_argument(
         '-w',
         '--walk-auto',
@@ -34,10 +30,9 @@ def register_module_parsers(ctx):
         type=int,
         help='Longest walk time to automatically accept.',
         default=300)
-    parser.set_defaults(func=route)
 
 
-def route(args):
+def route(args: 'argparse.Namespace') -> int:
     """Calculate an optimal route between portals listed in a bookmarks file."""
     dbc = args.dbc
     mode_cost_map = dict()

@@ -6,17 +6,15 @@ import shapely
 from ingress import json
 
 
-def register_shared_parsers(ctx):
-    """Parser registration API."""
-    dt_parser = ctx.argparse.ArgumentParser(add_help=False)
-    dt_parser.add_argument(
+def mundane_shared_flags(ctx: 'mundane.ArgparserApp'):
+    """Register shared flags."""
+    parser = ctx.new_shared_parser('drawtools')
+    parser.add_argument(
         '-d',
         '--drawtools',
         action='store',
         required=True,
         help='IITC drawtools json file to use')
-
-    ctx.shared_parsers['dt_parser'] = dt_parser
 
 
 def save_bounds(filename, collections):

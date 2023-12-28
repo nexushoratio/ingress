@@ -6,29 +6,21 @@ import time
 from ingress import bookmarks
 from ingress import database
 
+def mundane_commands(ctx: 'mundane.ArgparserApp'):
+    """Register commands."""
+    bm_flags = ctx.get_shared_parser('bookmarks')
 
-def register_module_parsers(ctx):
-    """Parser registration API."""
-    bm_parser = ctx.shared_parsers['bm_parser']
-
-    parser = ctx.subparsers.add_parser(
-        'show-portals',
-        parents=[bm_parser],
-        description=show.__doc__,
-        help=show.__doc__)
-
+    parser = ctx.register_command(show, parents=[bm_flags])
     parser.add_argument(
         '-f',
         '--field',
         required=True,
         choices=('first_seen', 'last_seen'),
         help='Sort on this field.')
-
     parser.add_argument(
         '-s', '--start', action='store', type=_parse_date, help='Start date.')
     parser.add_argument(
         '-S', '--stop', action='store', type=_parse_date, help='Stop date.')
-
     parser.add_argument(
         '-o',
         '--order',
@@ -44,10 +36,9 @@ def register_module_parsers(ctx):
         default='code',
         help=('How to group text output.  Grouping by date will group all of'
               ' those on the same calendar date.'))
-    parser.set_defaults(func=show)
 
 
-def show(args):
+def show(args: 'argparse.Namespace') -> int:
     """Show portals sorted by date.
 
     They will be exported to a bookmarks file.

@@ -1,7 +1,5 @@
 """Utilities to work with JSON files."""
 
-
-
 import codecs
 import json
 import os
@@ -14,30 +12,22 @@ _JSON_DUMP_OPTS = {
 }
 
 
-def register_shared_parsers(ctx):
-    """Parser registration API."""
-    file_parser = ctx.argparse.ArgumentParser(add_help=False)
-    file_parser.add_argument(
+def mundane_shared_flags(ctx: 'mundane.ArgparserApp'):
+    """Register shared flags."""
+    parser = ctx.new_shared_parser('file')
+    parser.add_argument(
         '-f',
         '--filename',
         action='store',
         required=True,
         help='Any arbitrary file argument.')
 
-    ctx.shared_parsers['file_parser'] = file_parser
 
+def mundane_commands(ctx: 'mundane.ArgparserApp'):
+    """Register commands."""
+    file_flags = ctx.get_shared_parser('file')
 
-def register_module_parsers(ctx):
-    """Parser registration API."""
-    file_parser = ctx.shared_parsers['file_parser']
-
-    parser = ctx.subparsers.add_parser(
-        'clean-json',
-        parents=[file_parser],
-        description=clean.__doc__,
-        help=clean.__doc__)
-    parser.set_defaults(func=clean)
-
+    ctx.register_command(clean, parents=[file_flags])
 
 def load(json_name):
     """Load a utf8-encoded json file."""
@@ -60,7 +50,7 @@ def save(db_name, data):
     os.rename(tmp_filename, db_name)
 
 
-def clean(args):
+def clean(args: 'argparse.Namespace') -> int:
     """Clean and format a json file."""
     data = load(args.filename)
     save(args.filename, data)
