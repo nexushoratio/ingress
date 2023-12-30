@@ -1,4 +1,3 @@
-#!/usr/bin/python -B
 """Perform a number of Ingress related functions."""
 
 import sys
