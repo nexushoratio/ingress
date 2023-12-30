@@ -36,6 +36,15 @@ build-backend = 'setuptools.build_meta'
 
 [tool.setuptools_scm]
 
+[tool.yapf]
+column_limit = 78
+join_multiple_lines = false
+space_between_ending_comma_and_closing_bracket = false
+split_before_arithmetic_operator = true
+split_before_dot = true
+split_before_first_argument = true
+split_complex_comprehension = true
+
 [tool.coverage.run]
 branch = true
 data_file = '.coverage/data_file'
@@ -56,6 +65,7 @@ isolated_build = True
 passenv = PYTHON*
 sitepackages = True
 commands =
+    python -m yapf -i -r ingress
     python -m coverage run
     python -m coverage report
     python -m coverage html
