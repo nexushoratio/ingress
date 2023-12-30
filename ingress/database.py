@@ -29,7 +29,6 @@ class Portal(Base):  # pylint: disable=missing-docstring
         sqlalchemy.Integer, nullable=False, index=True)
     last_seen = sqlalchemy.Column(
         sqlalchemy.Integer, nullable=False, index=True)
-    code = sqlalchemy.Column(sqlalchemy.String)
     latlng = sqlalchemy.Column(sqlalchemy.String, nullable=False)
 
     def update(self, **kwargs):
@@ -110,14 +109,6 @@ class Address(Base):  # pylint: disable=missing-docstring
     latlng = sqlalchemy.Column(sqlalchemy.String, nullable=False, unique=True)
     address = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     date = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
-
-
-class Code(Base):  # pylint: disable=missing-docstring
-    __tablename__ = 'codes'
-    code = sqlalchemy.Column(
-        sqlalchemy.Unicode, primary_key=True, nullable=False)
-    label = sqlalchemy.Column(sqlalchemy.Unicode)
-    keep = sqlalchemy.Column(sqlalchemy.Boolean)
 
 
 class Database:

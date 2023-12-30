@@ -10,7 +10,6 @@ import shapely
 from ingress import database
 from ingress import json
 from ingress import rtree
-from ingress import zcta as zcta_lib
 
 
 def mundane_shared_flags(ctx: 'mundane.ArgparserApp'):
@@ -79,10 +78,8 @@ def ingest(args: 'argparse.Namespace') -> int:
     portals = load(args.bookmarks)
     timestamp = os.stat(args.bookmarks).st_mtime
 
-    zcta = zcta_lib.Zcta()
     for portal in list(portals.values()):
         portal['last_seen'] = timestamp
-        portal['code'] = zcta.code_from_latlng(portal['latlng'])
 
     keys = set(portals.keys())
     rows = dbc.session.query(database.Portal).filter(

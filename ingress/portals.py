@@ -33,8 +33,8 @@ def mundane_commands(ctx: 'mundane.ArgparserApp'):
         '-g',
         '--group-by',
         action='store',
-        choices=('code', 'date'),
-        default='code',
+        choices=('date',),
+        default='date',
         help=(
             'How to group text output.  Grouping by date will group all of'
             ' those on the same calendar date.'))
@@ -84,7 +84,7 @@ def show(args: 'argparse.Namespace') -> int:
                 'pll=%(latlng)s\n\n') % portal
         text_output.append(line)
 
-    print(('=======\n\n'.join(text_output).encode('utf8')))
+    print('=======\n\n'.join(text_output))
     _save_cleaned_bookmarks(portals, known_columns, args.bookmarks)
 
 
