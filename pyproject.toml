@@ -36,3 +36,27 @@ build-backend = 'setuptools.build_meta'
 
 [tool.setuptools_scm]
 
+[tool.coverage.run]
+branch = true
+data_file = '.coverage/data_file'
+command_line = '-m unittest discover -p *_test.py'
+source = ['.']
+
+[tool.coverage.html]
+directory = '.coverage/html'
+
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+envlist = py3
+skipsdist = True
+isolated_build = True
+
+[testenv]
+passenv = PYTHON*
+sitepackages = True
+commands =
+    python -m coverage run
+    python -m coverage report
+    python -m coverage html
+"""
