@@ -12,7 +12,7 @@ import urllib.request
 
 import attr
 
-API_KEY = 'AIzaSyD5ahcNNKsmB1iB5ldI6HXV8BaWCv66tpo'
+API_KEY = 'TBD'
 REAL_DIRECTIONS_BASE_URL = (
     'https://maps.googleapis.com/maps/api/directions/json')
 FAKE_DIRECTIONS_BASE_URL = (
