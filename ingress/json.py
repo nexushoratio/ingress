@@ -29,6 +29,7 @@ def mundane_commands(ctx: 'mundane.ArgparserApp'):
 
     ctx.register_command(clean, parents=[file_flags])
 
+
 def load(json_name):
     """Load a utf8-encoded json file."""
     data = json.load(codecs.open(json_name, encoding='utf-8'))

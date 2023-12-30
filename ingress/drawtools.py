@@ -30,11 +30,12 @@ def save_bounds(filename, collections):
 
         hull_shapely = collection.convex_hull.exterior.coords
         hull = [{'lng': point[0], 'lat': point[1]} for point in hull_shapely]
-        hulls.append({
-            'type': 'polygon',
-            'color': '#%06x' % color,
-            'latLngs': hull
-        })
+        hulls.append(
+            {
+                'type': 'polygon',
+                'color': '#%06x' % color,
+                'latLngs': hull
+            })
     json.save(filename, hulls)
 
 
@@ -45,8 +46,9 @@ def load_polygons(filename):
     for outline in outlines:
         typ = outline['type']
         if typ == 'polygon':
-            points = [(point['lng'], point['lat'])
-                      for point in outline['latLngs']]
+            points = [
+                (point['lng'], point['lat']) for point in outline['latLngs']
+            ]
             polygons.append(shapely.geometry.Polygon(points))
         elif typ == 'circle':
             # Turn it into a finely defined polygon
@@ -77,8 +79,9 @@ def load_point(filename):
     common_point_types = ('circle', 'marker')
     drawing = json.load(filename)
     if len(drawing) != 1:
-        raise Exception('%s should have one element; has %d elements instead' %
-                        (filename, len(drawing)))
+        raise Exception(
+            '%s should have one element; has %d elements instead' %
+            (filename, len(drawing)))
     element = drawing[0]
     typ = element['type']
     if typ in common_point_types:

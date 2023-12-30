@@ -1,7 +1,5 @@
 """Work with Google APIs."""
 
-
-
 import http.client
 import json
 import logging

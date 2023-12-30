@@ -40,9 +40,8 @@ def route(args: 'argparse.Namespace') -> int:
     portal_keys = list(portals.keys())
     portal_keys.append(portal_keys[0])
     optimized_info = tsp.optimize(
-        portal_keys,
-        lambda start, end: _cost(dbc, mode_cost_map, args.walk_auto, start, end)
-    )
+        portal_keys, lambda start, end: _cost(
+            dbc, mode_cost_map, args.walk_auto, start, end))
 
     basename = os.path.splitext(args.bookmarks)[0]
 
@@ -82,8 +81,8 @@ def _cost(dbc, mode_cost_map, max_walking_time_allowed, begin, end):
 
 def _path_cost(dbc, path):
     cost = 0
-    for path_leg in dbc.session.query(database.PathLeg).filter(
-            database.PathLeg.path_id == path.id):
+    for path_leg in dbc.session.query(
+            database.PathLeg).filter(database.PathLeg.path_id == path.id):
         leg = dbc.session.query(database.Leg).get(path_leg.leg_id)
         cost += leg.duration
 
@@ -112,8 +111,9 @@ def _path_info(dbc, opt_path, mode_cost_map):
             legs_dict[db_leg.begin_latlng] = db_leg
         sorted_legs = list(reversed(toposort.toposort_flatten(legs_set)))
         items.append(
-            ('legs', [legs_dict[latlng] for latlng in sorted_legs[:-1]],
-             db_path, db_end))
+            (
+                'legs', [legs_dict[latlng]
+                         for latlng in sorted_legs[:-1]], db_path, db_end))
 
     return items
 
@@ -173,8 +173,8 @@ def _build_kml_legs(factory, legs):
                     label = db_portal.label
                 else:
                     label = 'waypoint'
-                _finalize_kml_leg_placemark(placemark, current_mode, duration,
-                                            label)
+                _finalize_kml_leg_placemark(
+                    placemark, current_mode, duration, label)
                 yield placemark
             current_mode = db_leg.mode
             placemark = factory.CreatePlacemark()
@@ -188,8 +188,8 @@ def _build_kml_legs(factory, legs):
             coordinates.add_latlng(lat, lng)
 
     if placemark:
-        _finalize_kml_leg_placemark(placemark, current_mode, duration,
-                                    db_portal.label)
+        _finalize_kml_leg_placemark(
+            placemark, current_mode, duration, db_portal.label)
         yield placemark
 
 

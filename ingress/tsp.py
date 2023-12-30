@@ -31,8 +31,10 @@ def optimize(nodes, cost):
         cost: Function[str, str] -> float, cost from first to second
     """
     node_count = len(nodes)
-    print(('optimizing %d nodes with initial path cost of %.1f' % (
-        node_count, _path_cost(nodes, cost))))
+    print(
+        (
+            'optimizing %d nodes with initial path cost of %.1f' %
+            (node_count, _path_cost(nodes, cost))))
     if node_count < 12:
         return _brute_force(nodes, cost)
     else:

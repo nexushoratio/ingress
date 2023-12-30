@@ -12,6 +12,7 @@ from ingress import json
 from ingress import rtree
 from ingress import zcta as zcta_lib
 
+
 def mundane_shared_flags(ctx: 'mundane.ArgparserApp'):
     """Register shared flags."""
     parser = ctx.new_shared_parser('bookmarks')
@@ -29,8 +30,9 @@ def mundane_shared_flags(ctx: 'mundane.ArgparserApp'):
         action='append',
         required=True,
         type=glob.iglob,
-        help=('A filename glob that will be matched by the program'
-              ' instead of the shell.  May be specified multiple times.'))
+        help=(
+            'A filename glob that will be matched by the program'
+            ' instead of the shell.  May be specified multiple times.'))
 
 
 def mundane_commands(ctx: 'mundane.ArgparserApp'):
@@ -98,7 +100,8 @@ def ingest(args: 'argparse.Namespace') -> int:
         keys.remove(guid)
 
     # whatever is left is a new portal
-    known_columns = frozenset(x.key for x in database.Portal.__table__.columns)  # pylint: disable=no-member
+    known_columns = frozenset(
+        x.key for x in database.Portal.__table__.columns)  # pylint: disable=no-member
 
     for key in keys:
         portal = portals[key]
@@ -176,7 +179,8 @@ def save(portals, filename):
 
 def save_from_guids(guids, filename, dbc):
     """Save portals specified by guids into a particular bookmarks file."""
-    known_columns = frozenset(x.key for x in database.Portal.__table__.columns)  # pylint: disable=no-member
+    known_columns = frozenset(
+        x.key for x in database.Portal.__table__.columns)  # pylint: disable=no-member
 
     portals = dict()
     for db_portal in dbc.session.query(database.Portal).filter(
@@ -261,8 +265,8 @@ def _hull_indexes(rtree_index):
     hull_indexes = set()
     for hull_point in hull_points:
         indexes = set(
-            rtree_index.index.nearest((hull_point[0], hull_point[1],
-                                       hull_point[0], hull_point[1])))
+            rtree_index.index.nearest(
+                (hull_point[0], hull_point[1], hull_point[0], hull_point[1])))
         hull_indexes.update(indexes)
 
     return frozenset(hull_indexes)

@@ -39,7 +39,6 @@ def mundane_commands(ctx: 'mundane.ArgparserApp'):
     file_flags = ctx.get_shared_parser('file')
     glob_flags = ctx.get_shared_parser('glob')
 
-
     parser = ctx.register_command(update, parents=[bm_flags])
     parser.add_argument(
         '--noaddresses',
@@ -156,8 +155,7 @@ def donuts(args: 'argparse.Namespace') -> int:
     dbc = args.dbc
     point = drawtools.load_point(args.drawtools)
     transform = functools.partial(
-        pyproj.transform,
-        pyproj.Proj(proj='latlong'),
+        pyproj.transform, pyproj.Proj(proj='latlong'),
         pyproj.Proj(
             proj='stere', lat_0=point.y, lon_0=point.x, lat_ts=point.y))
     ordered_sprinkles = _order_by_distance(point, dbc)
@@ -204,8 +202,8 @@ def cluster(args: 'argparse.Namespace') -> int:
             to_clean.update(new_cluster)
         print('Clusters extracted.')
 
-        _clean_clustered_points(graph, rtree_index.index, rtree_index.node_map,
-                                to_clean)
+        _clean_clustered_points(
+            graph, rtree_index.index, rtree_index.node_map, to_clean)
         distance *= 2
 
     clustered = _finalize(clusters, leaders, rtree_index)
@@ -234,20 +232,22 @@ def _finalize(clusters, leaders, rtree_index):
     clustered = list()
     for distance, nodes in clusters:
         clustered.append(
-            _cluster_entry(distance, nodes, node_map_by_projected_coords, zcta,
-                           leaders, rtree_index))
+            _cluster_entry(
+                distance, nodes, node_map_by_projected_coords, zcta, leaders,
+                rtree_index))
 
     logging.info('_finalize: done')
     return clustered
 
 
-def _cluster_entry(distance, nodes, node_map_by_projected_coords, zcta,
-                   leaders, rtree_index):
+def _cluster_entry(
+        distance, nodes, node_map_by_projected_coords, zcta, leaders,
+        rtree_index):
     multi_point = shapely.geometry.MultiPoint(
         [rtree_index.node_map[idx].projected_point for idx in nodes])
 
-    latlng_centroid = shapely.ops.transform(rtree_index.reverse_transform,
-                                            multi_point.centroid)
+    latlng_centroid = shapely.ops.transform(
+        rtree_index.reverse_transform, multi_point.centroid)
 
     guids = set()
     guid_map = dict()
@@ -265,8 +265,9 @@ def _cluster_entry(distance, nodes, node_map_by_projected_coords, zcta,
 
         leader_idx = list(
             local_rtree.nearest(
-                (multi_point.centroid.x, multi_point.centroid.y,
-                 multi_point.centroid.x, multi_point.centroid.y),
+                (
+                    multi_point.centroid.x, multi_point.centroid.y,
+                    multi_point.centroid.x, multi_point.centroid.y),
                 num_results=len(nodes) / 2))[-1]
 
         leader_guid = list(rtree_index.node_map[leader_idx].guids)[0]
@@ -276,14 +277,16 @@ def _cluster_entry(distance, nodes, node_map_by_projected_coords, zcta,
     else:
         logging.info('selecting leader from: %s', possible_leaders)
         local_rtree = rtree.rtree.index.Index(
-            (guid_map[guid],
-             rtree_index.node_map[guid_map[guid]].projected_coords, None)
+            (
+                guid_map[guid],
+                rtree_index.node_map[guid_map[guid]].projected_coords, None)
             for guid in possible_leaders)
 
         leader_idx = list(
             local_rtree.nearest(
-                (multi_point.centroid.x, multi_point.centroid.y,
-                 multi_point.centroid.x, multi_point.centroid.y),
+                (
+                    multi_point.centroid.x, multi_point.centroid.y,
+                    multi_point.centroid.x, multi_point.centroid.y),
                 num_results=len(nodes) / 2))[-1]
 
         leader_guid = list(rtree_index.node_map[leader_idx].guids)[0]
@@ -291,25 +294,35 @@ def _cluster_entry(distance, nodes, node_map_by_projected_coords, zcta,
     logging.info('selected leader: %s', leader_guid)
 
     projected_hull = multi_point.convex_hull
-    latlng_hull = (node_map_by_projected_coords[coord]
-                   for coord in projected_hull.exterior.coords)
+    latlng_hull = (
+        node_map_by_projected_coords[coord]
+        for coord in projected_hull.exterior.coords)
     return {
-        'area': projected_hull.area / 1000000,
+        'area':
+        projected_hull.area / 1000000,
         'centroid': {
             'lat': latlng_centroid.y,
             'lng': latlng_centroid.x,
         },
-        'leader': leader_guid,
-        'code': zcta.code_from_point(latlng_centroid),
+        'leader':
+        leader_guid,
+        'code':
+        zcta.code_from_point(latlng_centroid),
         # consider dropping density and calculate on client instead
-        'density': len(nodes) / projected_hull.area * 1000000,
-        'distance': distance,
-        'hull': [{
-            'lat': node.latlng_point.y,
-            'lng': node.latlng_point.x,
-        } for node in latlng_hull],
-        'perimeter': projected_hull.exterior.length,
-        'portals': sorted(guids),
+        'density':
+        len(nodes) / projected_hull.area * 1000000,
+        'distance':
+        distance,
+        'hull': [
+            {
+                'lat': node.latlng_point.y,
+                'lng': node.latlng_point.x,
+            } for node in latlng_hull
+        ],
+        'perimeter':
+        projected_hull.exterior.length,
+        'portals':
+        sorted(guids),
     }
 
 
@@ -320,8 +333,9 @@ def _clean_clustered_points(graph, index, node_map, new_cluster):
         node = node_map[node_index]
         index.delete(node_index, node.projected_coords)
         graph.del_node(node_index)
-    logging.info('_clean_clustered_points: points left in graph: %d',
-                 len(graph.nodes()))
+    logging.info(
+        '_clean_clustered_points: points left in graph: %d',
+        len(graph.nodes()))
 
 
 def _extract_clusters(graph):
@@ -411,8 +425,9 @@ def _smaller_bites(bite, transform, max_length, max_area):
         else:
             hull = transformed_points.convex_hull.exterior
 
-        distances = (transformed_points.hausdorff_distance(
-            shapely.geometry.Point(coords)) for coords in hull.coords)
+        distances = (
+            transformed_points.hausdorff_distance(
+                shapely.geometry.Point(coords)) for coords in hull.coords)
         length = max(distances)
         if length > max_length:
             good = False
@@ -423,8 +438,8 @@ def _smaller_bites(bite, transform, max_length, max_area):
     if good:
         yield bite
     else:
-        smaller_bites = _smaller_bites(bite[:-1], transform, max_length,
-                                       max_area)
+        smaller_bites = _smaller_bites(
+            bite[:-1], transform, max_length, max_area)
         yield next(smaller_bites)
         rest = list()
         for sprinkles in smaller_bites:
@@ -516,8 +531,8 @@ def _grouper(iterable, size):
 def _update_addresses(dbc, portals):
     now = time.time()
     needed = set()
-    latlng_groups = _grouper((portal['latlng']
-                              for portal in list(portals.values())), 64)
+    latlng_groups = _grouper(
+        (portal['latlng'] for portal in list(portals.values())), 64)
     for latlng_group in latlng_groups:
         filtered_latlng_group = [x for x in latlng_group if x is not None]
         needed.update(filtered_latlng_group)
@@ -590,8 +605,10 @@ def _ensure_path_legs(dbc, path_ids):
 def _ensure_path_legs_by_path_id(dbc, count, path_id):
     db_path = dbc.session.query(database.Path).get(path_id)
 
-    print(('%4d path_id: %4d|%23s|%23s' % (count, path_id, db_path.begin_latlng,
-                                          db_path.end_latlng)))
+    print(
+        (
+            '%4d path_id: %4d|%23s|%23s' %
+            (count, path_id, db_path.begin_latlng, db_path.end_latlng)))
 
     now = time.time()
     path_complete = False
@@ -644,12 +661,13 @@ def _ensure_leg(dbc, path_id, leg_of_interest, mode):
             database.Leg.mode == google_leg.mode).one_or_none()
         if db_leg is None:
             # finally add it
-            db_leg = database.Leg(begin_latlng=google_leg.begin_latlng,
-                                  end_latlng=google_leg.end_latlng,
-                                  mode=google_leg.mode,
-                                  date=time.time(),
-                                  duration=google_leg.duration,
-                                  polyline=google_leg.polyline)
+            db_leg = database.Leg(
+                begin_latlng=google_leg.begin_latlng,
+                end_latlng=google_leg.end_latlng,
+                mode=google_leg.mode,
+                date=time.time(),
+                duration=google_leg.duration,
+                polyline=google_leg.polyline)
 
             dbc.session.add(db_leg)
             dbc.session.flush()
@@ -678,30 +696,33 @@ def _get_reasonable_google_leg(begin, end, mode):
         google_leg.mode = 'walking'
         google_leg.duration = crow_flies  # seems like a good guess
         google_leg.polyline = str(
-            google.encode_polyline((_latlng_str_to_floats(begin),
-                                    _latlng_str_to_floats(end))))
+            google.encode_polyline(
+                (_latlng_str_to_floats(begin), _latlng_str_to_floats(end))))
 
     print(('wanted: %23s %23s %7s %5d' % (begin, end, mode, crow_flies)))
-    print(('got:    %23s %23s %7s %5d' % (
-        google_leg.begin_latlng, google_leg.end_latlng, google_leg.mode,
-        _distance(google_leg.begin_latlng, google_leg.end_latlng))))
+    print(
+        (
+            'got:    %23s %23s %7s %5d' % (
+                google_leg.begin_latlng, google_leg.end_latlng,
+                google_leg.mode,
+                _distance(google_leg.begin_latlng, google_leg.end_latlng))))
     return google_leg
 
 
 def _clean(dbc):
     now = time.time()
     oldest_allowed = now - MAX_AGE
-    rows = dbc.session.query(database.Address).filter(
-        database.Address.date < oldest_allowed)
+    rows = dbc.session.query(
+        database.Address).filter(database.Address.date < oldest_allowed)
     for row in rows:
         print(('Deleting ', row.date, row.address))
         dbc.session.delete(row)
-    rows = dbc.session.query(database.Leg).filter(
-        database.Leg.date < oldest_allowed)
+    rows = dbc.session.query(
+        database.Leg).filter(database.Leg.date < oldest_allowed)
     for row in rows:
         print(('Delete ', row))
-    rows = dbc.session.query(database.Path).filter(
-        database.Path.date < oldest_allowed)
+    rows = dbc.session.query(
+        database.Path).filter(database.Path.date < oldest_allowed)
     for row in rows:
         print(('Delete ', row))
     dbc.session.commit()

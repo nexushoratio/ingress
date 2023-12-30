@@ -30,11 +30,7 @@ def register_module_parsers(ctx):
 
     code_read_parser = ctx.argparse.ArgumentParser(add_help=False)
     code_read_parser.add_argument(
-        '-c',
-        '--code',
-        action='store',
-        type=str,
-        help='The location code.')
+        '-c', '--code', action='store', type=str, help='The location code.')
 
     label_parser = ctx.argparse.ArgumentParser(add_help=False)
     label_parser.add_argument(
@@ -50,8 +46,9 @@ def register_module_parsers(ctx):
         '--keep',
         type=lambda x: _BINARY.get(x, x),
         choices=(True, False),
-        help=('Controls whether or not to keep portals with this location code'
-              ' during the prune operations.'))
+        help=(
+            'Controls whether or not to keep portals with this location code'
+            ' during the prune operations.'))
 
     keep_read_parser = ctx.argparse.ArgumentParser(add_help=False)
     keep_read_parser.add_argument(
@@ -59,8 +56,9 @@ def register_module_parsers(ctx):
         '--keep',
         type=lambda x: _TRINARY.get(x, x),
         choices=(True, False, 'null'),
-        help=('Controls whether or not to keep portals with this location code'
-              ' during the prune operations.'))
+        help=(
+            'Controls whether or not to keep portals with this location code'
+            ' during the prune operations.'))
 
     parser = ctx.subparsers.add_parser(
         'codes-set',
@@ -90,8 +88,9 @@ def register_module_parsers(ctx):
         '--mode',
         choices=('new-codes-only', 'dry-run', 'full-pruning'),
         default='new-codes-only',
-        help=('Scan for new codes only, a pretend run, or a full commitment'
-              ' to pruning.'))
+        help=(
+            'Scan for new codes only, a pretend run, or a full commitment'
+            ' to pruning.'))
     parser.set_defaults(func=pruner)
 
 
@@ -123,11 +122,13 @@ def getter(args):
             keep = None
         query = query.filter(database.Code.keep == keep)
     for db_code in query:
-        print(('%(code)8s | %(keep)4s | %(label)s' % {
-            'code': db_code.code,
-            'keep': db_code.keep,
-            'label': db_code.label,
-        }))
+        print(
+            (
+                '%(code)8s | %(keep)4s | %(label)s' % {
+                    'code': db_code.code,
+                    'keep': db_code.keep,
+                    'label': db_code.label,
+                }))
 
 
 def deleter(args):

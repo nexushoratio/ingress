@@ -92,10 +92,11 @@ class Zcta:
         for code, multi_polygons in list(multi_polygons_by_code.items()):
             basename = '%s.json' % code
             json.save(self._full_path(basename), multi_polygons)
-            hulls_by_code[code] = shapely.ops.unary_union([
-                shapely.wkt.loads(multi_polygon_wkt)
-                for multi_polygon_wkt in list(multi_polygons.values())
-            ]).convex_hull.wkt
+            hulls_by_code[code] = shapely.ops.unary_union(
+                [
+                    shapely.wkt.loads(multi_polygon_wkt)
+                    for multi_polygon_wkt in list(multi_polygons.values())
+                ]).convex_hull.wkt
         json.save(self._full_path(self.INDEX_JSON), hulls_by_code)
 
     def code_from_latlng(self, latlng):

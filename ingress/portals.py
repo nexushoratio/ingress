@@ -6,6 +6,7 @@ import time
 from ingress import bookmarks
 from ingress import database
 
+
 def mundane_commands(ctx: 'mundane.ArgparserApp'):
     """Register commands."""
     bm_flags = ctx.get_shared_parser('bookmarks')
@@ -34,8 +35,9 @@ def mundane_commands(ctx: 'mundane.ArgparserApp'):
         action='store',
         choices=('code', 'date'),
         default='code',
-        help=('How to group text output.  Grouping by date will group all of'
-              ' those on the same calendar date.'))
+        help=(
+            'How to group text output.  Grouping by date will group all of'
+            ' those on the same calendar date.'))
 
 
 def show(args: 'argparse.Namespace') -> int:
@@ -55,7 +57,8 @@ def show(args: 'argparse.Namespace') -> int:
     query = query.filter(field.between(start, stop))
     groups = collections.defaultdict(list)
     portals = dict()
-    known_columns = frozenset(x.key for x in database.Portal.__table__.columns)  # pylint: disable=no-member
+    known_columns = frozenset(
+        x.key for x in database.Portal.__table__.columns)  # pylint: disable=no-member
 
     dates = list()
     for row in query:
@@ -69,14 +72,16 @@ def show(args: 'argparse.Namespace') -> int:
 
     dates.sort()
     text_output = list()
-    text_output.append('%d portals %s between %s and %s\n\n' %
-                       (len(dates), args.field, dates[0], dates[-1]))
+    text_output.append(
+        '%d portals %s between %s and %s\n\n' %
+        (len(dates), args.field, dates[0], dates[-1]))
     for group in sorted(list(groups.keys()), reverse=args.order == 'descend'):
         line = '%s: %s\n\n' % (args.group_by.capitalize(), group)
         groups[group].sort(key=lambda x: x['label'])
         for portal in groups[group]:
-            line += ('%(label)s: %(date)s\nhttps://www.ingress.com/intel?'
-                     'pll=%(latlng)s\n\n') % portal
+            line += (
+                '%(label)s: %(date)s\nhttps://www.ingress.com/intel?'
+                'pll=%(latlng)s\n\n') % portal
         text_output.append(line)
 
     print(('=======\n\n'.join(text_output).encode('utf8')))

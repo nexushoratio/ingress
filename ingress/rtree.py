@@ -1,7 +1,5 @@
 """RTree functions that are shared between modules."""
 
-
-
 import collections
 import functools
 import itertools
@@ -41,10 +39,10 @@ def _rtree_index(node_map_by_wkt):
         reverse_transform = functools.partial(
             pyproj.transform, stere_projection, latlng_projection)
         latlng_multi_points = shapely.geometry.MultiPoint(nodes)
-        stere_multi_points = shapely.ops.transform(forward_transform,
-                                                   latlng_multi_points)
-        centroid = shapely.ops.transform(reverse_transform,
-                                         stere_multi_points.centroid)
+        stere_multi_points = shapely.ops.transform(
+            forward_transform, latlng_multi_points)
+        centroid = shapely.ops.transform(
+            reverse_transform, stere_multi_points.centroid)
         new_centroid = _closest_point(centroid, latlng_multi_points)
 
     logging.info('projecting around %s', new_centroid)
@@ -53,8 +51,9 @@ def _rtree_index(node_map_by_wkt):
         node_map_by_wkt)
 
     logging.info('building rtree index')
-    index = rtree.index.Index((idx, node.projected_coords, None)
-                              for idx, node in list(node_map_by_index.items()))
+    index = rtree.index.Index(
+        (idx, node.projected_coords, None)
+        for idx, node in list(node_map_by_index.items()))
     logging.info('built rtree index')
     return RtreeIndex(
         index=index,
@@ -111,9 +110,10 @@ def _closest_point(target, points):
     geod = pyproj.Geod(ellps='WGS84')
     tlat = target.y
     tlng = target.x
-    distances = (DistancePoint(
-        distance=geod.inv(point.x, point.y, tlng, tlat)[2], point=point)
-                 for point in points)
+    distances = (
+        DistancePoint(
+            distance=geod.inv(point.x, point.y, tlng, tlat)[2], point=point)
+        for point in points)
     result = min(distances, key=lambda x: x.distance)
     logging.info('_closest_point: found %s', result)
     return result.point

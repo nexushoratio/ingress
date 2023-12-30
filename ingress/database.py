@@ -44,8 +44,7 @@ class ClusterLeader(Base):  # pylint: disable=missing-docstring
     __tablename__ = 'cluster_leaders'
 
     guid = sqlalchemy.Column(
-        sqlalchemy.ForeignKey(
-            'portals.guid', ondelete='CASCADE'),
+        sqlalchemy.ForeignKey('portals.guid', ondelete='CASCADE'),
         primary_key=True)
 
 
@@ -86,23 +85,22 @@ class PathLeg(Base):  # pylint: disable=missing-docstring
 
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)  # pylint: disable=invalid-name
     leg_id = sqlalchemy.Column(
-        sqlalchemy.ForeignKey(
-            'legs.id', ondelete='CASCADE'))
+        sqlalchemy.ForeignKey('legs.id', ondelete='CASCADE'))
     path_id = sqlalchemy.Column(
-        sqlalchemy.ForeignKey(
-            'paths.id', ondelete='CASCADE'))
+        sqlalchemy.ForeignKey('paths.id', ondelete='CASCADE'))
 
 
 sqlalchemy.event.listen(
     PathLeg.__table__,  # pylint: disable=no-member
     'after_create',
-    sqlalchemy.DDL('CREATE TRIGGER delete_legs'
-                   ' AFTER DELETE ON path_legs'
-                   ' FOR EACH ROW'
-                   ' BEGIN'
-                   '  DELETE FROM path_legs'
-                   '  WHERE path_id == OLD.path_id;'
-                   ' END;'))
+    sqlalchemy.DDL(
+        'CREATE TRIGGER delete_legs'
+        ' AFTER DELETE ON path_legs'
+        ' FOR EACH ROW'
+        ' BEGIN'
+        '  DELETE FROM path_legs'
+        '  WHERE path_id == OLD.path_id;'
+        ' END;'))
 
 
 class Address(Base):  # pylint: disable=missing-docstring
@@ -123,6 +121,7 @@ class Code(Base):  # pylint: disable=missing-docstring
 
 
 class Database:
+
     def __init__(self):
 
         sql_logger = logging.getLogger('sqlalchemy')
