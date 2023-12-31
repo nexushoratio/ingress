@@ -73,7 +73,7 @@ def mundane_commands(ctx: 'mundane.ArgparserApp'):
 
 
 def ingest(args: 'argparse.Namespace') -> int:
-    """Update the database with portals listed in a bookmarks file."""
+    """(V) Update the database with portals listed in a bookmarks file."""
     dbc = args.dbc
     portals = load(args.bookmarks)
     timestamp = os.stat(args.bookmarks).st_mtime
@@ -123,7 +123,7 @@ def expunge(args: 'argparse.Namespace') -> int:
 
 
 def export(args: 'argparse.Namespace') -> int:
-    """Export all portals as a bookmarks file."""
+    """(V) Export all portals as a bookmarks file."""
     dbc = args.dbc
     if args.samples is None:
         guids = [
@@ -217,7 +217,7 @@ def find_missing_labels(args: 'argparse.Namespace') -> int:
 
 
 def merge(args: 'argparse.Namespace') -> int:
-    """Merge multiple bookmarks files into one.
+    """(V) Merge multiple bookmarks files into one.
 
     Inputs will be the files specified by the glob arguments.  The
     contents of the destination bookmarks file will be destroyed.

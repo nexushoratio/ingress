@@ -41,7 +41,7 @@ def mundane_commands(ctx: 'mundane.ArgparserApp'):
 
 
 def show(args: 'argparse.Namespace') -> int:
-    """Show portals sorted by date.
+    """(V) Show portals sorted by date.
 
     They will be exported to a bookmarks file.
     """

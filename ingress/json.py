@@ -52,7 +52,7 @@ def save(db_name, data):
 
 
 def clean(args: 'argparse.Namespace') -> int:
-    """Clean and format a json file."""
+    """(V) Clean and format a json file."""
     data = load(args.filename)
     save(args.filename, data)
 
