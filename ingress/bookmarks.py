@@ -141,7 +141,8 @@ def export(args: 'argparse.Namespace') -> int:
         for index in hull_indices:
             guids.update(node_map[index].guids)
             del node_map[index]
-        for node in list(node_map.values())[:count]:
+        nodes = list(node_map.values())
+        for node in nodes[:count]:
             guids.update(node.guids)
         save_from_guids(guids, args.bookmarks, dbc)
 
