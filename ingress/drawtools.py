@@ -62,7 +62,7 @@ def load_polygons(filename):
             ]
             polygons.append(shapely.geometry.Polygon(points))
         else:
-            raise Exception('%s is a type not yet handled.' % typ)
+            raise TypeError('%s is a type not yet handled.' % typ)
 
     return shapely.geometry.MultiPolygon(polygons)
 
@@ -79,7 +79,7 @@ def load_point(filename):
     common_point_types = ('circle', 'marker')
     drawing = json.load(filename)
     if len(drawing) != 1:
-        raise Exception(
+        raise RuntimeError(
             '%s should have one element; has %d elements instead' %
             (filename, len(drawing)))
     element = drawing[0]
@@ -89,7 +89,7 @@ def load_point(filename):
         lat = latlng['lat']
         lng = latlng['lng']
     else:
-        raise Exception('%s is a type not yet handlded.' % typ)
+        raise TypeError('%s is a type not yet handlded.' % typ)
 
     point = shapely.geometry.Point(lng, lat)
     return point

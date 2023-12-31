@@ -227,7 +227,7 @@ def _save_as_kml(basename, path, duration):
             for placemark in _build_kml_legs(factory, item):
                 folder.add_feature(placemark)
         else:
-            raise Exception('Unknown type: %s' % type_)
+            raise TypeError('Unknown type: %s' % type_)
 
     # with open('%s-rt.kml' % basename, 'w') as f_kml:
     #     print(kmldom.SerializePretty(kml), file=f_kml)

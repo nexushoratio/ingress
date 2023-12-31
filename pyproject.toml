@@ -55,7 +55,6 @@ disable = [
   'use-dict-literal',
   'use-list-literal',
   # The following need to be addressed
-  'broad-exception-raised',
   'consider-using-f-string',
   'consider-using-with',
   'inconsistent-return-statements',
