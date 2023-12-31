@@ -69,7 +69,7 @@ def directions(origin, destination, mode):
     if result['status'] == 'ZERO_RESULTS':
         # Need to fake it -- sometimes gmaps just cannot figure it out
         # On the other hand, don't worry about it until we see a failure
-        raise Error('Zero results: %s' % pprint.pformat(args))
+        raise Error(f'Zero results: {pprint.pformat(args)}')
 
     leg_data = result['routes'][0]['legs'][0]
     answer = Directions(
@@ -99,7 +99,7 @@ def latlng_to_address(latlng, **args):
             answers.append((score, entry['formatted_address']))
     answers.sort()
     answer = answers[0]
-    print(('%s: %s (%d)' % (latlng, answer[1], answer[0])))
+    print(f'{latlng}: {answer[1]} ({answer[2]})')
     return answer[1]
 
 

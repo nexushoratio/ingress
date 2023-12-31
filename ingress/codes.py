@@ -155,12 +155,12 @@ def pruner(args):
     for db_portal in dbc.session.query(database.Portal):
         code = db_portal.code
         if code not in all_codes:
-            print(('New code: %s' % code))
+            print(f'New code: {code}')
             dbc.session.add(database.Code(code=code))
             all_codes.add(code)
         if args.mode != 'new-codes-only':
             if code in delete_codes:
-                print(('Pruning %s - %s' % (db_portal.guid, db_portal.label)))
+                print(f'Pruning {db_portal.guid} - {db_portal.label}')
                 dbc.session.delete(db_portal)
 
     if args.mode == 'dry-run':
