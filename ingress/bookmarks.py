@@ -213,7 +213,7 @@ def find_missing_labels(args: 'argparse.Namespace') -> int:
             ftime = os.stat(filename)
             save(portals, filename)
             os.utime(filename, (ftime.st_atime, ftime.st_mtime))
-    print('Portals missing labels: {len(missing_portals)}')
+    print(f'Portals missing labels: {len(missing_portals)}')
 
 
 def merge(args: 'argparse.Namespace') -> int:
