@@ -54,7 +54,7 @@ no-docstring-rgx = "(^__|_?test.*|.*Test)"
 disable = [
   'use-dict-literal',
   'use-list-literal',
-  # The following need to be addressed
+  # TODO(#15): The following need to be addressed
   'consider-using-f-string',
   'consider-using-with',
   'inconsistent-return-statements',
