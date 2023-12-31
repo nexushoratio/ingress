@@ -45,6 +45,40 @@ split_before_dot = true
 split_before_first_argument = true
 split_complex_comprehension = true
 
+[tool.pylint.basic]
+docstring-min-length = 2
+good-names = ["setUpModule"]
+no-docstring-rgx = "(^__|_?test.*|.*Test)"
+
+[tool.pylint.messages_control]
+disable = [
+  'use-dict-literal',
+  'use-list-literal',
+  # The following need to be addressed
+  'broad-exception-raised',
+  'consider-using-f-string',
+  'consider-using-with',
+  'inconsistent-return-statements',
+  'missing-class-docstring',
+  'missing-function-docstring',
+  'no-else-return',
+  'no-member',
+  'redefined-outer-name',
+  'stop-iteration-return',
+  'too-few-public-methods',
+  'too-many-arguments',
+  'too-many-function-args',
+  'too-many-locals',
+  'undefined-variable',
+  'unnecessary-pass',
+  'unused-argument',
+  'unused-import',
+  'unused-variable',
+]
+
+[tool.pylint.miscellaneous]
+notes = ["FIXME"]
+
 [tool.coverage.run]
 branch = true
 data_file = '.coverage/data_file'
@@ -66,6 +100,7 @@ passenv = PYTHON*
 sitepackages = True
 commands =
     python -m yapf -i -r ingress
+    python -m pylint ingress
     python -m coverage run
     python -m coverage report
     python -m coverage html
