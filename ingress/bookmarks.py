@@ -90,9 +90,6 @@ def ingest(args: 'argparse.Namespace') -> int:
         # only update if newer
         if portal['last_seen'] > row.last_seen:
             row.update(**portal)
-        # or if we have an updated code
-        elif portal['latlng'] == row.latlng and portal['code'] != row.code:
-            row.code = portal['code']
 
         keys.remove(guid)
 
