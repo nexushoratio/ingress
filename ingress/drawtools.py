@@ -21,7 +21,7 @@ def save_bounds(filename, collections):
     """Save the hull of MultiPoints instances in drawtools format."""
     hulls = list()
     color = 256 * 256 * 256
-    stride = color / (len(collections) + 1)
+    stride = color // (len(collections) + 1)
     for index, collection in enumerate(collections, start=1):
         if len(collection) < 3:
             # give points and lines a bit of area

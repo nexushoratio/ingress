@@ -61,9 +61,9 @@ def save_by_size(data, size, pattern):
     """Save contents from a list into a series of file of a certain size."""
     # Assume that each item in the list is roughly the same size in the file
     test_string = json.dumps(data, **_JSON_DUMP_OPTS)
-    number_needed = len(test_string) / size + 1
-    rough_limit = len(test_string) / number_needed
-    rough_count = len(data) / number_needed
+    number_needed = len(test_string) // size + 1
+    rough_limit = len(test_string) // number_needed
+    rough_count = len(data) // number_needed
     width = len(str(number_needed))
 
     for count in range(number_needed):
