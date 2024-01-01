@@ -92,7 +92,7 @@ def latlng_to_address(latlng, **args):
     for key, value in list(result['plus_code'].items()):
         score = LOCATION_TYPE_SCORES['PLUS'] + PLUS_CODE_SCORES[key]
         answers.append((score, value))
-    logging.info('latlng_to_address: %s', pprint.pformat(result))
+    logging.info('latlng=%s: result=%s', latlng, pprint.pformat(result))
     for entry in result['results']:
         if 'street_address' in entry['types']:
             score = LOCATION_TYPE_SCORES[entry['geometry']['location_type']]
