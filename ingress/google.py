@@ -87,16 +87,27 @@ def latlng_to_address(latlng, **args):
     args.update({
         'latlng': latlng,
     })  # yapf: disable
-    answers = [(LOCATION_TYPE_SCORES['UNKNOWN'], 'No known street address')]
     result = _call_api(GEOCODE_BASE_URL, args)
-    for key, value in list(result['plus_code'].items()):
-        score = LOCATION_TYPE_SCORES['PLUS'] + PLUS_CODE_SCORES[key]
-        answers.append((score, value))
     logging.info('latlng=%s: result=%s', latlng, pprint.pformat(result))
+
+    # The API result has a lot of information.  We want to score the results
+    # so we can select the "best" one.  So we use a simple tuple where the
+    # first item is the score and second the address.  We seed the answers
+    # with our worst score.
+    answers = [(LOCATION_TYPE_SCORES['UNKNOWN'], 'No known street address')]
+
+    # Google really likes their plus codes.  We use them as a fallback.
+    for key, address in list(result['plus_code'].items()):
+        score = LOCATION_TYPE_SCORES['PLUS'] + PLUS_CODE_SCORES[key]
+        answers.append((score, address))
+
     for entry in result['results']:
+        logging.info(
+            'types: %s, addr: %s', entry['types'], entry['formatted_address'])
         if 'street_address' in entry['types']:
             score = LOCATION_TYPE_SCORES[entry['geometry']['location_type']]
             answers.append((score, entry['formatted_address']))
+
     answers.sort()
     score, address = answers[0]
     print(f'{latlng}: {address} (score: {score})')
