@@ -108,7 +108,7 @@ def ingest(args: 'argparse.Namespace') -> int:
 
 
 def expunge(args: 'argparse.Namespace') -> int:
-    """Remove portals listed in a bookmarks file from the database."""
+    """(V) Remove portals listed in a bookmarks file from the database."""
     dbc = args.dbc
     portals = load(args.bookmarks)
     for db_portal in dbc.session.query(database.Portal).filter(
@@ -145,7 +145,7 @@ def export(args: 'argparse.Namespace') -> int:
 
 
 def flatten(args: 'argparse.Namespace') -> int:
-    """Load portals from BOOKMARKS and write out as lists using PATTERN."""
+    """(V) Load portals from BOOKMARKS and write out as lists using PATTERN."""
     portals = load(args.bookmarks)
     json.save_by_size(list(portals.values()), args.size, args.pattern)
 
@@ -188,7 +188,7 @@ def save_from_guids(guids, filename, dbc):
 
 
 def find_missing_labels(args: 'argparse.Namespace') -> int:
-    """Look through globs of bookmarks for missing labels.
+    """(V) Look through globs of bookmarks for missing labels.
 
     It will remove portals with missing labels from the bookmarks and
     add them to a newly created bookmarks file instead.  The contents of
