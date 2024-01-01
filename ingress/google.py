@@ -98,9 +98,9 @@ def latlng_to_address(latlng, **args):
             score = LOCATION_TYPE_SCORES[entry['geometry']['location_type']]
             answers.append((score, entry['formatted_address']))
     answers.sort()
-    answer = answers[0]
-    print(f'{latlng}: {answer[1]} ({answer[2]})')
-    return answer[1]
+    score, address = answers[0]
+    print(f'{latlng}: {address} (score: {score})')
+    return address
 
 
 def encode_polyline(coords):
