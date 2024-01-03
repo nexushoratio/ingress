@@ -84,6 +84,7 @@ def directions(origin, destination, mode):
 
 def latlng_to_address(latlng, **args):
     """Get a textual address for a specific location."""
+
     args.update({
         'latlng': latlng,
     })  # yapf: disable
@@ -103,7 +104,9 @@ def latlng_to_address(latlng, **args):
 
     for entry in result['results']:
         logging.info(
-            'types: %s, addr: %s', entry['types'], entry['formatted_address'])
+            'entry_types: %s, location_type: %s, addr: %s, loc: %s',
+            entry['types'], entry['geometry']['location_type'],
+            entry['formatted_address'], entry['geometry']['location'])
         if 'street_address' in entry['types']:
             score = LOCATION_TYPE_SCORES[entry['geometry']['location_type']]
             answers.append((score, entry['formatted_address']))
