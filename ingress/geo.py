@@ -485,8 +485,8 @@ def _donuts(all_sprinkles, count):
     return donuts, delta
 
 
-@attr.s  # pylint: disable=missing-docstring,too-few-public-methods
-class PortalGeo:
+@attr.s
+class PortalGeo:  # pylint: disable=missing-docstring,too-few-public-methods
     distance = attr.ib()
     angle = attr.ib()
     guid = attr.ib()

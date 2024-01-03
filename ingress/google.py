@@ -48,8 +48,8 @@ class NetworkError(Error):
     """Generic network issue."""
 
 
-@attr.s  # pylint: disable=missing-docstring,too-few-public-methods
-class Directions:
+@attr.s
+class Directions:  # pylint: disable=missing-docstring,too-few-public-methods
     begin_latlng = attr.ib()
     end_latlng = attr.ib()
     duration = attr.ib()

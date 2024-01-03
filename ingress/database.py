@@ -111,10 +111,9 @@ class Address(Base):  # pylint: disable=missing-docstring
     date = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
 
 
-class Database:
+class Database:  # pylint: disable=missing-docstring
 
     def __init__(self):
-
         sql_logger = logging.getLogger('sqlalchemy')
         root_logger = logging.getLogger()
         sql_logger.setLevel(root_logger.getEffectiveLevel())

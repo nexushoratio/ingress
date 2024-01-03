@@ -76,8 +76,8 @@ def _node_map(dbc):
     return node_map
 
 
-@attr.s  # pylint: disable=missing-docstring,too-few-public-methods
-class NodeData:
+@attr.s
+class NodeData:  # pylint: disable=missing-docstring,too-few-public-methods
     latlng_point = attr.ib(init=False, default=None)
     latlng_point_wkt = attr.ib(init=False, default=None)
     projected_point = attr.ib(init=False, default=None)
@@ -102,8 +102,8 @@ def _closest_point(target, points):
     # Find a known point that is the closest to the target point
     logging.info('_closest_point: near %s', target)
 
-    @attr.s  # pylint: disable=missing-docstring,too-few-public-methods
-    class DistancePoint:
+    @attr.s
+    class DistancePoint:  # pylint: disable=missing-docstring,too-few-public-methods
         distance = attr.ib()
         point = attr.ib()
 
@@ -133,8 +133,8 @@ def _node_map_by_index(index_pair, node_map_by_wkt):
     return node_map_by_index
 
 
-@attr.s  # pylint: disable=missing-docstring,too-few-public-methods
-class RtreeIndex:
+@attr.s
+class RtreeIndex:  # pylint: disable=missing-docstring,too-few-public-methods
     index = attr.ib()
     forward_transform = attr.ib()
     reverse_transform = attr.ib()

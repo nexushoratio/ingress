@@ -58,7 +58,6 @@ disable = [
   'consider-using-f-string',
   'consider-using-with',
   'inconsistent-return-statements',
-  'missing-class-docstring',
   'missing-function-docstring',
   'no-else-return',
   'no-member',
