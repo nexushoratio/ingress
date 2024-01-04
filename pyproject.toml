@@ -56,7 +56,6 @@ disable = [
   'use-list-literal',
   # TODO(#15): The following need to be addressed
   'consider-using-f-string',
-  'consider-using-with',
   'inconsistent-return-statements',
   'missing-function-docstring',
   'no-else-return',

@@ -32,23 +32,24 @@ def mundane_commands(ctx: 'mundane.ArgparserApp'):
 
 def load(json_name):
     """Load a utf8-encoded json file."""
-    data = json.load(codecs.open(json_name, encoding='utf-8'))
+    with open(json_name, encoding='utf-8') as handle:
+        data = json.load(handle)
     return data
 
 
-def save(db_name, data):
+def save(out_name, data):
     """Atomically save a utf8-encoded json file."""
-    newname = '%s.%s' % (db_name, time.strftime('%Y-%m-%dT%H:%M'))
-    tmp_fd, tmp_filename = tempfile.mkstemp(prefix='ingress_data', dir='.')
-    os.close(tmp_fd)
-    tmp_handle = codecs.open(tmp_filename, 'w', encoding='utf-8')
-    json.dump(data, tmp_handle, **_JSON_DUMP_OPTS)
-    tmp_handle.close()
+    newname = '%s.%s' % (out_name, time.strftime('%Y-%m-%dT%H:%M'))
+    with tempfile.NamedTemporaryFile(prefix='ingress_data', mode='w', dir='.',
+                                     encoding='utf-8',
+                                     delete=False) as handle:
+        json.dump(data, handle, **_JSON_DUMP_OPTS)
+
     try:
-        os.rename(db_name, newname)
+        os.rename(out_name, newname)
     except OSError:
         pass
-    os.rename(tmp_filename, db_name)
+    os.rename(handle.name, out_name)
 
 
 def clean(args: 'argparse.Namespace') -> int:
