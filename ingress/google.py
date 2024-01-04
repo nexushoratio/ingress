@@ -72,9 +72,11 @@ def directions(origin, destination, mode):
         raise Error(f'Zero results: {pprint.pformat(args)}')
 
     leg_data = result['routes'][0]['legs'][0]
+    start = leg_data['start_location']
+    end = leg_data['start_location']
     answer = Directions(
-        begin_latlng='{lat},{lng}'.format(**leg_data['start_location']),
-        end_latlng='{lat},{lng}'.format(**leg_data['end_location']),
+        begin_latlng=f'{start.lat},{start.lng}',
+        end_latlng=f'{end.lat},{end.lng}',
         duration=leg_data['duration']['value'],
         polyline=result['routes'][0]['overview_polyline']['points'],
         mode=mode

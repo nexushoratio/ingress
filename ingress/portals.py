@@ -76,7 +76,7 @@ def show(args: 'argparse.Namespace') -> int:
         '%d portals %s between %s and %s\n\n' %
         (len(dates), args.field, dates[0], dates[-1]))
     for group in sorted(list(groups.keys()), reverse=args.order == 'descend'):
-        line = '%s: %s\n\n' % (args.group_by.capitalize(), group)
+        line = f'{args.group_by.capitalize()}: {group}\n\n'
         groups[group].sort(key=lambda x: x['label'])
         for portal in groups[group]:
             line += (

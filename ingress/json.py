@@ -39,7 +39,7 @@ def load(json_name):
 
 def save(out_name, data):
     """Atomically save a utf8-encoded json file."""
-    newname = '%s.%s' % (out_name, time.strftime('%Y-%m-%dT%H:%M'))
+    newname = f'{out_name}.{time.strftime("%Y-%m-%dT%H:%M")}'
     with tempfile.NamedTemporaryFile(prefix='ingress_data', mode='w', dir='.',
                                      encoding='utf-8',
                                      delete=False) as handle:
