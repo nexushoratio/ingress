@@ -56,7 +56,7 @@ class Zcta:
         logging.info('Importing from %s', file_name)
         shapefile_reader = shapefile.Reader(file_name)
         logging.info('%d area', shapefile_reader.numRecords)
-        print((shapefile_reader.numRecords))
+        print(shapefile_reader.numRecords)
 
         for record_number in range(shapefile_reader.numRecords):
             shells = list()

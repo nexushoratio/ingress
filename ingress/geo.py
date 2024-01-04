@@ -166,7 +166,7 @@ def donuts(args: 'argparse.Namespace') -> int:
     print(('max_line:', max_length))
     print(('max_area:', max_area))
     bites = _bites(full_donuts, args.size, transform, max_length, max_area)
-    print(('There are %d donut bites.' % len(bites)))
+    print('There are %d donut bites.' % len(bites))
     width = len(str(len(bites)))
     for nibble, bite in enumerate(bites):
         if nibble < args.bites:
@@ -192,7 +192,7 @@ def cluster(args: 'argparse.Namespace') -> int:
 
     distance = START_DISTANCE
     while distance < MAX_DISTANCE:
-        print(('Looking for distance %d' % distance))
+        print('Looking for distance %d' % distance)
         to_clean = set()
 
         _add_edges(graph, rtree_index.index, rtree_index.node_map, distance)
@@ -208,7 +208,7 @@ def cluster(args: 'argparse.Namespace') -> int:
 
     clustered = _finalize(clusters, leaders, rtree_index)
     json.save(args.filename, clustered)
-    final_leaders = set(cluster['leader'] for cluster in clustered)
+    final_leaders = {cluster['leader'] for cluster in clustered}
     old_leaders = initial_leaders.difference(final_leaders)
     new_leaders = final_leaders.difference(initial_leaders)
     logging.info('old_leaders: %s', old_leaders)
@@ -226,9 +226,10 @@ def cluster(args: 'argparse.Namespace') -> int:
 def _finalize(clusters, leaders, rtree_index):
     logging.info('_finalize: %d clusters', len(clusters))
     zcta = zcta_lib.Zcta()
-    node_map_by_projected_coords = dict(
-        (node.projected_point.coords[0], node)
-        for node in list(rtree_index.node_map.values()))
+    node_map_by_projected_coords = {
+        node.projected_point.coords[0]: node
+        for node in list(rtree_index.node_map.values())
+    }
     clustered = list()
     for distance, nodes in clusters:
         clustered.append(
@@ -538,10 +539,10 @@ def _update_addresses(dbc, portals):
         needed.update(filtered_latlng_group)
         rows = dbc.session.query(database.Address).filter(
             database.Address.latlng.in_(filtered_latlng_group))
-        have = set(row.latlng for row in rows)
+        have = {row.latlng for row in rows}
         needed.difference_update(have)
 
-    print(('Addresses needed: %d' % len(needed)))
+    print('Addresses needed: %d' % len(needed))
     for latlng in needed:
         street_address = google.latlng_to_address(latlng)
         db_address = database.Address(
@@ -597,7 +598,7 @@ def _update_path_legs(dbc, portals):
 def _ensure_path_legs(dbc, path_ids):
     path_ids = list(path_ids)
     random.shuffle(path_ids)
-    print(('Paths to check: %d' % len(path_ids)))
+    print('Paths to check: %d' % len(path_ids))
     for count, path_id in enumerate(path_ids):
         _ensure_path_legs_by_path_id(dbc, count, path_id)
 
@@ -606,9 +607,8 @@ def _ensure_path_legs_by_path_id(dbc, count, path_id):
     db_path = dbc.session.query(database.Path).get(path_id)
 
     print(
-        (
-            '%4d path_id: %4d|%23s|%23s' %
-            (count, path_id, db_path.begin_latlng, db_path.end_latlng)))
+        '%4d path_id: %4d|%23s|%23s' %
+        (count, path_id, db_path.begin_latlng, db_path.end_latlng))
 
     now = time.time()
     path_complete = False
@@ -622,7 +622,7 @@ def _ensure_path_legs_by_path_id(dbc, count, path_id):
         if legs:
             sorted_legs = list(toposort.toposort(legs))
             if len(sorted_legs[0]) > 1:
-                print(('There is a hole for path %d.  Clearing.' % path_id))
+                print('There is a hole for path %d.  Clearing.' % path_id)
                 dbc.session.query(database.PathLeg).filter(
                     database.PathLeg.path_id == path_id).delete()
                 dbc.session.commit()
@@ -699,13 +699,11 @@ def _get_reasonable_google_leg(begin, end, mode):
             google.encode_polyline(
                 (_latlng_str_to_floats(begin), _latlng_str_to_floats(end))))
 
-    print(('wanted: %23s %23s %7s %5d' % (begin, end, mode, crow_flies)))
+    print('wanted: %23s %23s %7s %5d' % (begin, end, mode, crow_flies))
     print(
-        (
-            'got:    %23s %23s %7s %5d' % (
-                google_leg.begin_latlng, google_leg.end_latlng,
-                google_leg.mode,
-                _distance(google_leg.begin_latlng, google_leg.end_latlng))))
+        'got:    %23s %23s %7s %5d' % (
+            google_leg.begin_latlng, google_leg.end_latlng, google_leg.mode,
+            _distance(google_leg.begin_latlng, google_leg.end_latlng)))
     return google_leg
 
 

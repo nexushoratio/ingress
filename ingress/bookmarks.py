@@ -100,7 +100,7 @@ def ingest(args: 'argparse.Namespace') -> int:
     for key in keys:
         portal = portals[key]
         portal['first_seen'] = timestamp
-        new_portal = dict((k, portal[k]) for k in known_columns)
+        new_portal = {k: portal[k] for k in known_columns}
         db_portal = database.Portal(**new_portal)
         dbc.session.add(db_portal)
 

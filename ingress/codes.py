@@ -123,12 +123,11 @@ def getter(args):
         query = query.filter(database.Code.keep == keep)
     for db_code in query:
         print(
-            (
-                '%(code)8s | %(keep)4s | %(label)s' % {
-                    'code': db_code.code,
-                    'keep': db_code.keep,
-                    'label': db_code.label,
-                }))
+            '%(code)8s | %(keep)4s | %(label)s' % {
+                'code': db_code.code,
+                'keep': db_code.keep,
+                'label': db_code.label,
+            })
 
 
 def deleter(args):
