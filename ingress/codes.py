@@ -2,6 +2,10 @@
 
 from ingress import database
 
+# This module is currently unused and will get a rewrite.  Meanwhile, ignore
+# some issues.
+# pylint: disable=no-member
+
 _BINARY = {
     'true': True,
     'True': True,
