@@ -59,7 +59,6 @@ disable = [
   'inconsistent-return-statements',
   'missing-function-docstring',
   'no-else-return',
-  'no-member',
   'redefined-outer-name',
   'stop-iteration-return',
   'too-few-public-methods',
@@ -75,6 +74,13 @@ disable = [
 
 [tool.pylint.miscellaneous]
 notes = ["FIXME"]
+
+[tool.pylint.typecheck]
+generated-member = [
+  'shapely.geometry.base.BaseGeometry.exterior',
+  'shapely.geometry.base.BaseGeometry.x',
+  'shapely.geometry.base.BaseGeometry.y',
+]
 
 [tool.mypy]
 files = 'ingress'
