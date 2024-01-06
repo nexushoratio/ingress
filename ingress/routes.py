@@ -152,7 +152,7 @@ def _build_kml_portal(factory, portal):
 
 
 def _finalize_kml_leg_placemark(placemark, mode, duration, label):
-    name = f'{mode} for {humanize.h_m_s(duration)} to {label}'
+    name = f'{mode} for {humanize.precisedelta(duration)} to {label}'
     styleurl = '#%s' % mode
     placemark.set_name(name.encode('utf8'))
     placemark.set_styleurl(styleurl.encode('utf8'))
@@ -201,7 +201,7 @@ def _save_as_kml(basename, path, duration):
     doc = factory.CreateDocument()
     folder = factory.CreateFolder()
 
-    folder.set_name(f'{basename} - {humanize.h_m_s(duration)}')
+    folder.set_name(f'{basename} - {humanize.precisedelta(duration)}')
     doc.set_name(basename)
     doc.add_feature(folder)
     kml.set_feature(doc)
