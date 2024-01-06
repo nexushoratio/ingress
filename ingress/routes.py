@@ -92,7 +92,7 @@ def _path_cost(dbc, path):
 def _path_info(dbc, opt_path, mode_cost_map):
     items = list()
     for begin, end in zip(opt_path, opt_path[1:]):
-        mode, cost = mode_cost_map[(begin, end)]
+        mode, _ = mode_cost_map[(begin, end)]
         db_begin = dbc.session.query(database.Portal).get(begin)
         db_end = dbc.session.query(database.Portal).get(end)
         db_address = dbc.session.query(database.Address).filter(

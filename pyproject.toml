@@ -69,7 +69,6 @@ disable = [
   'unnecessary-pass',
   'unused-argument',
   'unused-import',
-  'unused-variable',
 ]
 
 [tool.pylint.miscellaneous]

@@ -504,7 +504,7 @@ def _order_by_distance(point):
     portals = list()
     for db_portal in rows:
         plat, plng = _latlng_str_to_floats(db_portal.latlng)
-        angle, rangle, distance = geod.inv(lng, lat, plng, plat)
+        angle, _, distance = geod.inv(lng, lat, plng, plat)
         portal = PortalGeo(
             distance=distance,
             angle=angle,
@@ -610,7 +610,6 @@ def _ensure_path_legs_by_path_id(dbc, count, path_id):
         '%4d path_id: %4d|%23s|%23s' %
         (count, path_id, db_path.begin_latlng, db_path.end_latlng))
 
-    now = time.time()
     path_complete = False
     attempts = 1
     while not path_complete and attempts < 5:
