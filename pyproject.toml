@@ -68,7 +68,6 @@ disable = [
   'undefined-variable',
   'unnecessary-pass',
   'unused-argument',
-  'unused-import',
 ]
 
 [tool.pylint.miscellaneous]

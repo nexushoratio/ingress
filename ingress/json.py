@@ -1,6 +1,5 @@
 """Utilities to work with JSON files."""
 
-import codecs
 import json
 import os
 import tempfile
