@@ -234,12 +234,15 @@ def _save_as_kml(basename, path, duration):
 
 
 def _save_as_bookmarks(basename, path):
-    pass
+    del basename
+    del path
 
 
 def _save_as_text(basename, path):
-    pass
+    del basename
+    del path
 
 
 def _save_as_drawtools(basename, path):
-    pass
+    del basename
+    del path
