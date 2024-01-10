@@ -81,7 +81,6 @@ def _ant_colony(nodes, cost):
     Also see:
     https://github.com/tzmartin/Google-Maps-TSP-Solver
     """
-    pass
 
 
 def _k_opt(nodes, cost):
