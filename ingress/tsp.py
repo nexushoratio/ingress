@@ -75,14 +75,6 @@ def _greedy(nodes, cost):
     return _path_cost(path, cost), path
 
 
-def _ant_colony(nodes, cost):
-    """Ported from the old Optimap stuff on gebweb.net.
-
-    Also see:
-    https://github.com/tzmartin/Google-Maps-TSP-Solver
-    """
-
-
 def _k_opt(nodes, cost):
     node_count = len(nodes)
     best_cost = _path_cost(nodes, cost)
