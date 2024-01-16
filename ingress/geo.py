@@ -183,7 +183,7 @@ def cluster(args: 'argparse.Namespace') -> int:
     """
     dbc = args.dbc
     rtree_index = rtree.rtree_index(dbc)
-    graph = pygraph.graph()
+    graph = pygraph.graph()  # pylint: disable=undefined-variable
     graph.add_nodes(iter(list(rtree_index.node_map.keys())))  # pylint: disable=no-member
     clusters = set()
     leaders = frozenset(
@@ -346,7 +346,7 @@ def _extract_clusters(graph):
         if node in visited:
             continue
         visited.add(node)
-        other_nodes = frozenset(pytraversal.traversal(graph, node, 'pre'))
+        other_nodes = frozenset(pytraversal.traversal(graph, node, 'pre'))  # pylint: disable=undefined-variable
         visited.update(other_nodes)
         if len(other_nodes) >= MINIMAL_CLUSTER_SIZE:
             yield other_nodes
@@ -381,11 +381,9 @@ def _add_edges(graph, index, node_map_by_index, max_distance):
                     other_node.projected_point)
                 if distance < max_distance:
                     edge = (node_index, other_node_index)
-                    try:
-                        graph.add_edge(edge)
-                        edge_count += 1
-                    except pyexceptions.AdditionError:
-                        pass
+                    graph.add_edge(edge)
+                    edge_count += 1
+
     logging.info('_add_edges: edges added: %d', edge_count)
 
 
@@ -494,8 +492,7 @@ class PortalGeo:  # pylint: disable=missing-docstring,too-few-public-methods
     latlng = attr.ib()
 
 
-def _order_by_distance(point):
-    dbc = args.dbc
+def _order_by_distance(point, dbc):
     geod = pyproj.Geod(ellps='WGS84')
     lat = point.y
     lng = point.x

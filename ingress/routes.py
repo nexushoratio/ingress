@@ -195,42 +195,9 @@ def _build_kml_legs(factory, legs):
 
 def _save_as_kml(basename, path, duration):
     # https://developers.google.com/kml/documentation/kmlreference
-
-    factory = kmldom.KmlFactory_GetFactory()
-    kml = factory.CreateKml()
-    doc = factory.CreateDocument()
-    folder = factory.CreateFolder()
-
-    folder.set_name(f'{basename} - {humanize.precisedelta(duration)}')
-    doc.set_name(basename)
-    doc.add_feature(folder)
-    kml.set_feature(doc)
-
-    for style_name in ('driving', 'walking'):
-        style = factory.CreateStyle()
-        line_style = factory.CreateLineStyle()
-        color = line_style.get_color()
-
-        style.set_id(style_name)
-        style.set_linestyle(line_style)
-        doc.add_styleselector(style)
-        color.set_color_abgr(_kml_color(style_name))
-        line_style.set_color(color)
-        line_style.set_width(4)
-
-    for item in path:
-        type_ = item[0]
-        if type_ == 'portal':
-            placemark = _build_kml_portal(factory, item)
-            folder.add_feature(placemark)
-        elif type_ == 'legs':
-            for placemark in _build_kml_legs(factory, item):
-                folder.add_feature(placemark)
-        else:
-            raise TypeError('Unknown type: %s' % type_)
-
-    # with open('%s-rt.kml' % basename, 'w') as f_kml:
-    #     print(kmldom.SerializePretty(kml), file=f_kml)
+    del basename
+    del path
+    del duration
 
 
 def _save_as_bookmarks(basename, path):

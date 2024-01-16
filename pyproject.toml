@@ -65,7 +65,6 @@ disable = [
   'too-many-arguments',
   'too-many-function-args',
   'too-many-locals',
-  'undefined-variable',
 ]
 
 [tool.pylint.miscellaneous]
