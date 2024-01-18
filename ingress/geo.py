@@ -136,7 +136,7 @@ def trim(args: 'argparse.Namespace') -> int:
         bookmarks.save(portals, args.bookmarks)
 
 
-def donuts(args: 'argparse.Namespace') -> int:
+def donuts(args: 'argparse.Namespace') -> int:  # pylint: disable=too-many-locals
     """Automatically group portals into COUNT sized bookmarks files.
 
     The idea is to provide a series of bookmarks that would be suitably
@@ -176,7 +176,7 @@ def donuts(args: 'argparse.Namespace') -> int:
             bookmarks.save_from_guids(guids, filename, dbc)
 
 
-def cluster(args: 'argparse.Namespace') -> int:
+def cluster(args: 'argparse.Namespace') -> int:  # pylint: disable=too-many-locals
     """Find clusters of portals together and save the results.
 
     The clustering results are saved into FILENAME.
@@ -241,7 +241,7 @@ def _finalize(clusters, leaders, rtree_index):
     return clustered
 
 
-def _cluster_entry(
+def _cluster_entry(  # pylint: disable=too-many-locals
         distance, nodes, node_map_by_projected_coords, zcta, leaders,
         rtree_index):
     multi_point = shapely.geometry.MultiPoint(
@@ -353,7 +353,7 @@ def _extract_clusters(graph):
     logging.info('leaving _extract_clusters')
 
 
-def _add_edges(graph, index, node_map_by_index, max_distance):
+def _add_edges(graph, index, node_map_by_index, max_distance):  # pylint: disable=too-many-locals
     logging.info('_add_edges for %d', max_distance)
     node_count = 0
     edge_count = 0
@@ -553,7 +553,7 @@ def _update_directions(dbc, portals):
     _update_path_legs(dbc, portals)
 
 
-def _update_paths(dbc, portals):
+def _update_paths(dbc, portals):  # pylint: disable=too-many-locals
     now = time.time()
     combo_groups = _grouper(_portal_combos(portals), 64)
     for combo_group in combo_groups:

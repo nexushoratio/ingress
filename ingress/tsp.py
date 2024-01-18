@@ -75,7 +75,7 @@ def _greedy(nodes, cost):
     return _path_cost(path, cost), path
 
 
-def _k_opt(nodes, cost):
+def _k_opt(nodes, cost):  # pylint: disable=too-many-locals
     node_count = len(nodes)
     best_cost = _path_cost(nodes, cost)
     best_path = nodes[:]

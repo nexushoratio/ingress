@@ -40,7 +40,7 @@ def mundane_commands(ctx: 'mundane.ArgparserApp'):
             ' those on the same calendar date.'))
 
 
-def show(args: 'argparse.Namespace') -> int:
+def show(args: 'argparse.Namespace') -> int:  # pylint: disable=too-many-locals
     """(V) Show portals sorted by date.
 
     They will be exported to a bookmarks file.

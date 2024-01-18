@@ -53,7 +53,7 @@ def route(args: 'argparse.Namespace') -> int:
     _save_as_drawtools(basename, path_info)
 
 
-def _cost(dbc, mode_cost_map, max_walking_time_allowed, begin, end):
+def _cost(dbc, mode_cost_map, max_walking_time_allowed, begin, end):  # pylint: disable=too-many-locals
     mode_cost = mode_cost_map.get((begin, end))
     if mode_cost:
         return mode_cost[1]
