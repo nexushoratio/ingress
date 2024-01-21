@@ -241,7 +241,7 @@ def _finalize(clusters, leaders, rtree_index):
     return clustered
 
 
-def _cluster_entry(  # pylint: disable=too-many-locals
+def _cluster_entry(  # pylint: disable=too-many-locals,too-many-arguments
         distance, nodes, node_map_by_projected_coords, zcta, leaders,
         rtree_index):
     multi_point = shapely.geometry.MultiPoint(

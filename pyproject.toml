@@ -62,8 +62,6 @@ disable = [
   'redefined-outer-name',
   'stop-iteration-return',
   'too-few-public-methods',
-  'too-many-arguments',
-  'too-many-function-args',
 ]
 
 [tool.pylint.miscellaneous]
