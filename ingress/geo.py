@@ -439,7 +439,9 @@ def _smaller_bites(bite, transform, max_length, max_area):
     else:
         smaller_bites = _smaller_bites(
             bite[:-1], transform, max_length, max_area)
-        yield next(smaller_bites)
+        # The fact that the following pylint exception exists is probably a
+        # good indicator that this code is overly complicated.
+        yield next(smaller_bites)  # pylint: disable=stop-iteration-return
         rest = list()
         for sprinkles in smaller_bites:
             rest.extend(sprinkles)

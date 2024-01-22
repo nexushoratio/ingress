@@ -60,8 +60,6 @@ disable = [
   'missing-function-docstring',
   'no-else-return',
   'redefined-outer-name',
-  'stop-iteration-return',
-  'too-few-public-methods',
 ]
 
 [tool.pylint.miscellaneous]
