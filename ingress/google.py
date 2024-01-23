@@ -231,13 +231,16 @@ def _call_api(base_url, parameters):
 
     if result['status'] == 'OK':
         return result
-    elif result['status'] == 'ZERO_RESULTS':
+
+    if result['status'] == 'ZERO_RESULTS':
         print('strange results:')
         pprint.pprint(result)
         return result
-    elif result['status'] == 'NOTOK':
+
+    if result['status'] == 'NOTOK':
         raise NetworkError(result)
-    elif result['status'] == 'OVER_QUERY_LIMIT':
+
+    if result['status'] == 'OVER_QUERY_LIMIT':
         raise ApiQueryLimitError(result)
-    else:
-        raise Error(result)
+
+    raise Error(result)

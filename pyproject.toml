@@ -58,7 +58,6 @@ disable = [
   'consider-using-f-string',
   'inconsistent-return-statements',
   'missing-function-docstring',
-  'no-else-return',
 ]
 
 [tool.pylint.miscellaneous]

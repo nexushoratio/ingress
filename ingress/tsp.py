@@ -36,9 +36,9 @@ def optimize(nodes, cost):
         (node_count, _path_cost(nodes, cost)))
     if node_count < 12:
         return _brute_force(nodes, cost)
-    else:
-        tmp = _greedy(nodes, cost)
-        return _k_opt(tmp[1], cost)
+
+    tmp = _greedy(nodes, cost)
+    return _k_opt(tmp[1], cost)
 
 
 def _brute_force(nodes, cost):
