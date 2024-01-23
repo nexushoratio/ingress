@@ -59,7 +59,6 @@ disable = [
   'inconsistent-return-statements',
   'missing-function-docstring',
   'no-else-return',
-  'redefined-outer-name',
 ]
 
 [tool.pylint.miscellaneous]

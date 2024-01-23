@@ -99,7 +99,7 @@ def update(args: 'argparse.Namespace') -> int:
 
 def bounds(args: 'argparse.Namespace') -> int:
     """Create a drawtools file outlining portals in multiple bookmarks files."""
-    collections = list()
+    collection_of_multi_points = list()
     for filename in itertools.chain(*args.glob):
         data = bookmarks.load(filename)
         points = list()
@@ -109,8 +109,8 @@ def bounds(args: 'argparse.Namespace') -> int:
             point = shapely.geometry.Point(lnglat)
             points.append(point)
         multi_points = shapely.geometry.MultiPoint(points)
-        collections.append(multi_points)
-    drawtools.save_bounds(args.drawtools, collections)
+        collection_of_multi_points.append(multi_points)
+    drawtools.save_bounds(args.drawtools, collection_of_multi_points)
 
 
 def trim(args: 'argparse.Namespace') -> int:
@@ -463,12 +463,12 @@ def _order_sprinkles(full_donuts):
 
 def _donuts(all_sprinkles, count):
     """Each donuts should have at least count sprinkles on it."""
-    donuts = list()
+    list_of_donuts = list()
     delta = all_sprinkles[count].distance
     radius = 0
     while all_sprinkles:
         donut = list()
-        # Keep making donuts bigger until it has at least count sprinkles on
+        # Keep making list_of_donuts bigger until it has at least count sprinkles on
         # it.
         while len(donut) < count:
             radius += delta
@@ -482,8 +482,8 @@ def _donuts(all_sprinkles, count):
             if len(all_sprinkles) < count:
                 donut.extend(all_sprinkles)
                 del all_sprinkles[:]
-        donuts.append(donut)
-    return donuts, delta
+        list_of_donuts.append(donut)
+    return list_of_donuts, delta
 
 
 @attr.s
