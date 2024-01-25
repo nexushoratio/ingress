@@ -249,6 +249,7 @@ def new():
 
 
 def _hull_indexes(rtree_index):
+    """Placeholder docstring for private function."""
     # pylint 1.6.5 cannot recognize that node_map is a dict.  This is due
     # to it being an attr.ib().  So explicitly cast it to be a dict.
     node_map = dict(rtree_index.node_map)

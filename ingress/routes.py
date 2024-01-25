@@ -54,6 +54,7 @@ def route(args: 'argparse.Namespace') -> int:
 
 
 def _cost(dbc, mode_cost_map, max_walking_time_allowed, begin, end):  # pylint: disable=too-many-locals
+    """Placeholder docstring for private function."""
     mode_cost = mode_cost_map.get((begin, end))
     if mode_cost:
         return mode_cost[1]
@@ -80,6 +81,7 @@ def _cost(dbc, mode_cost_map, max_walking_time_allowed, begin, end):  # pylint: 
 
 
 def _path_cost(dbc, path):
+    """Placeholder docstring for private function."""
     cost = 0
     for path_leg in dbc.session.query(
             database.PathLeg).filter(database.PathLeg.path_id == path.id):
@@ -90,6 +92,7 @@ def _path_cost(dbc, path):
 
 
 def _path_info(dbc, opt_path, mode_cost_map):
+    """Placeholder docstring for private function."""
     items = list()
     for begin, end in zip(opt_path, opt_path[1:]):
         mode, _ = mode_cost_map[(begin, end)]
@@ -131,11 +134,13 @@ def _kml_color(mode):
 
 
 def _latlng_as_doubles(latlng):
+    """Placeholder docstring for private function."""
     lat, lng = latlng.split(',')
     return float(lat), float(lng)
 
 
 def _build_kml_portal(factory, portal):
+    """Placeholder docstring for private function."""
     placemark = factory.CreatePlacemark()
     coordinates = factory.CreateCoordinates()
     point = factory.CreatePoint()
@@ -152,6 +157,7 @@ def _build_kml_portal(factory, portal):
 
 
 def _finalize_kml_leg_placemark(placemark, mode, duration, label):
+    """Placeholder docstring for private function."""
     name = f'{mode} for {humanize.precisedelta(duration)} to {label}'
     styleurl = '#%s' % mode
     placemark.set_name(name.encode('utf8'))
@@ -159,6 +165,7 @@ def _finalize_kml_leg_placemark(placemark, mode, duration, label):
 
 
 def _build_kml_legs(factory, legs):
+    """Placeholder docstring for private function."""
     db_path = legs[2]
     db_portal = legs[3]
 
@@ -194,6 +201,7 @@ def _build_kml_legs(factory, legs):
 
 
 def _save_as_kml(basename, path, duration):
+    """Placeholder docstring for private function."""
     # https://developers.google.com/kml/documentation/kmlreference
     del basename
     del path
@@ -201,15 +209,18 @@ def _save_as_kml(basename, path, duration):
 
 
 def _save_as_bookmarks(basename, path):
+    """Placeholder docstring for private function."""
     del basename
     del path
 
 
 def _save_as_text(basename, path):
+    """Placeholder docstring for private function."""
     del basename
     del path
 
 
 def _save_as_drawtools(basename, path):
+    """Placeholder docstring for private function."""
     del basename
     del path

@@ -117,6 +117,7 @@ class Zcta:
         return code
 
     def _point_in_any_code(self, point):
+        """Placeholder docstring for private function."""
         for index, entry in enumerate(self._codes):
             code, area = entry
             if point.intersects(area):
@@ -127,6 +128,7 @@ class Zcta:
                 return code
 
     def _load_group(self, point):
+        """Placeholder docstring for private function."""
         if self._code_index is None:
             self._load_code_index()
 
@@ -141,11 +143,13 @@ class Zcta:
                         self._codes.append((key, area))
 
     def _load_code_index(self):
+        """Placeholder docstring for private function."""
         wkt = json.load(self._full_path(self.INDEX_JSON))
         self._code_index = dict()
         for code, polygon in list(wkt.items()):
             self._code_index[code] = shapely.wkt.loads(polygon)
 
     def _full_path(self, file_name):
+        """Placeholder docstring for private function."""
         path_name = self.BASE_PATH + tuple([file_name])
         return os.path.join(*path_name)

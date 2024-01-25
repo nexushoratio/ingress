@@ -42,6 +42,7 @@ def optimize(nodes, cost):
 
 
 def _brute_force(nodes, cost):
+    """Placeholder docstring for private function."""
     best_cost = sys.maxsize
     best_path = None
     for order in itertools.permutations(nodes[1:-1]):
@@ -58,6 +59,7 @@ def _brute_force(nodes, cost):
 
 
 def _greedy(nodes, cost):
+    """Placeholder docstring for private function."""
     nodes_to_visit = set(nodes[1:-1])
     start = nodes[0]
     path = [start]
@@ -76,6 +78,7 @@ def _greedy(nodes, cost):
 
 
 def _k_opt(nodes, cost):  # pylint: disable=too-many-locals
+    """Placeholder docstring for private function."""
     node_count = len(nodes)
     best_cost = _path_cost(nodes, cost)
     best_path = nodes[:]
@@ -106,6 +109,7 @@ def _k_opt(nodes, cost):  # pylint: disable=too-many-locals
 
 
 def _path_cost(path, cost):
+    """Placeholder docstring for private function."""
     path_cost = 0
     for start, end in zip(path, path[1:]):
         path_cost += cost(start, end)
@@ -113,6 +117,7 @@ def _path_cost(path, cost):
 
 
 def _swappables(node_count, sw_count):
+    """Placeholder docstring for private function."""
     swaps = itertools.combinations(list(range(node_count)), sw_count)
     for temp_swap in swaps:
         swap = [None]

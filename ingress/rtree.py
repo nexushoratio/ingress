@@ -17,6 +17,7 @@ def rtree_index(dbc):
 
 
 def _rtree_index(node_map_by_wkt):
+    """Placeholder docstring for private function."""
     # First, find a good centroid to use for a projection, then use that
     # projection for the index
     logging.info('_rtree_index: nodes: %d', len(node_map_by_wkt))
@@ -88,16 +89,19 @@ class NodeData:  # pylint: disable=missing-docstring,too-few-public-methods
 
 
 def _latlng_str_to_point(latlng_as_str):
+    """Placeholder docstring for private function."""
     lat, lng = _latlng_str_to_floats(latlng_as_str)
     return shapely.geometry.Point(lng, lat)
 
 
 def _latlng_str_to_floats(latlng_as_str):
+    """Placeholder docstring for private function."""
     lat, lng = latlng_as_str.split(',')
     return float(lat), float(lng)
 
 
 def _closest_point(target, points):
+    """Placeholder docstring for private function."""
     # Find a known point that is the closest to the target point
     logging.info('_closest_point: near %s', target)
 
@@ -119,6 +123,7 @@ def _closest_point(target, points):
 
 
 def _node_map_by_index(index_pair, node_map_by_wkt):
+    """Placeholder docstring for private function."""
     logging.info('entered _node_map_by_index')
     node_map_by_index = dict()
     for index, pair in index_pair:

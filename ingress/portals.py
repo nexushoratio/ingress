@@ -89,6 +89,7 @@ def show(args: 'argparse.Namespace') -> int:  # pylint: disable=too-many-locals
 
 
 def _save_cleaned_bookmarks(portals, known_columns, filename):
+    """Placeholder docstring for private function."""
     for portal in list(portals.values()):
         keys_to_delete = set()
         for key in list(portal.keys()):

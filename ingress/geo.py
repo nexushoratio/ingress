@@ -224,6 +224,7 @@ def cluster(args: 'argparse.Namespace') -> int:  # pylint: disable=too-many-loca
 
 
 def _finalize(clusters, leaders, rtree_index):
+    """Placeholder docstring for private function."""
     logging.info('_finalize: %d clusters', len(clusters))
     zcta = zcta_lib.Zcta()
     node_map_by_projected_coords = {
@@ -244,6 +245,7 @@ def _finalize(clusters, leaders, rtree_index):
 def _cluster_entry(  # pylint: disable=too-many-locals,too-many-arguments
         distance, nodes, node_map_by_projected_coords, zcta, leaders,
         rtree_index):
+    """Placeholder docstring for private function."""
     multi_point = shapely.geometry.MultiPoint(
         [rtree_index.node_map[idx].projected_point for idx in nodes])
 
@@ -328,6 +330,7 @@ def _cluster_entry(  # pylint: disable=too-many-locals,too-many-arguments
 
 
 def _clean_clustered_points(graph, index, node_map, new_cluster):
+    """Placeholder docstring for private function."""
     logging.info('_clean_clustered_points: %d nodes', len(new_cluster))
     print('Cleaning out clustered points...')
     for node_index in new_cluster:
@@ -340,6 +343,7 @@ def _clean_clustered_points(graph, index, node_map, new_cluster):
 
 
 def _extract_clusters(graph):
+    """Placeholder docstring for private function."""
     logging.info('entered _extract_clusters')
     visited = set()
     for node in graph.nodes():
@@ -354,6 +358,7 @@ def _extract_clusters(graph):
 
 
 def _add_edges(graph, index, node_map_by_index, max_distance):  # pylint: disable=too-many-locals
+    """Placeholder docstring for private function."""
     logging.info('_add_edges for %d', max_distance)
     node_count = 0
     edge_count = 0
@@ -388,6 +393,7 @@ def _add_edges(graph, index, node_map_by_index, max_distance):  # pylint: disabl
 
 
 def _points_from_sprinkles(donut, transform):
+    """Placeholder docstring for private function."""
     points = (_latlng_str_to_floats(sprinkle.latlng) for sprinkle in donut)
     multi_points = shapely.geometry.MultiPoint(
         [(lng, lat) for lat, lng in points])
@@ -396,6 +402,7 @@ def _points_from_sprinkles(donut, transform):
 
 
 def _bites(full_donuts, count, transform, max_length, max_area):
+    """Placeholder docstring for private function."""
     all_bites = list()
     _order_sprinkles(full_donuts)
     for donut in full_donuts:
@@ -452,6 +459,7 @@ def _smaller_bites(bite, transform, max_length, max_area):
 
 
 def _order_sprinkles(full_donuts):
+    """Placeholder docstring for private function."""
     # sort the sprinkles by angle
     for donut in full_donuts:
         start = donut[0].angle
@@ -495,6 +503,7 @@ class PortalGeo:  # pylint: disable=missing-docstring,too-few-public-methods
 
 
 def _order_by_distance(point, dbc):
+    """Placeholder docstring for private function."""
     geod = pyproj.Geod(ellps='WGS84')
     lat = point.y
     lng = point.x
@@ -516,6 +525,7 @@ def _order_by_distance(point, dbc):
 
 
 def _portal_combos(portals):
+    """Placeholder docstring for private function."""
     for begin_portal in list(portals.values()):
         for end_portal in list(portals.values()):
             if begin_portal['guid'] != end_portal['guid']:
@@ -524,11 +534,13 @@ def _portal_combos(portals):
 
 
 def _grouper(iterable, size):
+    """Placeholder docstring for private function."""
     args = [iter(iterable)] * size
     return itertools.zip_longest(*args)
 
 
 def _update_addresses(dbc, portals):
+    """Placeholder docstring for private function."""
     now = time.time()
     needed = set()
     latlng_groups = _grouper(
@@ -551,11 +563,13 @@ def _update_addresses(dbc, portals):
 
 
 def _update_directions(dbc, portals):
+    """Placeholder docstring for private function."""
     _update_paths(dbc, portals)
     _update_path_legs(dbc, portals)
 
 
 def _update_paths(dbc, portals):  # pylint: disable=too-many-locals
+    """Placeholder docstring for private function."""
     now = time.time()
     combo_groups = _grouper(_portal_combos(portals), 64)
     for combo_group in combo_groups:
@@ -583,6 +597,7 @@ def _update_paths(dbc, portals):  # pylint: disable=too-many-locals
 
 
 def _update_path_legs(dbc, portals):
+    """Placeholder docstring for private function."""
     path_ids = set()
     for begin_portal, end_portal, mode in _portal_combos(portals):
         rows = dbc.session.query(database.Path).filter(
@@ -595,6 +610,7 @@ def _update_path_legs(dbc, portals):
 
 
 def _ensure_path_legs(dbc, path_ids):
+    """Placeholder docstring for private function."""
     path_ids = list(path_ids)
     random.shuffle(path_ids)
     print('Paths to check: %d' % len(path_ids))
@@ -603,6 +619,7 @@ def _ensure_path_legs(dbc, path_ids):
 
 
 def _ensure_path_legs_by_path_id(dbc, count, path_id):
+    """Placeholder docstring for private function."""
     db_path = dbc.session.query(database.Path).get(path_id)
 
     print(
@@ -643,6 +660,7 @@ def _ensure_path_legs_by_path_id(dbc, count, path_id):
 
 
 def _ensure_leg(dbc, path_id, leg_of_interest, mode):
+    """Placeholder docstring for private function."""
     # First look to see if there is already a matching leg, and if so,
     # use it.  If not, try to find a new leg matching and save it.
     begin, end = leg_of_interest
@@ -683,6 +701,7 @@ def _ensure_leg(dbc, path_id, leg_of_interest, mode):
 
 
 def _get_reasonable_google_leg(begin, end, mode):
+    """Placeholder docstring for private function."""
     google_leg = google.directions(begin, end, mode)
     crow_flies = _distance(begin, end)
     if mode == 'driving' and (crow_flies < 120 or google_leg.duration < 30):
@@ -706,6 +725,7 @@ def _get_reasonable_google_leg(begin, end, mode):
 
 
 def _clean(dbc):
+    """Placeholder docstring for private function."""
     now = time.time()
     oldest_allowed = now - MAX_AGE
     rows = dbc.session.query(
@@ -725,6 +745,7 @@ def _clean(dbc):
 
 
 def _distance(begin, end):
+    """Placeholder docstring for private function."""
     geod = pyproj.Geod(ellps='WGS84')
     blat, blng = _latlng_str_to_floats(begin)
     elat, elng = _latlng_str_to_floats(end)
@@ -734,5 +755,6 @@ def _distance(begin, end):
 
 
 def _latlng_str_to_floats(latlng_as_str):
+    """Placeholder docstring for private function."""
     lat, lng = latlng_as_str.split(',')
     return float(lat), float(lng)

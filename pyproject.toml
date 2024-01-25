@@ -57,7 +57,6 @@ disable = [
   # TODO(#15): The following need to be addressed
   'consider-using-f-string',
   'inconsistent-return-statements',
-  'missing-function-docstring',
 ]
 
 [tool.pylint.miscellaneous]
