@@ -56,7 +56,6 @@ disable = [
   'use-list-literal',
   # TODO(#15): The following need to be addressed
   'consider-using-f-string',
-  'inconsistent-return-statements',
 ]
 
 [tool.pylint.miscellaneous]

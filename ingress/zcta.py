@@ -126,6 +126,7 @@ class Zcta:
                     self._codes.pop(index)
                     self._codes.insert(0, entry)
                 return code
+        return None
 
     def _load_group(self, point):
         """Placeholder docstring for private function."""
