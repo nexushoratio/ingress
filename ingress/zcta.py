@@ -90,7 +90,7 @@ class Zcta:
 
         hulls_by_code = dict()
         for code, multi_polygons in list(multi_polygons_by_code.items()):
-            basename = '%s.json' % code
+            basename = f'{code}.json'
             json.save(self._full_path(basename), multi_polygons)
             hulls_by_code[code] = shapely.ops.unary_union(
                 [
@@ -137,7 +137,7 @@ class Zcta:
             if code not in self._groups_loaded:
                 if point.intersects(polygon):
                     self._groups_loaded.add(code)
-                    basename = '%s.json' % code
+                    basename = f'{code}.json'
                     group = json.load(self._full_path(basename))
                     for key, value in list(group.items()):
                         area = shapely.wkt.loads(value)

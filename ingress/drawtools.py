@@ -33,7 +33,7 @@ def save_bounds(filename, collections):
         hulls.append(
             {
                 'type': 'polygon',
-                'color': '#%06x' % color,
+                'color': f'#{color:06x}',
                 'latLngs': hull
             })
     json.save(filename, hulls)
@@ -62,7 +62,7 @@ def load_polygons(filename):
             ]
             polygons.append(shapely.geometry.Polygon(points))
         else:
-            raise TypeError('%s is a type not yet handled.' % typ)
+            raise TypeError(f'{typ} is a type not yet handled.')
 
     return shapely.geometry.MultiPolygon(polygons)
 
@@ -80,8 +80,8 @@ def load_point(filename):
     drawing = json.load(filename)
     if len(drawing) != 1:
         raise RuntimeError(
-            '%s should have one element; has %d elements instead' %
-            (filename, len(drawing)))
+            f'{filename} should have one element; has {len(drawing)} elements instead'
+        )
     element = drawing[0]
     typ = element['type']
     if typ in common_point_types:
@@ -89,7 +89,7 @@ def load_point(filename):
         lat = latlng['lat']
         lng = latlng['lng']
     else:
-        raise TypeError('%s is a type not yet handlded.' % typ)
+        raise TypeError(f'{typ} is a type not yet handled.')
 
     point = shapely.geometry.Point(lng, lat)
     return point

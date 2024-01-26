@@ -159,7 +159,7 @@ def _build_kml_portal(factory, portal):
 def _finalize_kml_leg_placemark(placemark, mode, duration, label):
     """Placeholder docstring for private function."""
     name = f'{mode} for {humanize.precisedelta(duration)} to {label}'
-    styleurl = '#%s' % mode
+    styleurl = f'#{mode}'
     placemark.set_name(name.encode('utf8'))
     placemark.set_styleurl(styleurl.encode('utf8'))
 
