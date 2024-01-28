@@ -54,8 +54,6 @@ no-docstring-rgx = "(^__|_?test.*|.*Test)"
 disable = [
   'use-dict-literal',
   'use-list-literal',
-  # TODO(#15): The following need to be addressed
-  'consider-using-f-string',
 ]
 
 [tool.pylint.miscellaneous]

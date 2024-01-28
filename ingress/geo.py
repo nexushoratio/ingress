@@ -163,10 +163,10 @@ def donuts(args: 'argparse.Namespace') -> int:  # pylint: disable=too-many-local
     transformed_points = _points_from_sprinkles(full_donuts[0], transform)
     max_area = transformed_points.convex_hull.area * FUDGE_FACTOR
     max_length = delta * 2 * FUDGE_FACTOR
-    print(('max_line:', max_length))
-    print(('max_area:', max_area))
+    print(f'max_line: {max_length}')
+    print(f'max_area: {max_area}')
     bites = _bites(full_donuts, args.size, transform, max_length, max_area)
-    print('There are %d donut bites.' % len(bites))
+    print(f'There are {len(bites)} donut bites.')
     width = len(str(len(bites)))
     for nibble, bite in enumerate(bites):
         if nibble < args.bites:
@@ -192,7 +192,7 @@ def cluster(args: 'argparse.Namespace') -> int:  # pylint: disable=too-many-loca
 
     distance = START_DISTANCE
     while distance < MAX_DISTANCE:
-        print('Looking for distance %d' % distance)
+        print(f'Looking for distance {distance}')
         to_clean = set()
 
         _add_edges(graph, rtree_index.index, rtree_index.node_map, distance)
@@ -553,7 +553,7 @@ def _update_addresses(dbc, portals):
         have = {row.latlng for row in rows}
         needed.difference_update(have)
 
-    print('Addresses needed: %d' % len(needed))
+    print(f'Addresses needed: {len(needed)}')
     for latlng in needed:
         street_address = google.latlng_to_address(latlng)
         db_address = database.Address(
@@ -613,7 +613,7 @@ def _ensure_path_legs(dbc, path_ids):
     """Placeholder docstring for private function."""
     path_ids = list(path_ids)
     random.shuffle(path_ids)
-    print('Paths to check: %d' % len(path_ids))
+    print(f'Paths to check: {len(path_ids)}')
     for count, path_id in enumerate(path_ids):
         _ensure_path_legs_by_path_id(dbc, count, path_id)
 
@@ -623,8 +623,8 @@ def _ensure_path_legs_by_path_id(dbc, count, path_id):
     db_path = dbc.session.query(database.Path).get(path_id)
 
     print(
-        '%4d path_id: %4d|%23s|%23s' %
-        (count, path_id, db_path.begin_latlng, db_path.end_latlng))
+        f'{count:4} path_id: {path_id:4}|{db_path.begin_latlng:23}'
+        f'|{db_path.end_latlng:23}')
 
     path_complete = False
     attempts = 1
@@ -637,7 +637,7 @@ def _ensure_path_legs_by_path_id(dbc, count, path_id):
         if legs:
             sorted_legs = list(toposort.toposort(legs))
             if len(sorted_legs[0]) > 1:
-                print('There is a hole for path %d.  Clearing.' % path_id)
+                print(f'There is a hole for path {path_id}.  Clearing.')
                 dbc.session.query(database.PathLeg).filter(
                     database.PathLeg.path_id == path_id).delete()
                 dbc.session.commit()
@@ -716,11 +716,23 @@ def _get_reasonable_google_leg(begin, end, mode):
             google.encode_polyline(
                 (_latlng_str_to_floats(begin), _latlng_str_to_floats(end))))
 
-    print('wanted: %23s %23s %7s %5d' % (begin, end, mode, crow_flies))
+    fmt = '{state:7}: {begin:23} {end:23} {mode:7} {distance:5}'
     print(
-        'got:    %23s %23s %7s %5d' % (
-            google_leg.begin_latlng, google_leg.end_latlng, google_leg.mode,
-            _distance(google_leg.begin_latlng, google_leg.end_latlng)))
+        fmt.format(
+            state='wanted',
+            begin=begin,
+            end=end,
+            mode=mode,
+            distance=crow_flies))
+    print(
+        fmt.format(
+            state='got',
+            begin=google_leg.begin_latlng,
+            end=google_leg.end_latlng,
+            mode=google_leg.mode,
+            distance=_distance(
+                google_leg.begin_latlng, google_leg.end_latlng)))
+
     return google_leg
 
 
