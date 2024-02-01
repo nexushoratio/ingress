@@ -194,7 +194,7 @@ def find_missing_labels(args: 'argparse.Namespace') -> int:
     add them to a newly created bookmarks file instead.  The contents of
     the destination bookmarks file will be destroyed.
     """
-    missing_portals = dict()
+    missing_portals: dict[str, dict] = dict()
     save(missing_portals, args.bookmarks)
     for filename in itertools.chain(*args.glob):
         missing_guids = set()
@@ -219,7 +219,7 @@ def merge(args: 'argparse.Namespace') -> int:
     Inputs will be the files specified by the glob arguments.  The
     contents of the destination bookmarks file will be destroyed.
     """
-    portals = dict()
+    portals: dict[str, dict] = dict()
     save(portals, args.bookmarks)
     for filename in itertools.chain(*args.glob):
         portals.update(load(filename))

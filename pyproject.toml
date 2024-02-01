@@ -79,7 +79,6 @@ disable_error_code = [
   'name-defined',
   'return',
   'valid-type',
-  'var-annotated',
 ]
 
 [tool.coverage.run]
