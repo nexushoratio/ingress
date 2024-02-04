@@ -77,7 +77,6 @@ disable_error_code = [
   'import',
   'misc',
   'name-defined',
-  'return',
 ]
 
 [[tool.mypy.overrides]]

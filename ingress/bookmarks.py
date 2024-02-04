@@ -106,6 +106,8 @@ def ingest(args: 'argparse.Namespace') -> int:
 
     dbc.session.commit()
 
+    return 0
+
 
 def expunge(args: 'argparse.Namespace') -> int:
     """(V) Remove portals listed in a bookmarks file from the database."""
@@ -117,6 +119,8 @@ def expunge(args: 'argparse.Namespace') -> int:
         dbc.session.delete(db_portal)
 
     dbc.session.commit()
+
+    return 0
 
 
 def export(args: 'argparse.Namespace') -> int:
@@ -143,11 +147,15 @@ def export(args: 'argparse.Namespace') -> int:
             guids.update(node.guids)
         save_from_guids(guids, args.bookmarks, dbc)
 
+    return 0
+
 
 def flatten(args: 'argparse.Namespace') -> int:
     """(V) Load portals from BOOKMARKS and write out as lists using PATTERN."""
     portals = load(args.bookmarks)
     json.save_by_size(list(portals.values()), args.size, args.pattern)
+
+    return 0
 
 
 def load(filename):
@@ -212,6 +220,8 @@ def find_missing_labels(args: 'argparse.Namespace') -> int:
             os.utime(filename, (ftime.st_atime, ftime.st_mtime))
     print(f'Portals missing labels: {len(missing_portals)}')
 
+    return 0
+
 
 def merge(args: 'argparse.Namespace') -> int:
     """(V) Merge multiple bookmarks files into one.
@@ -225,6 +235,8 @@ def merge(args: 'argparse.Namespace') -> int:
         portals.update(load(filename))
 
     save(portals, args.bookmarks)
+
+    return 0
 
 
 def new():

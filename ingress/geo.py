@@ -96,6 +96,8 @@ def update(args: 'argparse.Namespace') -> int:
     if args.directions:
         _update_directions(args.dbc, portals)
 
+    return 0
+
 
 def bounds(args: 'argparse.Namespace') -> int:
     """Create a drawtools file outlining portals in multiple bookmarks files."""
@@ -111,6 +113,8 @@ def bounds(args: 'argparse.Namespace') -> int:
         multi_points = shapely.geometry.MultiPoint(points)
         collection_of_multi_points.append(multi_points)
     drawtools.save_bounds(args.drawtools, collection_of_multi_points)
+
+    return 0
 
 
 def trim(args: 'argparse.Namespace') -> int:
@@ -134,6 +138,8 @@ def trim(args: 'argparse.Namespace') -> int:
     if to_delete:
         print(('deleting:', to_delete))
         bookmarks.save(portals, args.bookmarks)
+
+    return 0
 
 
 def donuts(args: 'argparse.Namespace') -> int:  # pylint: disable=too-many-locals
@@ -174,6 +180,8 @@ def donuts(args: 'argparse.Namespace') -> int:  # pylint: disable=too-many-local
                 size=args.size, width=width, bite=nibble)
             guids = (sprinkle.guid for sprinkle in bite)
             bookmarks.save_from_guids(guids, filename, dbc)
+
+    return 0
 
 
 def cluster(args: 'argparse.Namespace') -> int:  # pylint: disable=too-many-locals
@@ -221,6 +229,8 @@ def cluster(args: 'argparse.Namespace') -> int:  # pylint: disable=too-many-loca
         db_cluster_leader = database.ClusterLeader(guid=guid)
         dbc.session.add(db_cluster_leader)
     dbc.session.commit()
+
+    return 0
 
 
 def _finalize(clusters, leaders, rtree_index):

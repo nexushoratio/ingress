@@ -52,6 +52,8 @@ def route(args: 'argparse.Namespace') -> int:
     _save_as_text(basename, path_info)
     _save_as_drawtools(basename, path_info)
 
+    return 0
+
 
 def _cost(dbc, mode_cost_map, max_walking_time_allowed, begin, end):  # pylint: disable=too-many-locals
     """Placeholder docstring for private function."""

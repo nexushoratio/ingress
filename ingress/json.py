@@ -56,6 +56,8 @@ def clean(args: 'argparse.Namespace') -> int:
     data = load(args.filename)
     save(args.filename, data)
 
+    return 0
+
 
 def save_by_size(data, size, pattern):
     """Save contents from a list into a series of file of a certain size."""

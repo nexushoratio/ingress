@@ -88,6 +88,8 @@ def show(args: 'argparse.Namespace') -> int:  # pylint: disable=too-many-locals
     print('=======\n\n'.join(text_output))
     _save_cleaned_bookmarks(portals, known_columns, args.bookmarks)
 
+    return 0
+
 
 def _save_cleaned_bookmarks(portals, known_columns, filename):
     """Placeholder docstring for private function."""
