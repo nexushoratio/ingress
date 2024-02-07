@@ -191,7 +191,7 @@ def cluster(args: 'argparse.Namespace') -> int:  # pylint: disable=too-many-loca
     """
     dbc = args.dbc
     rtree_index = rtree.rtree_index(dbc)
-    graph = pygraph.graph()  # pylint: disable=undefined-variable
+    graph = pygraph.graph()  # type: ignore[name-defined] # pylint: disable=undefined-variable
     graph.add_nodes(iter(list(rtree_index.node_map.keys())))  # pylint: disable=no-member
     clusters = set()
     leaders = frozenset(
