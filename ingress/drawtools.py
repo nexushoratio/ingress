@@ -1,12 +1,20 @@
 """Functions for working with IITC drawtools files."""
+from __future__ import annotations
+
+import typing
 
 import pyproj
 import shapely
 
 from ingress import json
 
+if typing.TYPE_CHECKING:  # pragma: no cover
+    import argparse
 
-def mundane_shared_flags(ctx: 'mundane.ArgparserApp'):
+    from mundane import app
+
+
+def mundane_shared_flags(ctx: app.ArgparseApp):
     """Register shared flags."""
     parser = ctx.new_shared_parser('drawtools')
     parser.add_argument(

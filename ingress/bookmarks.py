@@ -1,9 +1,12 @@
 """Functions to work with IITC bookmarks files."""
 
+from __future__ import annotations
+
 import glob
 import itertools
 import logging
 import os
+import typing
 
 import shapely
 
@@ -11,8 +14,13 @@ from ingress import database
 from ingress import json
 from ingress import rtree
 
+if typing.TYPE_CHECKING:  # pragma: no cover
+    import argparse
 
-def mundane_shared_flags(ctx: 'mundane.ArgparserApp'):
+    from mundane import app
+
+
+def mundane_shared_flags(ctx: app.ArgparseApp):
     """Register shared flags."""
     parser = ctx.new_shared_parser('bookmarks')
     parser.add_argument(
@@ -34,7 +42,7 @@ def mundane_shared_flags(ctx: 'mundane.ArgparserApp'):
             ' instead of the shell.  May be specified multiple times.'))
 
 
-def mundane_commands(ctx: 'mundane.ArgparserApp'):
+def mundane_commands(ctx: app.ArgparseApp):
     """Register commands."""
     bm_flags = ctx.get_shared_parser('bookmarks')
     glob_flags = ctx.get_shared_parser('glob')
@@ -72,7 +80,7 @@ def mundane_commands(ctx: 'mundane.ArgparserApp'):
     ctx.register_command(merge, parents=[bm_flags, glob_flags])
 
 
-def ingest(args: 'argparse.Namespace') -> int:
+def ingest(args: argparse.Namespace) -> int:
     """(V) Update the database with portals listed in a bookmarks file."""
     dbc = args.dbc
     portals = load(args.bookmarks)
@@ -109,7 +117,7 @@ def ingest(args: 'argparse.Namespace') -> int:
     return 0
 
 
-def expunge(args: 'argparse.Namespace') -> int:
+def expunge(args: argparse.Namespace) -> int:
     """(V) Remove portals listed in a bookmarks file from the database."""
     dbc = args.dbc
     portals = load(args.bookmarks)
@@ -123,7 +131,7 @@ def expunge(args: 'argparse.Namespace') -> int:
     return 0
 
 
-def export(args: 'argparse.Namespace') -> int:
+def export(args: argparse.Namespace) -> int:
     """(V) Export all portals as a bookmarks file."""
     dbc = args.dbc
     if args.samples is None:
@@ -150,7 +158,7 @@ def export(args: 'argparse.Namespace') -> int:
     return 0
 
 
-def flatten(args: 'argparse.Namespace') -> int:
+def flatten(args: argparse.Namespace) -> int:
     """(V) Load portals from BOOKMARKS and write out as lists using PATTERN."""
     portals = load(args.bookmarks)
     json.save_by_size(list(portals.values()), args.size, args.pattern)
@@ -195,7 +203,7 @@ def save_from_guids(guids, filename, dbc):
     save(portals, filename)
 
 
-def find_missing_labels(args: 'argparse.Namespace') -> int:
+def find_missing_labels(args: argparse.Namespace) -> int:
     """(V) Look through globs of bookmarks for missing labels.
 
     It will remove portals with missing labels from the bookmarks and
@@ -223,7 +231,7 @@ def find_missing_labels(args: 'argparse.Namespace') -> int:
     return 0
 
 
-def merge(args: 'argparse.Namespace') -> int:
+def merge(args: argparse.Namespace) -> int:
     """(V) Merge multiple bookmarks files into one.
 
     Inputs will be the files specified by the glob arguments.  The

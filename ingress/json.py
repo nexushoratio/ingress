@@ -1,9 +1,17 @@
 """Utilities to work with JSON files."""
 
+from __future__ import annotations
+
 import json
 import os
 import tempfile
 import time
+import typing
+
+if typing.TYPE_CHECKING:  # pragma: no cover
+    import argparse
+
+    from mundane import app
 
 _JSON_DUMP_OPTS = {
     'indent': 2,
@@ -11,7 +19,7 @@ _JSON_DUMP_OPTS = {
 }
 
 
-def mundane_shared_flags(ctx: 'mundane.ArgparserApp'):
+def mundane_shared_flags(ctx: app.ArgparseApp):
     """Register shared flags."""
     parser = ctx.new_shared_parser('file')
     parser.add_argument(
@@ -22,7 +30,7 @@ def mundane_shared_flags(ctx: 'mundane.ArgparserApp'):
         help='Any arbitrary file argument.')
 
 
-def mundane_commands(ctx: 'mundane.ArgparserApp'):
+def mundane_commands(ctx: app.ArgparseApp):
     """Register commands."""
     file_flags = ctx.get_shared_parser('file')
 
@@ -51,7 +59,7 @@ def save(out_name, data):
     os.rename(handle.name, out_name)
 
 
-def clean(args: 'argparse.Namespace') -> int:
+def clean(args: argparse.Namespace) -> int:
     """(V) Clean and format a json file."""
     data = load(args.filename)
     save(args.filename, data)

@@ -1,5 +1,7 @@
 """Functions for all things geo related."""
 
+from __future__ import annotations
+
 import collections
 import functools
 import itertools
@@ -7,6 +9,7 @@ import logging
 import random
 import sys
 import time
+import typing
 
 import attr
 import pyproj
@@ -25,6 +28,11 @@ from ingress import json
 from ingress import rtree
 from ingress import zcta as zcta_lib
 
+if typing.TYPE_CHECKING:  # pragma: no cover
+    import argparse
+
+    from mundane import app
+
 MAX_AGE = 90 * 24 * 60 * 60
 FUDGE_FACTOR = 1.1
 MINIMAL_CLUSTER_SIZE = 10
@@ -32,7 +40,7 @@ START_DISTANCE = 75
 MAX_DISTANCE = START_DISTANCE * 4 + 1
 
 
-def mundane_commands(ctx: 'mundane.ArgparserApp'):
+def mundane_commands(ctx: app.ArgparseApp):
     """Parser registration API."""
     bm_flags = ctx.get_shared_parser('bookmarks')
     dt_flags = ctx.get_shared_parser('drawtools')
@@ -87,7 +95,7 @@ def mundane_commands(ctx: 'mundane.ArgparserApp'):
             ' strings with the following fields:  size, width, bite'))
 
 
-def update(args: 'argparse.Namespace') -> int:
+def update(args: argparse.Namespace) -> int:
     """Update the locations and directions for portals in a bookmarks file."""
     portals = bookmarks.load(args.bookmarks)
     _clean(args.dbc)
@@ -99,7 +107,7 @@ def update(args: 'argparse.Namespace') -> int:
     return 0
 
 
-def bounds(args: 'argparse.Namespace') -> int:
+def bounds(args: argparse.Namespace) -> int:
     """Create a drawtools file outlining portals in multiple bookmarks files."""
     collection_of_multi_points = list()
     for filename in itertools.chain(*args.glob):
@@ -117,7 +125,7 @@ def bounds(args: 'argparse.Namespace') -> int:
     return 0
 
 
-def trim(args: 'argparse.Namespace') -> int:
+def trim(args: argparse.Namespace) -> int:
     """Trim a bookmarks file to only include portals inside a boundary."""
     if shapely.speedups.available:
         shapely.speedups.enable()
@@ -142,7 +150,7 @@ def trim(args: 'argparse.Namespace') -> int:
     return 0
 
 
-def donuts(args: 'argparse.Namespace') -> int:  # pylint: disable=too-many-locals
+def donuts(args: argparse.Namespace) -> int:  # pylint: disable=too-many-locals
     """Automatically group portals into COUNT sized bookmarks files.
 
     The idea is to provide a series of bookmarks that would be suitably
@@ -184,7 +192,7 @@ def donuts(args: 'argparse.Namespace') -> int:  # pylint: disable=too-many-local
     return 0
 
 
-def cluster(args: 'argparse.Namespace') -> int:  # pylint: disable=too-many-locals
+def cluster(args: argparse.Namespace) -> int:  # pylint: disable=too-many-locals
     """Find clusters of portals together and save the results.
 
     The clustering results are saved into FILENAME.

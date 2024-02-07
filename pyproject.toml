@@ -76,7 +76,6 @@ disable_error_code = [
   'dict-item',
   'import',
   'misc',
-  'name-defined',
 ]
 
 [[tool.mypy.overrides]]

@@ -1,13 +1,21 @@
 """Functions to work with portals directly."""
 
+from __future__ import annotations
+
 import collections
 import time
+import typing
 
 from ingress import bookmarks
 from ingress import database
 
+if typing.TYPE_CHECKING:  # pragma: no cover
+    import argparse
 
-def mundane_commands(ctx: 'mundane.ArgparserApp'):
+    from mundane import app
+
+
+def mundane_commands(ctx: app.ArgparseApp):
     """Register commands."""
     bm_flags = ctx.get_shared_parser('bookmarks')
 
@@ -40,7 +48,7 @@ def mundane_commands(ctx: 'mundane.ArgparserApp'):
             ' those on the same calendar date.'))
 
 
-def show(args: 'argparse.Namespace') -> int:  # pylint: disable=too-many-locals
+def show(args: argparse.Namespace) -> int:  # pylint: disable=too-many-locals
     """(V) Show portals sorted by date.
 
     They will be exported to a bookmarks file.

@@ -1,7 +1,10 @@
 """Create and save routes between portals."""
 
+from __future__ import annotations
+
 import collections
 import os
+import typing
 
 import humanize
 # import kmldom
@@ -12,13 +15,18 @@ from ingress import database
 from ingress import google
 from ingress import tsp
 
+if typing.TYPE_CHECKING:  # pragma: no cover
+    import argparse
+
+    from mundane import app
+
 COLORS = {
     'walking': '#ff6eb4',
     'driving': '#00ff00',
 }
 
 
-def mundane_commands(ctx: 'mundane.ArgparserApp'):
+def mundane_commands(ctx: app.ArgparseApp):
     """Register commands."""
     bm_flags = ctx.get_shared_parser('bookmarks')
 
@@ -32,7 +40,7 @@ def mundane_commands(ctx: 'mundane.ArgparserApp'):
         default=300)
 
 
-def route(args: 'argparse.Namespace') -> int:
+def route(args: argparse.Namespace) -> int:
     """Calculate an optimal route between portals listed in a bookmarks file."""
     dbc = args.dbc
     mode_cost_map: dict[tuple[str, str], tuple[str, float]] = dict()
