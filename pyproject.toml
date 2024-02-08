@@ -75,7 +75,6 @@ disable_error_code = [
   'call-arg',
   'dict-item',
   'import',
-  'misc',
 ]
 
 [[tool.mypy.overrides]]
@@ -84,6 +83,7 @@ disable_error_code = [
 # probably work, but since I refuse to, just disable this error in this file.
 module = 'ingress.database'
 disable_error_code = [
+  'misc',
   'valid-type',
 ]
 
