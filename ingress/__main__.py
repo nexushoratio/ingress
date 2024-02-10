@@ -6,6 +6,7 @@ Mostly this works on data saved via IITC, like saved bookmarks and drawtools.
 import sys
 
 from mundane import app
+from mundane import log_mgr
 
 from ingress import bookmarks
 from ingress import database
@@ -18,6 +19,7 @@ from ingress import routes
 
 def main():
     """The Ingress app."""
+    log_mgr.set_root_log_level('INFO')
     ingress_app = app.ArgparseApp(
         use_log_mgr=True, use_docstring_for_description=sys.modules[__name__])
     modules = (bookmarks, drawtools, geo, json, portals, routes)
