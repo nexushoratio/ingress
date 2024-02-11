@@ -36,7 +36,7 @@ def mundane_shared_flags(ctx: app.ArgparseApp):
         '--glob',
         action='append',
         required=True,
-        type=glob.iglob,
+        type=glob.iglob,  # type: ignore[arg-type]  # old version of mypy
         help=(
             'A filename glob that will be matched by the program'
             ' instead of the shell.  May be specified multiple times.'))
