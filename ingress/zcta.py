@@ -26,10 +26,10 @@ import logging
 import os.path
 
 import shapefile
-import shapely.geometry
-import shapely.ops
-import shapely.wkt
-import shapely.speedups
+import shapely.geometry  # type: ignore[import]
+import shapely.ops  # type: ignore[import]
+import shapely.wkt  # type: ignore[import]
+import shapely.speedups  # type: ignore[import]
 
 from ingress import json
 

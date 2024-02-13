@@ -8,7 +8,7 @@ import logging
 import os
 import typing
 
-import shapely
+import shapely  # type: ignore[import]
 
 from ingress import database
 from ingress import json

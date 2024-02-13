@@ -13,7 +13,7 @@ import typing
 
 import attr
 import pyproj
-import shapely
+import shapely  # type: ignore[import]
 import toposort
 
 # from pygraph.algorithms import traversal as pytraversal

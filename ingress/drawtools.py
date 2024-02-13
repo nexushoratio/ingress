@@ -4,7 +4,7 @@ from __future__ import annotations
 import typing
 
 import pyproj
-import shapely
+import shapely  # type: ignore[import]
 
 from ingress import json
 
