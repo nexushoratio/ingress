@@ -73,7 +73,6 @@ disable_error_code = [
   'assignment',
   'attr-defined',
   'call-arg',
-  'dict-item',
 ]
 
 [[tool.mypy.overrides]]

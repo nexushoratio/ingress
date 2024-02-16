@@ -17,7 +17,7 @@ _BINARY = {
     'N': False,
 }
 
-_TRINARY = _BINARY.copy()
+_TRINARY: dict[str, bool | str] = _BINARY.copy()
 _TRINARY.update({'null': 'null'})
 
 
