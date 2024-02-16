@@ -22,12 +22,13 @@ _JSON_DUMP_OPTS = {
 def mundane_shared_flags(ctx: app.ArgparseApp):
     """Register shared flags."""
     parser = ctx.new_shared_parser('file')
-    parser.add_argument(
-        '-f',
-        '--filename',
-        action='store',
-        required=True,
-        help='Any arbitrary file argument.')
+    if parser:
+        parser.add_argument(
+            '-f',
+            '--filename',
+            action='store',
+            required=True,
+            help='Any arbitrary file argument.')
 
 
 def mundane_commands(ctx: app.ArgparseApp):

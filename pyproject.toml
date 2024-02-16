@@ -75,7 +75,6 @@ disable_error_code = [
   'call-arg',
   'dict-item',
   'import',
-  'union-attr',
 ]
 
 [[tool.mypy.overrides]]

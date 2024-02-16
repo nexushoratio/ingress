@@ -23,23 +23,25 @@ if typing.TYPE_CHECKING:  # pragma: no cover
 def mundane_shared_flags(ctx: app.ArgparseApp):
     """Register shared flags."""
     parser = ctx.new_shared_parser('bookmarks')
-    parser.add_argument(
-        '-b',
-        '--bookmarks',
-        action='store',
-        required=True,
-        help='IITC bookmarks json file to use')
+    if parser:
+        parser.add_argument(
+            '-b',
+            '--bookmarks',
+            action='store',
+            required=True,
+            help='IITC bookmarks json file to use')
 
     parser = ctx.new_shared_parser('glob')
-    parser.add_argument(
-        '-g',
-        '--glob',
-        action='append',
-        required=True,
-        type=glob.iglob,  # type: ignore[arg-type]  # old version of mypy
-        help=(
-            'A filename glob that will be matched by the program'
-            ' instead of the shell.  May be specified multiple times.'))
+    if parser:
+        parser.add_argument(
+            '-g',
+            '--glob',
+            action='append',
+            required=True,
+            type=glob.iglob,  # type: ignore[arg-type]  # old version of mypy
+            help=(
+                'A filename glob that will be matched by the program'
+                ' instead of the shell.  May be specified multiple times.'))
 
 
 def mundane_commands(ctx: app.ArgparseApp):

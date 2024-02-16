@@ -17,12 +17,13 @@ if typing.TYPE_CHECKING:  # pragma: no cover
 def mundane_shared_flags(ctx: app.ArgparseApp):
     """Register shared flags."""
     parser = ctx.new_shared_parser('drawtools')
-    parser.add_argument(
-        '-d',
-        '--drawtools',
-        action='store',
-        required=True,
-        help='IITC drawtools json file to use')
+    if parser:
+        parser.add_argument(
+            '-d',
+            '--drawtools',
+            action='store',
+            required=True,
+            help='IITC drawtools json file to use')
 
 
 def save_bounds(filename, collections):
