@@ -25,7 +25,7 @@ import logging
 
 import os.path
 
-import shapefile
+import shapefile  # type: ignore[import]
 import shapely.geometry  # type: ignore[import]
 import shapely.ops  # type: ignore[import]
 import shapely.wkt  # type: ignore[import]
