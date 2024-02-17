@@ -72,7 +72,6 @@ disable_error_code = [
   # TODO(#18): Fix these.
   'assignment',
   'attr-defined',
-  'call-arg',
 ]
 
 [[tool.mypy.overrides]]
