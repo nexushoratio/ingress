@@ -71,7 +71,6 @@ files = 'ingress'
 disable_error_code = [
   # TODO(#18): Fix these.
   'assignment',
-  'attr-defined',
 ]
 
 [[tool.mypy.overrides]]

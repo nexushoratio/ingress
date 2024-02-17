@@ -137,9 +137,8 @@ def export(args: argparse.Namespace) -> int:
     """(V) Export all portals as a bookmarks file."""
     dbc = args.dbc
     if args.samples is None:
-        guids = [
-            result[0] for result in dbc.session.query(database.Portal.guid)
-        ]
+        guids = set(
+            result[0] for result in dbc.session.query(database.Portal.guid))
         save_from_guids(guids, args.bookmarks, dbc)
     else:
         rtree_index = rtree.rtree_index(dbc)
