@@ -1,12 +1,14 @@
 """Functions to manage and use location codes associated with portals."""
 
+import typing
+
 from ingress import database
 
 # This module is currently unused and will get a rewrite.  Meanwhile, ignore
 # some issues.
 # pylint: disable=no-member
 
-_BINARY = {
+_BINARY: dict[str, bool] = {
     'true': True,
     'True': True,
     'y': True,
@@ -17,7 +19,7 @@ _BINARY = {
     'N': False,
 }
 
-_TRINARY: dict[str, bool | str] = _BINARY.copy()
+_TRINARY = typing.cast(dict[str, bool | str], _BINARY.copy())
 _TRINARY.update({'null': 'null'})
 
 

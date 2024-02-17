@@ -68,10 +68,6 @@ generated-member = [
 
 [tool.mypy]
 files = 'ingress'
-disable_error_code = [
-  # TODO(#18): Fix these.
-  'assignment',
-]
 
 [[tool.mypy.overrides]]
 # The sqlalchemy/mypy combo on Debian/bookworm are incompatible with the
