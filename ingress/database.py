@@ -1,11 +1,33 @@
 """Database connector for Ingress stuff."""
 
+from __future__ import annotations
+
 import logging
+import typing
+
 import sqlalchemy
 from sqlalchemy.ext import declarative
 from sqlalchemy import orm
 
+if typing.TYPE_CHECKING:  # pragma: no cover
+    from mundane import app
+
 # pylint: disable=too-few-public-methods
+
+
+def mundane_global_flags(ctx: app.ArgparseApp):
+    """Register global flags."""
+    ctx.global_flags.add_argument(
+        '--db-dir',
+        help='Database directory (Default: %(default)s)',
+        action='store',
+        default=ctx.dirs.user_data_dir)
+
+    ctx.global_flags.add_argument(
+        '--db-name',
+        help='Database file name (Default: %(default)s)',
+        action='store',
+        default=f'{ctx.appname}.db')
 
 
 @sqlalchemy.event.listens_for(sqlalchemy.engine.Engine, 'connect')

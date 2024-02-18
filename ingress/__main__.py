@@ -22,7 +22,7 @@ def main():
     log_mgr.set_root_log_level('INFO')
     ingress_app = app.ArgparseApp(
         use_log_mgr=True, use_docstring_for_description=sys.modules[__name__])
-    modules = (bookmarks, drawtools, geo, json, portals, routes)
+    modules = (bookmarks, database, drawtools, geo, json, portals, routes)
     ingress_app.register_global_flags(modules)
     ingress_app.register_shared_flags(modules)
     ingress_app.register_commands(modules)
