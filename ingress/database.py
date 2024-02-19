@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import pathlib
 import typing
 
 import sqlalchemy
@@ -10,6 +11,8 @@ from sqlalchemy.ext import declarative
 from sqlalchemy import orm
 
 if typing.TYPE_CHECKING:  # pragma: no cover
+    import argparse
+
     from mundane import app
 
 # pylint: disable=too-few-public-methods
@@ -28,6 +31,18 @@ def mundane_global_flags(ctx: app.ArgparseApp):
         help='Database file name (Default: %(default)s)',
         action='store',
         default=f'{ctx.appname}.db')
+
+    ctx.register_after_parse_hook(init_db)
+
+
+def init_db(args: argparse.Namespace):
+    """Initialize the database using command line arguments."""
+
+    # Do not bother if no command was given.
+    if args.name:
+        args.dbc = Database(args.db_dir, args.db_name)
+        del args.db_dir
+        del args.db_name
 
 
 @sqlalchemy.event.listens_for(sqlalchemy.engine.Engine, 'connect')
@@ -135,10 +150,11 @@ class Address(Base):  # pylint: disable=missing-docstring
 
 class Database:  # pylint: disable=missing-docstring
 
-    def __init__(self):
+    def __init__(self, directory: str, filename: str):
+        pathlib.Path(directory).mkdir(exist_ok=True)
         sql_logger = logging.getLogger('sqlalchemy')
         root_logger = logging.getLogger()
         sql_logger.setLevel(root_logger.getEffectiveLevel())
-        engine = sqlalchemy.create_engine('sqlite:////home/nexus/ingress.db')
+        engine = sqlalchemy.create_engine(f'sqlite:///{directory}/{filename}')
         self.session = orm.sessionmaker(bind=engine)()
         Base.metadata.create_all(engine)

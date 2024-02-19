@@ -27,9 +27,6 @@ def main():
     ingress_app.register_shared_flags(modules)
     ingress_app.register_commands(modules)
 
-    dbc = database.Database()
-    ingress_app.parser.set_defaults(dbc=dbc)
-
     sys.exit(ingress_app.run())
 
 

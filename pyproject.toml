@@ -12,7 +12,7 @@ authors = [
   {name = 'Mike Castle', email = 'dalgoda@gmail.com'},
 ]
 dependencies = [
-  'mundane>=1',
+  'mundane>=1.dev112',
   'attrs>=22.2.0',
   'pyproj>=3.4.1',
   'pyshp>=2.3.1',
