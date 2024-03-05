@@ -46,8 +46,10 @@ def init_db(args: argparse.Namespace):
 
 
 @sqlalchemy.event.listens_for(sqlalchemy.engine.Engine, 'connect')
-def set_sqlite_pragma(dbapi_connection, _connection_record):
+def on_connect(dbapi_connection, _connection_record):
     """Defaults for our connection."""
+    dbapi_connection.enable_load_extension(True)
+    dbapi_connection.load_extension('mod_spatialite')
     cursor = dbapi_connection.cursor()
     cursor.execute("PRAGMA foreign_keys=ON")
     cursor.close()
