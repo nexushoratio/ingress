@@ -156,6 +156,7 @@ class Database:  # pylint: disable=missing-docstring
         sql_logger = logging.getLogger('sqlalchemy')
         root_logger = logging.getLogger()
         sql_logger.setLevel(root_logger.getEffectiveLevel())
-        engine = sqlalchemy.create_engine(f'sqlite:///{directory}/{filename}')
-        self.session = orm.sessionmaker(bind=engine)()
+        engine = sqlalchemy.create_engine(
+            f'sqlite:///{directory}/{filename}', future=True)
+        self.session = orm.sessionmaker(bind=engine, future=True)()
         Base.metadata.create_all(engine)
