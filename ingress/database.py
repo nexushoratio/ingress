@@ -7,7 +7,6 @@ import pathlib
 import typing
 
 import sqlalchemy
-from sqlalchemy.ext import declarative
 from sqlalchemy import orm
 
 if typing.TYPE_CHECKING:  # pragma: no cover
@@ -55,7 +54,7 @@ def on_connect(dbapi_connection, _connection_record):
     cursor.close()
 
 
-Base = declarative.declarative_base()  # pylint: disable=invalid-name
+Base = orm.declarative_base()  # pylint: disable=invalid-name
 
 
 class Portal(Base):  # pylint: disable=missing-docstring
