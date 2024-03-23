@@ -127,6 +127,7 @@ class PathLeg(Base):  # pylint: disable=missing-docstring
         sqlalchemy.ForeignKey('paths.id', ondelete='CASCADE'))
 
 
+# If any path_leg is deleted, remove all associated ones
 sqlalchemy.event.listen(
     PathLeg.__table__,  # pylint: disable=no-member
     'after_create',
