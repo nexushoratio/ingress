@@ -51,6 +51,9 @@ def on_connect(dbapi_connection, _connection_record):
     dbapi_connection.load_extension('mod_spatialite')
     dbapi_connection.enable_load_extension(False)
     dbapi_connection.execute('PRAGMA foreign_keys=ON')
+    cur = dbapi_connection.execute('SELECT CheckSpatialMetaData();')
+    if cur.fetchone()[0] < 1:
+        dbapi_connection.execute('SELECT InitSpatialMetaData(1);')
 
 
 Base = orm.declarative_base()  # pylint: disable=invalid-name
