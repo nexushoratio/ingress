@@ -119,7 +119,7 @@ def expunge(args: argparse.Namespace) -> int:
     portals = load(args.bookmarks)
     for db_portal in dbc.session.query(database.Portal).filter(
             database.Portal.guid.in_(portals)):
-        print(('Deleting', db_portal.label, db_portal.last_seen))
+        print('Deleting', db_portal.label, db_portal.last_seen)
         dbc.session.delete(db_portal)
 
     dbc.session.commit()
