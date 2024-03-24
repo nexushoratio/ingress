@@ -88,13 +88,12 @@ def ingest(args: argparse.Namespace) -> int:
     portals = load(args.bookmarks)
     timestamp = os.stat(args.bookmarks).st_mtime
 
-    for portal in list(portals.values()):
+    for portal in portals.values():
         portal['last_seen'] = timestamp
 
     # Look for existing portals first
-    keys = set(portals.keys())
     rows = dbc.session.query(database.Portal).filter(
-        database.Portal.guid.in_(keys))
+        database.Portal.guid.in_(portals))
     for row in rows:
         guid = row.guid
         portal = portals[guid]
@@ -102,11 +101,10 @@ def ingest(args: argparse.Namespace) -> int:
         if portal['last_seen'] > row.last_seen:
             row.from_iitc(**portal)
 
-        keys.remove(guid)
+        del portals[guid]
 
     # Whatever is left is a new portal
-    for key in keys:
-        portal = portals[key]
+    for portal in portals.values():
         portal['first_seen'] = timestamp
         dbc.session.add(database.Portal().from_iitc(**portal))
 
