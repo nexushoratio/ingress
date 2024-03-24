@@ -77,6 +77,15 @@ class Portal(Base):  # pylint: disable=missing-docstring
         logging.debug('populated')
         return self
 
+    def to_iitc(self):
+        """Generate an IITC bookmark style dict."""
+        portal = dict()
+
+        for key in self.__mapper__.c.keys():
+            portal[key] = getattr(self, key)
+
+        return portal
+
 
 class ClusterLeader(Base):  # pylint: disable=missing-docstring
     __tablename__ = 'cluster_leaders'

@@ -185,16 +185,10 @@ def save(portals, filename):
 
 def save_from_guids(guids, filename, dbc):
     """Save portals specified by guids into a particular bookmarks file."""
-    known_columns = frozenset(
-        x.key for x in database.Portal.__table__.columns)  # pylint: disable=no-member
-
     portals = dict()
     for db_portal in dbc.session.query(database.Portal).filter(
             database.Portal.guid.in_(guids)):
-        portal = dict()
-        for column in known_columns:
-            portal[column] = getattr(db_portal, column)
-        portals[db_portal.guid] = portal
+        portals[db_portal.guid] = db_portal.to_iitc()
     save(portals, filename)
 
 
