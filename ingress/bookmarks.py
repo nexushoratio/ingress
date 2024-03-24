@@ -91,6 +91,7 @@ def ingest(args: argparse.Namespace) -> int:
     for portal in list(portals.values()):
         portal['last_seen'] = timestamp
 
+    # Look for existing portals first
     keys = set(portals.keys())
     rows = dbc.session.query(database.Portal).filter(
         database.Portal.guid.in_(keys))
@@ -99,20 +100,15 @@ def ingest(args: argparse.Namespace) -> int:
         portal = portals[guid]
         # only update if newer
         if portal['last_seen'] > row.last_seen:
-            row.update(**portal)
+            row.from_iitc(**portal)
 
         keys.remove(guid)
 
-    # whatever is left is a new portal
-    known_columns = frozenset(
-        x.key for x in database.Portal.__table__.columns)  # pylint: disable=no-member
-
+    # Whatever is left is a new portal
     for key in keys:
         portal = portals[key]
         portal['first_seen'] = timestamp
-        new_portal = {k: portal[k] for k in known_columns}
-        db_portal = database.Portal(**new_portal)
-        dbc.session.add(db_portal)
+        dbc.session.add(database.Portal().from_iitc(**portal))
 
     dbc.session.commit()
 

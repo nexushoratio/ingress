@@ -69,12 +69,13 @@ class Portal(Base):  # pylint: disable=missing-docstring
         sqlalchemy.Integer, nullable=False, index=True)
     latlng = sqlalchemy.Column(sqlalchemy.String, nullable=False)
 
-    def update(self, **kwargs):
-        """Update a row using kwargs just like the initial creation did."""
-        logging.debug('updating with: %s', kwargs)
+    def from_iitc(self, **kwargs):
+        """Populate a row with an IITC bookmark style dict."""
+        logging.debug('populating with: %s', kwargs)
         for key, value in list(kwargs.items()):
             setattr(self, key, value)
-        logging.debug('updated')
+        logging.debug('populated')
+        return self
 
 
 class ClusterLeader(Base):  # pylint: disable=missing-docstring
