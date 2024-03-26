@@ -6,6 +6,7 @@ import logging
 import pathlib
 import typing
 
+import geoalchemy2  # type: ignore[import]
 import sqlalchemy
 from sqlalchemy import orm
 
@@ -59,6 +60,19 @@ def on_connect(dbapi_connection, _connection_record):
 Base = orm.declarative_base()  # pylint: disable=invalid-name
 
 
+def latlng_to_point(latlng: str) -> geoalchemy2.elements.WKTElement:
+    """Convert lat,lng to a geoalchemy wrapped POINT."""
+    lat, lng = latlng.split(',')
+    point = geoalchemy2.elements.WKTElement(f'POINT({lng} {lat})', srid=4326)
+    return point
+
+
+def point_to_latlng(point: geoalchemy2.elements.WKTElement) -> str:
+    """Convert a geoalchemy wrapped POINT to a lat,lng string."""
+    shape = geoalchemy2.shape.to_shape(point)
+    return f'{shape.y},{shape.x}'
+
+
 class Portal(Base):  # pylint: disable=missing-docstring
     __tablename__ = 'portals'
 
@@ -69,12 +83,15 @@ class Portal(Base):  # pylint: disable=missing-docstring
         sqlalchemy.Integer, nullable=False, index=True)
     last_seen = sqlalchemy.Column(
         sqlalchemy.Integer, nullable=False, index=True)
-    latlng = sqlalchemy.Column(sqlalchemy.String, nullable=False)
+    latlng = sqlalchemy.Column(
+        geoalchemy2.Geometry('POINT', srid=4326), nullable=False)
 
     def from_iitc(self, **kwargs):
         """Populate a row with an IITC bookmark style dict."""
         logging.debug('populating with: %s', kwargs)
         for key, value in list(kwargs.items()):
+            if key == 'latlng':
+                value = latlng_to_point(value)
             setattr(self, key, value)
         logging.debug('populated')
         return self
@@ -85,6 +102,8 @@ class Portal(Base):  # pylint: disable=missing-docstring
 
         for key in self.__mapper__.c.keys():
             portal[key] = getattr(self, key)
+            if key == 'latlng':
+                portal[key] = point_to_latlng(portal[key])
 
         return portal
 
