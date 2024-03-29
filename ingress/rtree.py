@@ -67,7 +67,8 @@ def _node_map(dbc):
     logging.info('entered _node_map')
     node_map = collections.defaultdict(NodeData)
     for db_portal in dbc.session.query(database.Portal):
-        point = _latlng_str_to_point(db_portal.latlng)
+        point = _latlng_str_to_point(
+            database.point_to_latlng(db_portal.latlng))
         node = node_map[point.wkt]
         node.latlng_point = point
         node.latlng_point_wkt = point.wkt
