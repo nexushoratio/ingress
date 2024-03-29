@@ -1,0 +1,20 @@
+"""Tests for database.py"""
+
+import unittest
+
+from ingress import database
+
+
+class ConversionsTest(unittest.TestCase):
+
+    def test_latlng_via_point(self):
+        tetrahelix = '37.423521,-122.089649'
+
+        result = database.point_to_latlng(
+            database.latlng_to_point(tetrahelix))
+
+        self.assertEqual(tetrahelix, result)
+
+
+if __name__ == '__main__':  # pragma: no cover
+    unittest.main()
