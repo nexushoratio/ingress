@@ -51,6 +51,11 @@ docstring-min-length = 2
 good-names = ["setUpModule"]
 no-docstring-rgx = "(^__|_?test.*|.*Test)"
 
+[tool.pylint.classes]
+exclude-protected = [
+  '_mapping',
+]
+
 [tool.pylint.messages_control]
 disable = [
   'use-dict-literal',
@@ -65,6 +70,10 @@ generated-member = [
   'shapely.geometry.base.BaseGeometry.exterior',
   'shapely.geometry.base.BaseGeometry.x',
   'shapely.geometry.base.BaseGeometry.y',
+]
+
+ignored-modules = [
+  'geoalchemy2.functions',
 ]
 
 [tool.mypy]

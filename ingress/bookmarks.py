@@ -8,11 +8,8 @@ import logging
 import os
 import typing
 
-import shapely  # type: ignore[import]
-
 from ingress import database
 from ingress import json
-from ingress import rtree
 
 if typing.TYPE_CHECKING:  # pragma: no cover
     import argparse
@@ -135,21 +132,21 @@ def export(args: argparse.Namespace) -> int:
             result[0] for result in dbc.session.query(database.Portal.guid))
         save_from_guids(guids, args.bookmarks, dbc)
     else:
-        rtree_index = rtree.rtree_index(dbc)
-        hull_indices = _hull_indexes(rtree_index)
-        # hull_indices will always be in the sample
-        limit = max(len(hull_indices), args.samples)
-        count = limit - len(hull_indices)
-        node_map = dict(rtree_index.node_map)
-        guids = set()
-        for index in hull_indices:
-            guids.update(node_map[index].guids)
-            del node_map[index]
-        nodes = list(node_map.values())
-        for node in nodes[:count]:
-            guids.update(node.guids)
+        hull = dbc.session.query(
+            database.geoalchemy2.functions.ST_ConvexHull(
+                database.geoalchemy2.functions.ST_Union(
+                    database.Portal.latlng))).scalar_subquery()
+        result = dbc.session.query(database.Portal.guid).filter(
+            database.geoalchemy2.functions.ST_Touches(
+                hull, database.Portal.latlng))
+        guids = set(row._mapping['guid'] for row in result)
+        limit = max(len(guids), args.samples)
+        count = limit - len(guids)
+        result = dbc.session.query(database.Portal.guid).filter(
+            database.Portal.guid.not_in(guids)).order_by(
+                database.Portal.guid).limit(count)
+        guids.update(row._mapping['guid'] for row in result)
         save_from_guids(guids, args.bookmarks, dbc)
-
     return 0
 
 
@@ -255,23 +252,3 @@ def new():
         },
     }
     return bookmarks
-
-
-def _hull_indexes(rtree_index):
-    """Placeholder docstring for private function."""
-    # pylint 1.6.5 cannot recognize that node_map is a dict.  This is due
-    # to it being an attr.ib().  So explicitly cast it to be a dict.
-    node_map = dict(rtree_index.node_map)
-
-    multi_points = shapely.geometry.MultiPoint(
-        [node.projected_point for node in list(node_map.values())])
-    hull_points = set(multi_points.convex_hull.exterior.coords)
-
-    hull_indexes = set()
-    for hull_point in hull_points:
-        indexes = set(
-            rtree_index.index.nearest(
-                (hull_point[0], hull_point[1], hull_point[0], hull_point[1])))
-        hull_indexes.update(indexes)
-
-    return frozenset(hull_indexes)
