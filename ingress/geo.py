@@ -26,7 +26,6 @@ from ingress import drawtools
 from ingress import google
 from ingress import json
 from ingress import rtree
-from ingress import zcta as zcta_lib
 
 if typing.TYPE_CHECKING:  # pragma: no cover
     import argparse
@@ -244,7 +243,7 @@ def cluster(args: argparse.Namespace) -> int:  # pylint: disable=too-many-locals
 def _finalize(clusters, leaders, rtree_index):
     """Placeholder docstring for private function."""
     logging.info('_finalize: %d clusters', len(clusters))
-    zcta = zcta_lib.Zcta()
+
     node_map_by_projected_coords = {
         node.projected_point.coords[0]: node
         for node in list(rtree_index.node_map.values())
@@ -253,7 +252,7 @@ def _finalize(clusters, leaders, rtree_index):
     for distance, nodes in clusters:
         clustered.append(
             _cluster_entry(
-                distance, nodes, node_map_by_projected_coords, zcta, leaders,
+                distance, nodes, node_map_by_projected_coords, leaders,
                 rtree_index))
 
     logging.info('_finalize: done')
@@ -261,7 +260,7 @@ def _finalize(clusters, leaders, rtree_index):
 
 
 def _cluster_entry(  # pylint: disable=too-many-locals,too-many-arguments
-        distance, nodes, node_map_by_projected_coords, zcta, leaders,
+        distance, nodes, node_map_by_projected_coords, leaders,
         rtree_index):
     """Placeholder docstring for private function."""
     multi_point = shapely.geometry.MultiPoint(
@@ -327,8 +326,6 @@ def _cluster_entry(  # pylint: disable=too-many-locals,too-many-arguments
         },
         'leader':
         leader_guid,
-        'code':
-        zcta.code_from_point(latlng_centroid),
         # consider dropping density and calculate on client instead
         'density':
         len(nodes) / projected_hull.area * 1000000,
