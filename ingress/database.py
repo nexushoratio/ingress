@@ -67,6 +67,14 @@ def latlng_to_point(latlng: str) -> geoalchemy2.elements.WKTElement:
     return point
 
 
+def latlng_dict_to_point(
+        latlng: dict[str, str]) -> geoalchemy2.elements.WKTElement:
+    """Convert lat,lng to a geoalchemy wrapped POINT."""
+    point = geoalchemy2.elements.WKTElement(
+        f'POINT({latlng["lng"]} {latlng["lat"]})', srid=4326)
+    return point
+
+
 def point_to_latlng(point: geoalchemy2.elements.WKTElement) -> str:
     """Convert a geoalchemy wrapped POINT to a lat,lng string."""
     shape = geoalchemy2.shape.to_shape(point)
