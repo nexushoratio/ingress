@@ -6,6 +6,7 @@ import typing
 import pyproj
 import shapely  # type: ignore[import]
 
+from ingress import database
 from ingress import json
 
 if typing.TYPE_CHECKING:  # pragma: no cover
@@ -76,14 +77,14 @@ def load_polygons(filename):
     return shapely.geometry.MultiPolygon(polygons)
 
 
-def load_point(filename):
+def load_point(filename: str) -> database.geoalchemy2.elements.WKTElement:
     """Find a singular point from a drawtools file.
 
     Args:
-      filename: str, name of the file
+      filename: name of the file
 
     Returns:
-      shapely.geometry.Point
+      The singular point.
     """
     common_point_types = ('circle', 'marker')
     drawing = json.load(filename)
@@ -95,10 +96,8 @@ def load_point(filename):
     typ = element['type']
     if typ in common_point_types:
         latlng = element['latLng']
-        lat = latlng['lat']
-        lng = latlng['lng']
     else:
-        raise TypeError(f'{typ} is a type not yet handled.')
+        raise TypeError(f'"{typ}" is a type not yet handled.')
 
-    point = shapely.geometry.Point(lng, lat)
+    point = database.latlng_dict_to_point(latlng)
     return point
