@@ -71,8 +71,8 @@ def mundane_commands(ctx: app.ArgparseApp):
 
     parser = ctx.register_command(donuts, parents=[dt_flags])
     parser.add_argument(
-        '-s',
-        '--size',
+        '-c',
+        '--count',
         action='store',
         type=int,
         required=True,
@@ -159,11 +159,11 @@ def donuts(args: argparse.Namespace) -> int:  # pylint: disable=too-many-locals
     (donut hole) that includes COUNT portals will be created.  The size
     of this hole will inform the size of concentric rings (donuts).
 
-    The donut will be broken down into bites that contain roughly COUNT
+    The donuts will be broken down into bites that contain roughly COUNT
     portals.  The command will try to balance between between the number
     of portals in a bite and how big (in area) a bite would be.  For
     example, it will try to avoid having a bite be the entire donut
-    because it reaches out to a sparsely populated area.
+    because it covers a sparsely populated area.
     """
     dbc = args.dbc
     point = drawtools.load_point(args.drawtools)
