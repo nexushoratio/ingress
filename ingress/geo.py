@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import collections
+import dataclasses
 import itertools
 import logging
 import math
@@ -11,7 +12,6 @@ import sys
 import time
 import typing
 
-import attr
 import pyproj
 import shapely  # type: ignore[import]
 import toposort
@@ -504,13 +504,13 @@ def _donuts(all_sprinkles, count):
     return list_of_donuts, delta
 
 
-@attr.s
+@dataclasses.dataclass(frozen=True, kw_only=True)
 class Sprinkle:  # pylint: disable=too-few-public-methods
     """Pre-computed information about portals useful for making donuts."""
-    distance = attr.ib()
-    azimuth = attr.ib()
-    guid = attr.ib()
-    latlng = attr.ib()
+    distance: float
+    azimuth: float
+    guid: str
+    latlng: database.geoalchemy2.elements.WKBElement
 
 
 def _order_by_distance(point, dbc):
