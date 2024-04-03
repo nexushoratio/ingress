@@ -165,29 +165,6 @@ def donuts(args: argparse.Namespace) -> int:  # pylint: disable=too-many-locals
     example, it will try to avoid having a bite be the entire donut
     because it reaches out to a sparsely populated area.
     """
-    try:
-        return _donut_dough(args)
-    except Exception as e:
-        print('caught:', e)
-        return 1
-
-
-def _donut_dough(args: argparse.Namespace) -> int:  # pylint: disable=too-many-locals
-    """Automatically group portals into COUNT sized bookmarks files.
-
-    The idea is to provide a series of bookmarks that would be suitably
-    sized groups for efficient capturing.
-
-    Given a starting marker specified in the drawtools file, a circle
-    (donut hole) that includes COUNT portals will be created.  The size
-    of this hole will inform the size of concentric rings (donuts).
-
-    The donut will be broken down into bites that contain roughly COUNT
-    portals.  The command will try to balance between between the number
-    of portals in a bite and how big (in area) a bite would be.  For
-    example, it will try to avoid having a bite be the entire donut
-    because it reaches out to a sparsely populated area.
-    """
     dbc = args.dbc
     point = drawtools.load_point(args.drawtools)
     ordered_sprinkles = _order_by_distance(point, dbc)
