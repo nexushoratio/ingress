@@ -545,22 +545,16 @@ def _order_by_distance(point, dbc):
         database.geoalchemy2.functions.ST_Azimuth(
             point, database.Portal.latlng).label('azimuth'),
     )
-    print(rows)
     portals = list()
     for row in rows:
-        print(
-            row.Portal.label, row.distance, row.azimuth /
-            (math.pi * 2) * 360.0)
-    #     plat, plng = _latlng_str_to_floats(db_portal.latlng)
-    #     azimuth, _, distance = geod.inv(lng, lat, plng, plat)
-    #     portal = PortalGeo(
-    #         distance=distance,
-    #         azimuth=azimuth,
-    #         guid=db_portal.guid,
-    #         latlng=db_portal.latlng)
-    #     portals.append(portal)
+        portal = PortalGeo(
+            distance=row.distance,
+            azimuth=row.azimuth,
+            guid=row.Portal.guid,
+            latlng=row.Portal.latlng)
+        portals.append(portal)
 
-    # portals.sort(key=lambda x: x.distance)
+    portals.sort(key=lambda x: x.distance)
     return portals
 
 
