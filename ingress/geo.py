@@ -475,13 +475,13 @@ def _smaller_bites(bite, transform, max_length, max_area):
 
 def _order_sprinkles(full_donuts):
     """Placeholder docstring for private function."""
-    # sort the sprinkles by angle
+    # sort the sprinkles by azimuth
     for donut in full_donuts:
-        start = donut[0].angle
+        start = donut[0].azimuth
         for sprinkle in donut:
-            if sprinkle.angle < start:
-                sprinkle.angle += 360
-        donut.sort(key=lambda sprinkle: sprinkle.angle)
+            if sprinkle.azimuth < start:
+                sprinkle.azimuth += 360
+        donut.sort(key=lambda sprinkle: sprinkle.azimuth)
 
 
 def _donuts(all_sprinkles, count):
@@ -512,7 +512,7 @@ def _donuts(all_sprinkles, count):
 @attr.s
 class PortalGeo:  # pylint: disable=missing-docstring,too-few-public-methods
     distance = attr.ib()
-    angle = attr.ib()
+    azimuth = attr.ib()
     guid = attr.ib()
     latlng = attr.ib()
 
@@ -527,10 +527,10 @@ def _order_by_distance(point, dbc):
     portals = list()
     for db_portal in rows:
         plat, plng = _latlng_str_to_floats(db_portal.latlng)
-        angle, _, distance = geod.inv(lng, lat, plng, plat)
+        azimuth, _, distance = geod.inv(lng, lat, plng, plat)
         portal = PortalGeo(
             distance=distance,
-            angle=angle,
+            azimuth=azimuth,
             guid=db_portal.guid,
             latlng=db_portal.latlng)
         portals.append(portal)
