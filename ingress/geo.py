@@ -169,7 +169,11 @@ def donuts(args: argparse.Namespace) -> int:  # pylint: disable=too-many-locals
     point = drawtools.load_point(args.drawtools)
     sprinkles = _load_sprinkles(point, dbc)
     sprinkles.sort(key=lambda x: x.distance)
-    # full_donuts, delta = _donuts(ordered_sprinkles, args.size)
+    full_donuts, delta = _donuts(sprinkles, args.count)
+    for donut in full_donuts:
+        print(len(donut))
+    print(f'delta: {delta}')
+
     # transformed_points = _points_from_sprinkles(full_donuts[0], transform)
     # max_area = transformed_points.convex_hull.area * FUDGE_FACTOR
     # max_length = delta * 2 * FUDGE_FACTOR
