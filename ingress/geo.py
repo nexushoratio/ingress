@@ -6,6 +6,7 @@ import collections
 import functools
 import itertools
 import logging
+import math
 import random
 import sys
 import time
@@ -165,28 +166,47 @@ def donuts(args: argparse.Namespace) -> int:  # pylint: disable=too-many-locals
     example, it will try to avoid having a bite be the entire donut
     because it reaches out to a sparsely populated area.
     """
+    try:
+        return _donut_dough(args)
+    except Exception as e:
+        print('caught:', e)
+        return 1
+
+
+def _donut_dough(args: argparse.Namespace) -> int:  # pylint: disable=too-many-locals
+    """Automatically group portals into COUNT sized bookmarks files.
+
+    The idea is to provide a series of bookmarks that would be suitably
+    sized groups for efficient capturing.
+
+    Given a starting marker specified in the drawtools file, a circle
+    (donut hole) that includes COUNT portals will be created.  The size
+    of this hole will inform the size of concentric rings (donuts).
+
+    The donut will be broken down into bites that contain roughly COUNT
+    portals.  The command will try to balance between between the number
+    of portals in a bite and how big (in area) a bite would be.  For
+    example, it will try to avoid having a bite be the entire donut
+    because it reaches out to a sparsely populated area.
+    """
     dbc = args.dbc
     point = drawtools.load_point(args.drawtools)
-    transform = functools.partial(
-        pyproj.transform, pyproj.Proj(proj='latlong'),
-        pyproj.Proj(
-            proj='stere', lat_0=point.y, lon_0=point.x, lat_ts=point.y))
     ordered_sprinkles = _order_by_distance(point, dbc)
-    full_donuts, delta = _donuts(ordered_sprinkles, args.size)
-    transformed_points = _points_from_sprinkles(full_donuts[0], transform)
-    max_area = transformed_points.convex_hull.area * FUDGE_FACTOR
-    max_length = delta * 2 * FUDGE_FACTOR
-    print(f'max_line: {max_length}')
-    print(f'max_area: {max_area}')
-    bites = _bites(full_donuts, args.size, transform, max_length, max_area)
-    print(f'There are {len(bites)} donut bites.')
-    width = len(str(len(bites)))
-    for nibble, bite in enumerate(bites):
-        if nibble < args.bites:
-            filename = args.pattern.format(
-                size=args.size, width=width, bite=nibble)
-            guids = (sprinkle.guid for sprinkle in bite)
-            bookmarks.save_from_guids(guids, filename, dbc)
+    # full_donuts, delta = _donuts(ordered_sprinkles, args.size)
+    # transformed_points = _points_from_sprinkles(full_donuts[0], transform)
+    # max_area = transformed_points.convex_hull.area * FUDGE_FACTOR
+    # max_length = delta * 2 * FUDGE_FACTOR
+    # print(f'max_line: {max_length}')
+    # print(f'max_area: {max_area}')
+    # bites = _bites(full_donuts, args.size, transform, max_length, max_area)
+    # print(f'There are {len(bites)} donut bites.')
+    # width = len(str(len(bites)))
+    # for nibble, bite in enumerate(bites):
+    #     if nibble < args.bites:
+    #         filename = args.pattern.format(
+    #             size=args.size, width=width, bite=nibble)
+    #         guids = (sprinkle.guid for sprinkle in bite)
+    #         bookmarks.save_from_guids(guids, filename, dbc)
 
     return 0
 
@@ -480,12 +500,12 @@ def _order_sprinkles(full_donuts):
         start = donut[0].azimuth
         for sprinkle in donut:
             if sprinkle.azimuth < start:
-                sprinkle.azimuth += 360
+                sprinkle.azimuth += math.pi * 2
         donut.sort(key=lambda sprinkle: sprinkle.azimuth)
 
 
 def _donuts(all_sprinkles, count):
-    """Each donuts should have at least count sprinkles on it."""
+    """Each donut should have at least count sprinkles on it."""
     list_of_donuts = list()
     delta = all_sprinkles[count].distance
     radius = 0
@@ -519,23 +539,29 @@ class PortalGeo:  # pylint: disable=missing-docstring,too-few-public-methods
 
 def _order_by_distance(point, dbc):
     """Placeholder docstring for private function."""
-    geod = pyproj.Geod(ellps='WGS84')
-    lat = point.y
-    lng = point.x
-
-    rows = dbc.session.query(database.Portal)
+    rows = dbc.session.query(
+        database.Portal,
+        database.geoalchemy2.functions.ST_Distance(
+            point, database.Portal.latlng, 0).label('distance'),
+        database.geoalchemy2.functions.ST_Azimuth(
+            point, database.Portal.latlng).label('azimuth'),
+    )
+    print(rows)
     portals = list()
-    for db_portal in rows:
-        plat, plng = _latlng_str_to_floats(db_portal.latlng)
-        azimuth, _, distance = geod.inv(lng, lat, plng, plat)
-        portal = PortalGeo(
-            distance=distance,
-            azimuth=azimuth,
-            guid=db_portal.guid,
-            latlng=db_portal.latlng)
-        portals.append(portal)
+    for row in rows:
+        print(
+            row.Portal.label, row.distance, row.azimuth /
+            (math.pi * 2) * 360.0)
+    #     plat, plng = _latlng_str_to_floats(db_portal.latlng)
+    #     azimuth, _, distance = geod.inv(lng, lat, plng, plat)
+    #     portal = PortalGeo(
+    #         distance=distance,
+    #         azimuth=azimuth,
+    #         guid=db_portal.guid,
+    #         latlng=db_portal.latlng)
+    #     portals.append(portal)
 
-    portals.sort(key=lambda x: x.distance)
+    # portals.sort(key=lambda x: x.distance)
     return portals
 
 
