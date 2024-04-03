@@ -494,8 +494,7 @@ def _smaller_bites(bite, transform, max_length, max_area):
 
 
 def _order_sprinkles(full_donuts):
-    """Placeholder docstring for private function."""
-    # sort the sprinkles by azimuth
+    """Sort the sprinkles by azimuth."""
     for donut in full_donuts:
         start = donut[0].azimuth
         for sprinkle in donut:
@@ -538,7 +537,7 @@ class PortalGeo:  # pylint: disable=missing-docstring,too-few-public-methods
 
 
 def _order_by_distance(point, dbc):
-    """Placeholder docstring for private function."""
+    """Load all portals, sorted by distance from the starting point."""
     rows = dbc.session.query(
         database.Portal,
         database.geoalchemy2.functions.ST_Distance(
