@@ -480,14 +480,15 @@ def _order_sprinkles(full_donuts):
         donut.sort(key=lambda sprinkle: sprinkle.azimuth)
 
 
-def _donuts(all_sprinkles, count):
+def _donuts(all_sprinkles: list[Sprinkle],
+            count: int) -> tuple[list[list[Sprinkle]], float]:
     """Each donut should have at least count sprinkles on it."""
     list_of_donuts = list()
     delta = all_sprinkles[count].distance
-    radius = 0
+    radius = 0.0
     while all_sprinkles:
-        donut = list()
-        # Keep making list_of_donuts bigger until it has at least "count"
+        donut: list[Sprinkle] = list()
+        # Keep making current donut bigger until it has at least "count"
         # sprinkles on it.
         while len(donut) < count:
             radius += delta
