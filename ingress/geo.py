@@ -513,7 +513,9 @@ class Sprinkle:  # pylint: disable=too-few-public-methods
     latlng: database.geoalchemy2.elements.WKBElement
 
 
-def _order_by_distance(point, dbc):
+def _order_by_distance(
+        point: database.geoalchemy2.elements.WKTElement,
+        dbc: database.Database) -> list[Sprinkle]:
     """Load all portals, sorted by distance from the starting point."""
     rows = dbc.session.query(
         database.Portal,
