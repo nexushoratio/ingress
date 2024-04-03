@@ -167,7 +167,8 @@ def donuts(args: argparse.Namespace) -> int:  # pylint: disable=too-many-locals
     """
     dbc = args.dbc
     point = drawtools.load_point(args.drawtools)
-    ordered_sprinkles = _order_by_distance(point, dbc)
+    sprinkles = _load_sprinkles(point, dbc)
+    sprinkles.sort(key=lambda x: x.distance)
     # full_donuts, delta = _donuts(ordered_sprinkles, args.size)
     # transformed_points = _points_from_sprinkles(full_donuts[0], transform)
     # max_area = transformed_points.convex_hull.area * FUDGE_FACTOR
@@ -513,10 +514,10 @@ class Sprinkle:  # pylint: disable=too-few-public-methods
     latlng: database.geoalchemy2.elements.WKBElement
 
 
-def _order_by_distance(
+def _load_sprinkles(
         point: database.geoalchemy2.elements.WKTElement,
         dbc: database.Database) -> list[Sprinkle]:
-    """Load all portals, sorted by distance from the starting point."""
+    """Load all portal information needed for donuts."""
     rows = dbc.session.query(
         database.Portal,
         database.geoalchemy2.functions.ST_Distance(
@@ -533,7 +534,6 @@ def _order_by_distance(
             latlng=row.Portal.latlng)
         sprinkles.append(sprinkle)
 
-    sprinkles.sort(key=lambda x: x.distance)
     return sprinkles
 
 
