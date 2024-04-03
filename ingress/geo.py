@@ -505,7 +505,8 @@ def _donuts(all_sprinkles, count):
 
 
 @attr.s
-class PortalGeo:  # pylint: disable=missing-docstring,too-few-public-methods
+class Sprinkle:  # pylint: disable=too-few-public-methods
+    """Pre-computed information about portals useful for making donuts."""
     distance = attr.ib()
     azimuth = attr.ib()
     guid = attr.ib()
@@ -521,17 +522,17 @@ def _order_by_distance(point, dbc):
         database.geoalchemy2.functions.ST_Azimuth(
             point, database.Portal.latlng).label('azimuth'),
     )
-    portals = list()
+    sprinkles = list()
     for row in rows:
-        portal = PortalGeo(
+        sprinkle = Sprinkle(
             distance=row.distance,
             azimuth=row.azimuth,
             guid=row.Portal.guid,
             latlng=row.Portal.latlng)
-        portals.append(portal)
+        sprinkles.append(sprinkle)
 
-    portals.sort(key=lambda x: x.distance)
-    return portals
+    sprinkles.sort(key=lambda x: x.distance)
+    return sprinkles
 
 
 def _portal_combos(portals):
