@@ -510,8 +510,8 @@ def _donuts(all_sprinkles, count):
     radius = 0
     while all_sprinkles:
         donut = list()
-        # Keep making list_of_donuts bigger until it has at least count sprinkles on
-        # it.
+        # Keep making list_of_donuts bigger until it has at least "count"
+        # sprinkles on it.
         while len(donut) < count:
             radius += delta
             donut_sprinkles = [
