@@ -170,15 +170,19 @@ def donuts(args: argparse.Namespace) -> int:  # pylint: disable=too-many-locals
     sprinkles = _load_sprinkles(point, dbc)
     sprinkles.sort(key=lambda x: x.distance)
     full_donuts, delta = _donuts(sprinkles, args.count)
-    for donut in full_donuts:
-        print(len(donut))
-    print(f'delta: {delta}')
 
-    # transformed_points = _points_from_sprinkles(full_donuts[0], transform)
-    # max_area = transformed_points.convex_hull.area * FUDGE_FACTOR
-    # max_length = delta * 2 * FUDGE_FACTOR
-    # print(f'max_line: {max_length}')
-    # print(f'max_area: {max_area}')
+    guids = frozenset(x.guid for x in full_donuts[0])
+    result = dbc.session.query(
+        database.geoalchemy2.functions.ST_ConvexHull(
+            database.geoalchemy2.functions.ST_Union(
+                database.Portal.latlng))).filter(
+                    database.Portal.guid.in_(guids)).one()[0]
+
+    max_area = dbc.session.scalar(result.ST_Area(1)) * FUDGE_FACTOR
+    max_length = delta * 2
+    print(f'max_line: {max_length}')
+    print(f'max_area: {max_area}')
+
     # bites = _bites(full_donuts, args.size, transform, max_length, max_area)
     # print(f'There are {len(bites)} donut bites.')
     # width = len(str(len(bites)))
