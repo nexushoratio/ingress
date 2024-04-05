@@ -514,7 +514,7 @@ def _donuts(all_sprinkles: list[Sprinkle],
     return list_of_donuts, delta
 
 
-@dataclasses.dataclass(frozen=True, kw_only=True)
+@dataclasses.dataclass(kw_only=True)
 class Sprinkle:
     """Pre-computed information about portals useful for making donuts."""
     distance: float
