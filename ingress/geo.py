@@ -180,8 +180,8 @@ def donuts(args: argparse.Namespace) -> int:  # pylint: disable=too-many-locals
 
     max_area = dbc.session.scalar(result.ST_Area(1)) * FUDGE_FACTOR
     max_length = delta * 2
-    print(f'max_line: {max_length}')
-    print(f'max_area: {max_area}')
+    print(f'{max_length=}')
+    print(f'{max_area=}')
 
     # bites = _bites(full_donuts, args.size, transform, max_length, max_area)
     # print(f'There are {len(bites)} donut bites.')
