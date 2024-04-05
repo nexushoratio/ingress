@@ -515,7 +515,7 @@ def _donuts(all_sprinkles: list[Sprinkle],
 
 
 @dataclasses.dataclass(frozen=True, kw_only=True)
-class Sprinkle:  # pylint: disable=too-few-public-methods
+class Sprinkle:
     """Pre-computed information about portals useful for making donuts."""
     distance: float
     azimuth: float
