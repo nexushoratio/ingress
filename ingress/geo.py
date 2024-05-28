@@ -481,6 +481,9 @@ def _smaller_bites(bite, transform, max_length, max_area):
 def _order_sprinkles(full_donuts):
     """Sort the sprinkles by azimuth."""
     for donut in full_donuts:
+        # We do not want the bites to align along the 0th azimuth (north), so
+        # we use the first sprinkle we find on the donut and order everything
+        # relative to it.
         start = donut[0].azimuth
         for sprinkle in donut:
             if sprinkle.azimuth < start:
