@@ -183,8 +183,8 @@ def donuts(args: argparse.Namespace) -> int:  # pylint: disable=too-many-locals
     print(f'{max_length=}')
     print(f'{max_area=}')
 
-    # bites = _bites(full_donuts, args.size, transform, max_length, max_area)
-    # print(f'There are {len(bites)} donut bites.')
+    bites = _bites(full_donuts, args.count, max_length, max_area)
+    print(f'There are {len(bites)} donut bites.')
     # width = len(str(len(bites)))
     # for nibble, bite in enumerate(bites):
     #     if nibble < args.bites:
@@ -421,10 +421,13 @@ def _points_from_sprinkles(donut, transform):
     return transformed_points
 
 
-def _bites(full_donuts, count, transform, max_length, max_area):
-    """Placeholder docstring for private function."""
-    all_bites = list()
-    _order_sprinkles(full_donuts)
+def _bites(
+        full_donuts: list[list[Sprinkle]], count: int, max_length: float,
+        max_area: float) -> list[typing.Any]:
+    """Divide the donuts into bite-sized morsels (e.g., COUNT portals)."""
+    all_bites: list[typing.Any] = list()
+    _order_sprinkles_on_donuts(full_donuts)
+    del max_length, max_area
     for donut in full_donuts:
         bite_count = len(donut) // count + bool(len(donut) % count)
         overlap = ((bite_count * count) - len(donut)) / bite_count
@@ -433,9 +436,10 @@ def _bites(full_donuts, count, transform, max_length, max_area):
             start = int(round(count - overlap) * nibble)
             stop = start + count
             bite = donut[start:stop]
-            for smaller_bite in _smaller_bites(bite, transform, max_length,
-                                               max_area):
-                all_bites.append(smaller_bite)
+            del bite
+    #         for smaller_bite in _smaller_bites(bite, None, max_length,
+    #                                            max_area):
+    #             all_bites.append(smaller_bite)
     return all_bites
 
 
@@ -478,8 +482,8 @@ def _smaller_bites(bite, transform, max_length, max_area):
             yield smaller_bite
 
 
-def _order_sprinkles(full_donuts):
-    """Sort the sprinkles by azimuth."""
+def _order_sprinkles_on_donuts(full_donuts: list[list[Sprinkle]]):
+    """Sort the sprinkles by azimuth on each donut."""
     for donut in full_donuts:
         # We do not want the bites to align along the 0th azimuth (north), so
         # we use the first sprinkle we find on the donut and order everything
