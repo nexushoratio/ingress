@@ -426,8 +426,8 @@ def _bites(full_donuts, count, transform, max_length, max_area):
     all_bites = list()
     _order_sprinkles(full_donuts)
     for donut in full_donuts:
-        bite_count = len(donut) / count + bool(len(donut) % count)
-        overlap = 1.0 * ((bite_count * count) - len(donut)) / bite_count
+        bite_count = len(donut) // count + bool(len(donut) % count)
+        overlap = ((bite_count * count) - len(donut)) / bite_count
         donut *= 2
         for nibble in range(bite_count):
             start = int(round(count - overlap) * nibble)
