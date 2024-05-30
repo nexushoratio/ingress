@@ -200,7 +200,7 @@ def donuts(args: argparse.Namespace) -> int:  # pylint: disable=too-many-locals
     print(f'{max_length=}')
     print(f'{max_area=}')
 
-    bites = _bites(full_donuts, args.count, max_length, max_area)
+    bites = _bites(dbc, full_donuts, args.count, max_length, max_area)
     print(f'There are {len(bites)} donut bites.')
     # width = len(str(len(bites)))
     # for nibble, bite in enumerate(bites):
@@ -429,77 +429,89 @@ def _add_edges(graph, index, node_map_by_index, max_distance):  # pylint: disabl
     logging.info('_add_edges: edges added: %d', edge_count)
 
 
-def _points_from_sprinkles(donut, transform):
-    """Placeholder docstring for private function."""
-    points = (_latlng_str_to_floats(sprinkle.latlng) for sprinkle in donut)
-    multi_points = shapely.geometry.MultiPoint(
-        [(lng, lat) for lat, lng in points])
-    transformed_points = shapely.ops.transform(transform, multi_points)
-    return transformed_points
-
-
 def _bites(
-        full_donuts: list[list[Sprinkle]], count: int, max_length: float,
-        max_area: float) -> list[typing.Any]:
+        dbc: database.Database, all_donuts: list[Bite], count: int,
+        max_length: float, max_area: float) -> list[Bite]:
     """Divide the donuts into bite-sized morsels (e.g., COUNT portals)."""
-    all_bites: list[typing.Any] = list()
-    _order_sprinkles_on_donuts(full_donuts)
-    del max_length, max_area
-    for donut in full_donuts:
-        bite_count = len(donut) // count + bool(len(donut) % count)
-        overlap = ((bite_count * count) - len(donut)) / bite_count
-        donut *= 2
-        for nibble in range(bite_count):
-            start = int(round(count - overlap) * nibble)
-            stop = start + count
-            bite = donut[start:stop]
-            del bite
-    #         for smaller_bite in _smaller_bites(bite, None, max_length,
-    #                                            max_area):
-    #             all_bites.append(smaller_bite)
+    all_bites: list[Bite] = list()
+    _order_sprinkles_on_donuts(all_donuts)
+    for real_donut in all_donuts:
+        dist_cache: DistanceCache = dict()
+        donut = list(real_donut)
+        while donut:
+            bite = _bite(dbc, donut[:count], max_length, max_area, dist_cache)
+            donut = donut[len(bite):]
+            all_bites.append(bite)
     return all_bites
 
 
-def _smaller_bites(bite, transform, max_length, max_area):
-    """Examine a bite for various issues, maybe resulting in smaller bites."""
-    transformed_points = _points_from_sprinkles(bite, transform)
+def _get_wkb_to_point_map(dbc, ring):
+    """Map stable WKB to Geometry for easier caching."""
+    dss = dbc.session.scalar
+    num_points = dss(ring.ST_NPoints()) - 1
+    wkb_to_point = dict()
+    for entry in range(num_points):
+        point = ring.ST_PointN(entry + 1)
+        wkb_to_point[dss(point)] = point
+    return wkb_to_point
+
+
+def _get_distances(
+        dbc: database.Database, ring: database.geoalchemy2.types.Geometry,
+        cache: DistanceCache) -> list[float]:
+    """Calculate the distances between every sprinkle."""
+    dss = dbc.session.scalar
+    num_points = dss(ring.ST_NPoints()) - 1
+    wkb_to_point = _get_wkb_to_point_map(dbc, ring)
+
+    distances = [0.0]
+    wkbs = list(wkb_to_point.keys())
+    for x_off in range(num_points):
+        wkb_x = wkbs[x_off]
+        point_x = wkb_to_point[wkb_x]
+        for y_off in range(x_off + 1, num_points):
+            wkb_y = wkbs[y_off]
+            key = (wkb_x, wkb_y)
+            if key not in cache:
+                cache[key] = dss(point_x.ST_Distance(wkb_to_point[wkb_y], 0))
+            distances.append(cache[key])
+    return distances
+
+
+def _bite(
+        dbc: database.Database, donut: Bite, max_length: float,
+        max_area: float, cache: DistanceCache) -> Bite:
+    """Given a donut, return a bite that is not a choking hazard."""
+    dss = dbc.session.scalar
+    guids = frozenset(x.guid for x in donut)
+    db_points = dbc.session.query(
+        database.geoalchemy2.functions.ST_Collect(
+            database.Portal.latlng)).filter(
+                database.Portal.guid.in_(guids)).one()[0]
+
+    hull = db_points.ST_ConvexHull()
+    ring = hull.ST_ExteriorRing()
+    num_ring_points = dss(ring.ST_NPoints())
+
     good = True
-    if transformed_points.convex_hull.area > max_area:
-        good = False
-    if len(transformed_points) > 1:
-        if len(transformed_points) == 2:
-            hull = transformed_points.convex_hull
-        else:
-            hull = transformed_points.convex_hull.exterior
 
-        distances = (
-            transformed_points.hausdorff_distance(
-                shapely.geometry.Point(coords)) for coords in hull.coords)
-        length = max(distances)
-        if length > max_length:
+    if num_ring_points is not None:
+        area = dss(hull.ST_Area(True))
+        if area > max_area:
             good = False
-
-    if len(transformed_points) == 1:
-        good = True
+        else:
+            distance = max(_get_distances(dbc, ring, cache))
+            if distance > max_length:
+                good = False
 
     if good:
-        yield bite
-    else:
-        smaller_bites = _smaller_bites(
-            bite[:-1], transform, max_length, max_area)
-        # The fact that the following pylint exception exists is probably a
-        # good indicator that this code is overly complicated.
-        yield next(smaller_bites)  # pylint: disable=stop-iteration-return
-        rest = list()
-        for sprinkles in smaller_bites:
-            rest.extend(sprinkles)
-        rest.append(bite[-1])
-        for smaller_bite in _smaller_bites(rest, transform, max_length,
-                                           max_area):
-            yield smaller_bite
+        return donut
+
+    # Try again with one less sprinkle
+    return _bite(dbc, donut[:-1], max_length, max_area, cache)
 
 
-def _order_sprinkles_on_donuts(full_donuts: list[list[Sprinkle]]):
+def _order_sprinkles_on_donuts(full_donuts: list[Bite]):
     """Sort the sprinkles by azimuth on each donut."""
     for donut in full_donuts:
         # We do not want the bites to align along the 0th azimuth (north), so
