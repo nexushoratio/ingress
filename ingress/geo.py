@@ -92,22 +92,23 @@ def mundane_commands(ctx: app.ArgparseApp):
         action='store',
         type=int,
         required=True,
-        help='Number of portals per bite.')
+        help='Upper limit of portals per bite.')
     parser.add_argument(
         '-b',
         '--bites',
         action='store',
         type=int,
         default=sys.maxsize,
-        help='Limit the number of bites.')
+        help='Rough limit on the number of bites. (Default: %(default)s)')
     parser.add_argument(
         '-p',
         '--pattern',
         action='store',
-        default='bm-donut-{size}-{bite:0{width}d}.json',
+        default='bm-donut-{count}-{bite:0{width}d}.json',
         help=(
             'Pattern used to name the output files.  Uses PEP 3101 formatting'
-            ' strings with the following fields:  size, width, bite'))
+            ' strings with the following fields:  count, width, bite'
+            ' (Default: %(default)s)'))
 
 
 def update(args: argparse.Namespace) -> int:
@@ -203,9 +204,9 @@ def donuts(args: argparse.Namespace) -> int:
         dbc, all_donuts, args.count, args.bites, max_length, max_area)
     print(f'There are {len(bites)} donut bites.')
     width = len(str(len(bites)))
-    for nibble, bite in enumerate(bites):
+    for bite_num, bite in enumerate(bites):
         filename = args.pattern.format(
-            size=args.count, width=width, bite=nibble)
+            count=args.count, width=width, bite=bite_num)
         guids = frozenset(sprinkle.guid for sprinkle in bite)
         bookmarks.save_from_guids(guids, filename, dbc)
 
