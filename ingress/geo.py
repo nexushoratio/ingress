@@ -39,6 +39,23 @@ START_DISTANCE = 75
 MAX_DISTANCE = START_DISTANCE * 4 + 1
 
 
+@dataclasses.dataclass(kw_only=True)
+class Sprinkle:
+    """Pre-computed information about portals useful for making donuts."""
+    distance: float
+    azimuth: float
+    guid: str
+    latlng: database.geoalchemy2.elements.WKBElement
+
+
+DistanceCache: typing.TypeAlias = dict[
+    tuple[database.geoalchemy2.elements.WKBElement,
+          database.geoalchemy2.elements.WKBElement], float]
+
+# A Donut is a really big Bite
+Bite: typing.TypeAlias = list[Sprinkle]
+
+
 def mundane_commands(ctx: app.ArgparseApp):
     """Parser registration API."""
     bm_flags = ctx.get_shared_parser('bookmarks')
@@ -495,14 +512,13 @@ def _order_sprinkles_on_donuts(full_donuts: list[list[Sprinkle]]):
         donut.sort(key=lambda sprinkle: sprinkle.azimuth)
 
 
-def _donuts(all_sprinkles: list[Sprinkle],
-            count: int) -> tuple[list[list[Sprinkle]], float]:
+def _donuts(all_sprinkles: Bite, count: int) -> tuple[list[Bite], float]:
     """Each donut should have at least count sprinkles on it."""
     list_of_donuts = list()
     delta = all_sprinkles[count].distance
     radius = 0.0
     while all_sprinkles:
-        donut: list[Sprinkle] = list()
+        donut: Bite = list()
         # Keep making current donut bigger until it has at least "count"
         # sprinkles on it.
         while len(donut) < count:
@@ -521,18 +537,9 @@ def _donuts(all_sprinkles: list[Sprinkle],
     return list_of_donuts, delta
 
 
-@dataclasses.dataclass(kw_only=True)
-class Sprinkle:
-    """Pre-computed information about portals useful for making donuts."""
-    distance: float
-    azimuth: float
-    guid: str
-    latlng: database.geoalchemy2.elements.WKBElement
-
-
 def _load_sprinkles(
-        point: database.geoalchemy2.elements.WKTElement,
-        dbc: database.Database) -> list[Sprinkle]:
+        point: database.geoalchemy2.elements.WKBElement,
+        dbc: database.Database) -> Bite:
     """Load all portal information needed for donuts."""
     rows = dbc.session.query(
         database.Portal,
