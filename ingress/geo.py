@@ -124,7 +124,16 @@ def update(args: argparse.Namespace) -> int:
 
 
 def bounds(args: argparse.Namespace) -> int:
-    """Create a drawtools file outlining portals in multiple bookmarks files."""
+    """Create a drawtools file outlining portals in multiple bookmarks files.
+
+    A new boundary is created for each bookmarks file.
+
+    Each boundary is given a unique color determined automatically.  They are
+    known to be difficult to see against some IITC maps, so manual editing may
+    be required.
+
+    Hint: Useful for processing the output of the 'donuts' command.
+    """
     collection_of_multi_points = list()
     for filename in itertools.chain(*args.glob):
         data = bookmarks.load(filename)
