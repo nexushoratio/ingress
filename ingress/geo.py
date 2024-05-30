@@ -186,9 +186,9 @@ def donuts(args: argparse.Namespace) -> int:  # pylint: disable=too-many-locals
     point = drawtools.load_point(args.drawtools)
     sprinkles = _load_sprinkles(point, dbc)
     sprinkles.sort(key=lambda x: x.distance)
-    full_donuts, delta = _donuts(sprinkles, args.count)
+    all_donuts, delta = _donuts(sprinkles, args.count)
 
-    guids = frozenset(x.guid for x in full_donuts[0])
+    guids = frozenset(x.guid for x in all_donuts[0])
     result = dbc.session.query(
         database.geoalchemy2.functions.ST_ConvexHull(
             database.geoalchemy2.functions.ST_Union(
@@ -200,7 +200,7 @@ def donuts(args: argparse.Namespace) -> int:  # pylint: disable=too-many-locals
     print(f'{max_length=}')
     print(f'{max_area=}')
 
-    bites = _bites(dbc, full_donuts, args.count, max_length, max_area)
+    bites = _bites(dbc, all_donuts, args.count, max_length, max_area)
     print(f'There are {len(bites)} donut bites.')
     # width = len(str(len(bites)))
     # for nibble, bite in enumerate(bites):
@@ -511,9 +511,9 @@ def _bite(
     return _bite(dbc, donut[:-1], max_length, max_area, cache)
 
 
-def _order_sprinkles_on_donuts(full_donuts: list[Bite]):
+def _order_sprinkles_on_donuts(all_donuts: list[Bite]):
     """Sort the sprinkles by azimuth on each donut."""
-    for donut in full_donuts:
+    for donut in all_donuts:
         # We do not want the bites to align along the 0th azimuth (north), so
         # we use the first sprinkle we find on the donut and order everything
         # relative to it.
