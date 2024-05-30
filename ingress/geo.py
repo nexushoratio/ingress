@@ -165,7 +165,7 @@ def trim(args: argparse.Namespace) -> int:
     return 0
 
 
-def donuts(args: argparse.Namespace) -> int:  # pylint: disable=too-many-locals
+def donuts(args: argparse.Namespace) -> int:
     """Automatically group portals into COUNT sized bookmarks files.
 
     The idea is to provide a series of bookmarks that would be suitably
@@ -199,15 +199,15 @@ def donuts(args: argparse.Namespace) -> int:  # pylint: disable=too-many-locals
     print(f'{max_length=}')
     print(f'{max_area=}')
 
-    bites = _bites(dbc, all_donuts, args.count, max_length, max_area)
+    bites = _bites(
+        dbc, all_donuts, args.count, args.bites, max_length, max_area)
     print(f'There are {len(bites)} donut bites.')
     width = len(str(len(bites)))
     for nibble, bite in enumerate(bites):
-        if nibble < args.bites:
-            filename = args.pattern.format(
-                size=args.count, width=width, bite=nibble)
-            guids = frozenset(sprinkle.guid for sprinkle in bite)
-            bookmarks.save_from_guids(guids, filename, dbc)
+        filename = args.pattern.format(
+            size=args.count, width=width, bite=nibble)
+        guids = frozenset(sprinkle.guid for sprinkle in bite)
+        bookmarks.save_from_guids(guids, filename, dbc)
 
     return 0
 
@@ -428,9 +428,9 @@ def _add_edges(graph, index, node_map_by_index, max_distance):  # pylint: disabl
     logging.info('_add_edges: edges added: %d', edge_count)
 
 
-def _bites(
+def _bites(  # pylint: disable=too-many-arguments
         dbc: database.Database, all_donuts: list[Bite], count: int,
-        max_length: float, max_area: float) -> list[Bite]:
+        max_bites: int, max_length: float, max_area: float) -> list[Bite]:
     """Divide the donuts into bite-sized morsels (e.g., COUNT portals)."""
     all_bites: list[Bite] = list()
     _order_sprinkles_on_donuts(all_donuts)
@@ -441,6 +441,9 @@ def _bites(
             bite = _bite(dbc, donut[:count], max_length, max_area, dist_cache)
             donut = donut[len(bite):]
             all_bites.append(bite)
+        if len(all_bites) > max_bites:
+            break
+
     return all_bites
 
 
