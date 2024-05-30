@@ -45,7 +45,6 @@ class Sprinkle:
     distance: float
     azimuth: float
     guid: str
-    latlng: database.geoalchemy2.elements.WKBElement
 
 
 DistanceCache: typing.TypeAlias = dict[
@@ -566,7 +565,7 @@ def _load_sprinkles(
             distance=row.distance,
             azimuth=row.azimuth,
             guid=row.Portal.guid,
-            latlng=row.Portal.latlng)
+        )
         sprinkles.append(sprinkle)
 
     return sprinkles
