@@ -549,15 +549,15 @@ def _donuts(all_sprinkles: Bite, count: int) -> tuple[list[Bite], float]:
 
 
 def _load_sprinkles(
-        point: database.geoalchemy2.elements.WKBElement,
+        center_point: database.geoalchemy2.elements.WKBElement,
         dbc: database.Database) -> Bite:
     """Load all portal information needed for donuts."""
     rows = dbc.session.query(
         database.Portal,
         database.geoalchemy2.functions.ST_Distance(
-            point, database.Portal.latlng, 0).label('distance'),
+            center_point, database.Portal.latlng, 0).label('distance'),
         database.geoalchemy2.functions.ST_Azimuth(
-            point, database.Portal.latlng).label('azimuth'),
+            center_point, database.Portal.latlng).label('azimuth'),
     )
     sprinkles = list()
     for row in rows:
