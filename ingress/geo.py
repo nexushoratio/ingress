@@ -79,7 +79,7 @@ def mundane_commands(ctx: app.ArgparseApp):
     parser.add_argument(
         '--directions',
         action='store_true',
-        help='Enable updating directions..')
+        help='Enable updating directions.')
 
     ctx.register_command(bounds, parents=[dt_flags, glob_flags])
     ctx.register_command(trim, parents=[bm_flags, dt_flags])
