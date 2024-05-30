@@ -167,7 +167,7 @@ def trim(args: argparse.Namespace) -> int:
 
 
 def donuts(args: argparse.Namespace) -> int:
-    """Automatically group portals into COUNT sized bookmarks files.
+    """(V) Automatically group portals into COUNT sized bookmarks files.
 
     The idea is to provide a series of bookmarks that would be suitably
     sized groups for efficient capturing.
@@ -181,6 +181,9 @@ def donuts(args: argparse.Namespace) -> int:
     of portals in a bite and how big (in area) a bite would be.  For
     example, it will try to avoid having a bite be the entire donut
     because it covers a sparsely populated area.
+
+    Hint: Use the 'bounds' and 'merge' commands to create interesting features
+    to import into IITC.
     """
     dbc = args.dbc
     point = drawtools.load_point(args.drawtools)
