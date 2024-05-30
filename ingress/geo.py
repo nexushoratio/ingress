@@ -559,16 +559,13 @@ def _load_sprinkles(
         database.geoalchemy2.functions.ST_Azimuth(
             center_point, database.Portal.latlng).label('azimuth'),
     )
-    sprinkles = list()
-    for row in rows:
-        sprinkle = Sprinkle(
+    return [
+        Sprinkle(
             distance=row.distance,
             azimuth=row.azimuth,
             guid=row.Portal.guid,
-        )
-        sprinkles.append(sprinkle)
-
-    return sprinkles
+        ) for row in rows
+    ]
 
 
 def _portal_combos(portals):
