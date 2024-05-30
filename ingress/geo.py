@@ -201,13 +201,13 @@ def donuts(args: argparse.Namespace) -> int:  # pylint: disable=too-many-locals
 
     bites = _bites(dbc, all_donuts, args.count, max_length, max_area)
     print(f'There are {len(bites)} donut bites.')
-    # width = len(str(len(bites)))
-    # for nibble, bite in enumerate(bites):
-    #     if nibble < args.bites:
-    #         filename = args.pattern.format(
-    #             size=args.size, width=width, bite=nibble)
-    #         guids = (sprinkle.guid for sprinkle in bite)
-    #         bookmarks.save_from_guids(guids, filename, dbc)
+    width = len(str(len(bites)))
+    for nibble, bite in enumerate(bites):
+        if nibble < args.bites:
+            filename = args.pattern.format(
+                size=args.count, width=width, bite=nibble)
+            guids = frozenset(sprinkle.guid for sprinkle in bite)
+            bookmarks.save_from_guids(guids, filename, dbc)
 
     return 0
 
