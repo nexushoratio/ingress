@@ -70,9 +70,7 @@ def show(args: argparse.Namespace) -> int:  # pylint: disable=too-many-locals
 
     dates = list()
     for row in query:
-        portal = dict()
-        for column in known_columns:
-            portal[column] = getattr(row, column)
+        portal = row.to_iitc()
         portal['date'] = _format_date(portal[args.field])
         dates.append(portal['date'])
         groups[portal[args.group_by]].append(portal)
