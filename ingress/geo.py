@@ -796,23 +796,23 @@ def _get_reasonable_google_leg(begin, end, mode):
     return google_leg
 
 
-def _clean(dbc):
-    """Placeholder docstring for private function."""
+def _clean(dbc: database.Database):
+    """Clean out old cached data."""
     now = time.time()
     oldest_allowed = now - MAX_AGE
     rows = dbc.session.query(
         database.Address).filter(database.Address.date < oldest_allowed)
     for row in rows:
-        print(('Deleting ', row.date, row.address))
+        print('Deleting ', row.date, row.address)
         dbc.session.delete(row)
     rows = dbc.session.query(
         database.Leg).filter(database.Leg.date < oldest_allowed)
     for row in rows:
-        print(('Delete ', row))
+        print('Delete ', row)
     rows = dbc.session.query(
         database.Path).filter(database.Path.date < oldest_allowed)
     for row in rows:
-        print(('Delete ', row))
+        print('Delete ', row)
     dbc.session.commit()
 
 
