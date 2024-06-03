@@ -64,21 +64,15 @@ def mundane_commands(ctx: app.ArgparseApp):
 
     parser = ctx.register_command(update, parents=[bm_flags])
     parser.add_argument(
-        '--noaddresses',
-        action='store_false',
-        dest='addresses',
-        help='Disable updating addresses.')
-    parser.add_argument(
-        '--addresses', action='store_true', help='Enable updating addresses.')
-    parser.add_argument(
-        '--nodirections',
-        action='store_false',
-        dest='directions',
-        help='Disable updating directions.')
+        '--addresses',
+        action=ctx.argparse_api.BooleanOptionalAction,
+        default=True,
+        help='Update addresses. (Default: %(default)s)')
     parser.add_argument(
         '--directions',
-        action='store_true',
-        help='Enable updating directions.')
+        action=ctx.argparse_api.BooleanOptionalAction,
+        default=True,
+        help='Update directions. (Default: %(default)s)')
 
     ctx.register_command(bounds, parents=[dt_flags, glob_flags])
     ctx.register_command(trim, parents=[bm_flags, dt_flags])
