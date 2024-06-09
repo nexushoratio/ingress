@@ -78,9 +78,12 @@ def show(args: argparse.Namespace) -> int:  # pylint: disable=too-many-locals
 
     dates.sort()
     text_output = list()
-    text_output.append(
-        f'{len(dates)} portals {args.field}'
-        f' between {dates[0]} and {dates[-1]}\n\n')
+    if dates:
+        text_output.append(
+            f'{len(dates)} portals {args.field}'
+            f' between {dates[0]} and {dates[-1]}\n\n')
+    else:
+        text_output.append('No portals matched search criteria.')
     for group in sorted(list(groups.keys()), reverse=args.order == 'descend'):
         line = f'{args.group_by.capitalize()}: {group}\n\n'
         groups[group].sort(key=lambda x: x['label'])
