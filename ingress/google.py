@@ -3,6 +3,7 @@
 import http.client
 import json
 import logging
+import os
 import pprint
 import socket
 import time
@@ -12,7 +13,7 @@ import urllib.request
 
 import attr
 
-API_KEY = 'TBD'
+API_KEY = os.getenv('GOOGLE_API_KEY', default='TBD')
 REAL_DIRECTIONS_BASE_URL = (
     'https://maps.googleapis.com/maps/api/directions/json')
 FAKE_DIRECTIONS_BASE_URL = (
