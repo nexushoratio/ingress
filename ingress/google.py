@@ -1,5 +1,6 @@
 """Work with Google APIs."""
 
+import collections
 import http.client
 import json
 import logging
@@ -85,14 +86,35 @@ def directions(origin, destination, mode):
     return answer
 
 
+PREFERRED_TYPES = frozenset(
+    (
+        'administrative_area_level_1',
+        'administrative_area_level_2',
+        'country',
+        'locality',
+        'neighborhood',
+        'postal_code',
+    ))
+ESTABLISHMENT_POI_TYPES = frozenset(('establishment', 'point_of_interest'))
+OTHER_TYPES = frozenset(
+    (
+        'plus_code',
+        'political',
+        'premise',
+        'route',
+        'street_address',
+    ))
+
+
 def latlng_to_address(latlng, **args):
     """Get a textual address for a specific location."""
-
     args.update({
         'latlng': latlng,
     })  # yapf: disable
     result = _call_api(GEOCODE_BASE_URL, args)
-    logging.info('latlng=%s: result=%s', latlng, pprint.pformat(result))
+    logging.info('latlng=%s:\nresult=%s', latlng, pprint.pformat(result))
+
+    types = collections.defaultdict(set)
 
     # The API result has a lot of information.  We want to score the results
     # so we can select the "best" one.  So we use a simple tuple where the
@@ -106,6 +128,18 @@ def latlng_to_address(latlng, **args):
         answers.append((score, address))
 
     for entry in result['results']:
+        entry_types = frozenset(entry['types'])
+        if ESTABLISHMENT_POI_TYPES.issubset(entry_types):
+            logging.info(
+                'ignoring types: %s',
+                ' | '.join(sorted(entry_types - ESTABLISHMENT_POI_TYPES)))
+        else:
+            for type_ in entry['types']:
+                if type_ in PREFERRED_TYPES:
+                    types[type_].add(entry['formatted_address'])
+                elif type_ not in OTHER_TYPES:
+                    raise RuntimeError(
+                        f'Unknown type: {type_} ({entry["types"]})')
         logging.info(
             'entry_types: %s, location_type: %s, addr: %s, loc: %s',
             entry['types'], entry['geometry']['location_type'],
@@ -117,6 +151,8 @@ def latlng_to_address(latlng, **args):
     answers.sort()
     score, address = answers[0]
     print(f'{latlng}: {address} (score: {score})')
+    for key in sorted(types.keys()):
+        logging.info('%s: %s', key, ' | '.join(types[key]))
     return address
 
 
