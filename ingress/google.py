@@ -106,7 +106,7 @@ OTHER_TYPES = frozenset(
     ))
 
 
-def latlng_to_address(latlng):
+def latlng_to_address(latlng: str) -> str:
     """Get a textual address for a specific location."""
     args = {
         'latlng': latlng,
@@ -114,17 +114,21 @@ def latlng_to_address(latlng):
     result = _call_api(GEOCODE_BASE_URL, args)
     logging.info('latlng=%s:\nresult=%s', latlng, pprint.pformat(result))
 
-    types = collections.defaultdict(set)
+    types_: dict[str, set[str]] = collections.defaultdict(set)
 
     # The API result has a lot of information.  We want to score the results
     # so we can select the "best" one.  So we use a simple tuple where the
     # first item is the score and second the address.  We seed the answers
     # with our worst score.
-    answers = [(LOCATION_TYPE_SCORES['UNKNOWN'], 'No known street address')]
+    answers: list[tuple[int, str]] = [
+        (LOCATION_TYPE_SCORES['UNKNOWN'], 'No known street address')
+    ]
 
     # Google really likes their plus codes.  We use them as a fallback.
-    for key, address in list(result['plus_code'].items()):
-        score = LOCATION_TYPE_SCORES['PLUS'] + PLUS_CODE_SCORES[key]
+    type_: str
+    address: str
+    for type_, address in list(result['plus_code'].items()):
+        score: int = LOCATION_TYPE_SCORES['PLUS'] + PLUS_CODE_SCORES[type_]
         answers.append((score, address))
 
     for entry in result['results']:
@@ -136,7 +140,7 @@ def latlng_to_address(latlng):
         else:
             for type_ in entry['types']:
                 if type_ in PREFERRED_TYPES:
-                    types[type_].add(entry['formatted_address'])
+                    types_[type_].add(entry['formatted_address'])
                 elif type_ not in OTHER_TYPES:
                     raise RuntimeError(
                         f'Unknown type: {type_} ({entry["types"]})')
@@ -151,8 +155,9 @@ def latlng_to_address(latlng):
     answers.sort()
     score, address = answers[0]
     print(f'{latlng}: {address} (score: {score})')
-    for key in sorted(types.keys()):
-        logging.info('%s: %s', key, ' | '.join(types[key]))
+    for type_ in sorted(types_.keys()):
+        logging.info('%s: %s', type_, ' | '.join(types_[type_]))
+
     return address
 
 
