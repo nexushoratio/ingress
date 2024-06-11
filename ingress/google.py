@@ -154,7 +154,7 @@ def latlng_to_address(latlng: str) -> str:
 
     answers.sort()
     score, address = answers[0]
-    print(f'{latlng}: {address} (score: {score})')
+    print(f'{latlng}: {address} ({score=})')
     for type_ in sorted(types_.keys()):
         logging.info('%s: %s', type_, ' | '.join(types_[type_]))
 
