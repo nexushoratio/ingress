@@ -106,11 +106,11 @@ OTHER_TYPES = frozenset(
     ))
 
 
-def latlng_to_address(latlng, **args):
+def latlng_to_address(latlng):
     """Get a textual address for a specific location."""
-    args.update({
+    args = {
         'latlng': latlng,
-    })  # yapf: disable
+    }
     result = _call_api(GEOCODE_BASE_URL, args)
     logging.info('latlng=%s:\nresult=%s', latlng, pprint.pformat(result))
 
