@@ -49,6 +49,7 @@ split_complex_comprehension = true
 [tool.pylint.basic]
 docstring-min-length = 2
 good-names = ["setUpModule"]
+max-line-length = 78
 no-docstring-rgx = "(^__|_?test.*|.*Test)"
 
 [tool.pylint.classes]

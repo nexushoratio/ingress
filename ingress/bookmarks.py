@@ -72,8 +72,9 @@ def mundane_commands(ctx: app.ArgparseApp):
         action='store',
         default='flattened-{size}-{count:0{width}d}.json',
         help=(
-            'Pattern used to name the output files.  Uses PEP 3101 formatting '
-            'strings with the following fields:  size, width, count'))
+            'Pattern used to name the output files.  Uses PEP 3101'
+            ' formatting strings with the following fields:  size,'
+            ' width, count'))
 
     ctx.register_command(find_missing_labels, parents=[bm_flags, glob_flags])
     ctx.register_command(merge, parents=[bm_flags, glob_flags])
@@ -151,7 +152,7 @@ def export(args: argparse.Namespace) -> int:
 
 
 def flatten(args: argparse.Namespace) -> int:
-    """(V) Load portals from BOOKMARKS and write out as lists using PATTERN."""
+    """(V) Load portals from BOOKMARKS and create new ones using PATTERN."""
     portals = load(args.bookmarks)
     json.save_by_size(list(portals.values()), args.size, args.pattern)
 

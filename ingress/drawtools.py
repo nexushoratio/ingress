@@ -50,7 +50,7 @@ def save_bounds(filename, collections):
 
 
 def load_polygons(filename):
-    """Load items from a drawtools file into a shapely.geometry.MultiPolygon."""
+    """Load items from a drawtools file into a geometry.MultiPolygon."""
     outlines = json.load(filename)
     polygons = list()
     for outline in outlines:
@@ -90,8 +90,8 @@ def load_point(filename: str) -> database.geoalchemy2.elements.WKTElement:
     drawing = json.load(filename)
     if len(drawing) != 1:
         raise RuntimeError(
-            f'{filename} should have one element; has {len(drawing)} elements instead'
-        )
+            f'{filename} should have one element;'
+            f' has {len(drawing)} elements instead')
     element = drawing[0]
     typ = element['type']
     if typ in common_point_types:
