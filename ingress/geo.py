@@ -668,9 +668,11 @@ def _portal_combos(portals):
 
 
 def _grouper(iterable, size):
-    """Placeholder docstring for private function."""
-    args = [iter(iterable)] * size
-    return itertools.zip_longest(*args)
+    """Group iterable into batches of size items."""
+    filler = dict()
+    args = (iter(iterable),) * size
+    for group in itertools.zip_longest(*args, fillvalue=filler):
+        yield tuple(item for item in group if item is not filler)
 
 
 def _update_addresses(dbc, portals):
