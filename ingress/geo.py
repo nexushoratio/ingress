@@ -675,7 +675,7 @@ def _grouper(iterable, size):
         yield tuple(item for item in group if item is not filler)
 
 
-def _update_addresses(dbc, portals):
+def _update_addresses(dbc: database.Database, portals: bookmarks.Portals):
     """Placeholder docstring for private function."""
     now = time.time()
     needed = set()
@@ -698,13 +698,13 @@ def _update_addresses(dbc, portals):
         dbc.session.commit()
 
 
-def _update_directions(dbc, portals):
+def _update_directions(dbc: database.Database, portals: bookmarks.Portals):
     """Placeholder docstring for private function."""
     _update_paths(dbc, portals)
     _update_path_legs(dbc, portals)
 
 
-def _update_paths(dbc, portals):  # pylint: disable=too-many-locals
+def _update_paths(dbc: database.Database, portals: bookmarks.Portals):  # pylint: disable=too-many-locals
     """Placeholder docstring for private function."""
     now = time.time()
     combo_groups = _grouper(_portal_combos(portals), 64)
@@ -732,7 +732,7 @@ def _update_paths(dbc, portals):  # pylint: disable=too-many-locals
     dbc.session.commit()
 
 
-def _update_path_legs(dbc, portals):
+def _update_path_legs(dbc: database.Database, portals: bookmarks.Portals):
     """Placeholder docstring for private function."""
     path_ids = set()
     for begin_portal, end_portal, mode in _portal_combos(portals):
