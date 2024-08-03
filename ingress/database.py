@@ -57,7 +57,17 @@ def on_connect(dbapi_connection, _connection_record):
         dbapi_connection.execute('SELECT InitSpatialMetaData(1);')
 
 
-Base = orm.declarative_base()  # pylint: disable=invalid-name
+convention = {
+    'ix': 'ix_%(column_0_label)s',
+    'uq': 'uq_%(table_name)s_%(column_0_name)s',
+    'ck': 'ck_%(table_name)s_%(constraint_name)s',
+    'fk': 'fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s',
+    'pk': 'pk_%(table_name)s',
+}
+
+metadata = sqlalchemy.schema.MetaData(naming_convention=convention)
+
+Base = orm.declarative_base(metadata=metadata)  # pylint: disable=invalid-name
 
 
 def latlng_to_point(latlng: str) -> geoalchemy2.elements.WKTElement:
