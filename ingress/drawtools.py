@@ -86,18 +86,35 @@ def load_point(filename: str) -> database.geoalchemy2.elements.WKTElement:
     Returns:
       The singular point.
     """
-    common_point_types = ('circle', 'marker')
-    drawing = json.load(filename)
-    if len(drawing) != 1:
+    points = load_points(filename)
+    num_points = len(points)
+    if num_points != 1:
         raise RuntimeError(
             f'{filename} should have one element;'
-            f' has {len(drawing)} elements instead')
-    element = drawing[0]
-    typ = element['type']
-    if typ in common_point_types:
-        latlng = element['latLng']
-    else:
-        raise TypeError(f'"{typ}" is a type not yet handled.')
+            f' has {num_points} elements instead')
 
-    point = database.latlng_dict_to_point(latlng)
-    return point
+    return list(points)[0]
+
+
+def load_points(
+        filename: str) -> frozenset[database.geoalchemy2.elements.WKTElement]:
+    """Find a collection of point from a drawtools file.
+
+    Args:
+      filename: name of the file
+
+    Returns:
+      The points.
+    """
+    common_point_types = ('circle', 'marker')
+    drawing = json.load(filename)
+    points = set()
+    for element in drawing:
+        typ = element['type']
+        if typ in common_point_types:
+            latlng = element['latLng']
+            points.add(database.latlng_dict_to_point(latlng))
+        else:
+            raise TypeError(f'"{typ}" is a type not yet handled.')
+
+    return frozenset(points)

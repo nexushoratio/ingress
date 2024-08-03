@@ -7,6 +7,7 @@ import dataclasses
 import itertools
 import logging
 import math
+import operator
 import random
 import sys
 import time
@@ -102,6 +103,31 @@ def mundane_commands(ctx: app.ArgparseApp):
         help=(
             'Pattern used to name the output files.  Uses PEP 3101 formatting'
             ' strings with the following fields:  count, width, bite'
+            ' (Default: %(default)s)'))
+
+    parser = ctx.register_command(ellipse, parents=[dt_flags])
+    parser.add_argument(
+        '-c',
+        '--count',
+        action='store',
+        type=int,
+        required=True,
+        help='The count of portals per ellipse.')
+    parser.add_argument(
+        '-n',
+        '--number',
+        action='store',
+        type=int,
+        default=sys.maxsize,
+        help='Number of ellipse to compute. (Default: %(default)s)')
+    parser.add_argument(
+        '-p',
+        '--pattern',
+        action='store',
+        default='bm-ellipse-{count}-{number:0{width}d}.json',
+        help=(
+            'Pattern used to name the output files.  Uses PEP 3101 formatting'
+            ' strings with the following fields:  count, width, number'
             ' (Default: %(default)s)'))
 
 
@@ -217,6 +243,60 @@ def donuts(args: argparse.Namespace) -> int:
         bookmarks.save_from_guids(guids, filename, dbc)
 
     return 0
+
+
+def ellipse(args: argparse.Namespace) -> int:
+    """Find a number of n-ellipse containing portals.
+
+    An n-ellipse is a generalization of the 2-foci ellipse and 1-focus ellipse
+    (aka, the circle).  The idea is that the sum of distances from any given
+    point on the edge to the foci is a constant.
+
+    This implementation is much more simple than that: It will determine the
+    total distance from a portal to the given foci and sort them.  That sorted
+    listed list is broken up in groups of COUNT portals and turned into
+    bookmarks files.
+
+    Hint: Use the 'bounds' and 'merge' commands to create interesting features
+    to import into IITC.
+    """
+    dbc = args.dbc
+    points = drawtools.load_points(args.drawtools)
+    portals = _load_portal_distances(points, dbc)
+    width = len(str(args.number))
+    for group_num, group in enumerate(_grouper(portals, args.count)):
+        if group_num == args.number:
+            break
+        filename = args.pattern.format(
+            count=args.count, width=width, number=group_num)
+        print(f'min={group[0].distance} max={group[-1].distance}')
+        guids = frozenset(portal.guid for portal in group)
+        bookmarks.save_from_guids(guids, filename, dbc)
+
+    return 0
+
+
+def _load_portal_distances(
+        points: database.geoalchemy2.elements.WKBElement,
+        dbc: database.Database) -> Bite:
+    """Load all portal information needed for donuts."""
+    distance = operator.add(0, 0)
+    for point in points:
+        distance = operator.add(
+            distance,
+            database.geoalchemy2.functions.ST_Distance(
+                point, database.Portal.latlng, 0))
+    rows = dbc.session.query(
+        database.Portal,
+        distance.label('distance'),
+    ).order_by('distance')
+    return [
+        Sprinkle(
+            distance=row.distance,
+            azimuth=0,
+            guid=row.Portal.guid,
+        ) for row in rows
+    ]
 
 
 def cluster(args: argparse.Namespace) -> int:  # pylint: disable=too-many-locals
