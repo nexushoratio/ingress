@@ -48,10 +48,10 @@ def init_db(args: argparse.Namespace):
 @sqlalchemy.event.listens_for(sqlalchemy.engine.Engine, 'connect')
 def on_connect(dbapi_connection, _connection_record):
     """Defaults for our connection."""
+    dbapi_connection.execute('PRAGMA foreign_keys=ON')
     dbapi_connection.enable_load_extension(True)
     dbapi_connection.load_extension('mod_spatialite')
     dbapi_connection.enable_load_extension(False)
-    dbapi_connection.execute('PRAGMA foreign_keys=ON')
     cur = dbapi_connection.execute('SELECT CheckSpatialMetaData();')
     if cur.fetchone()[0] < 1:
         dbapi_connection.execute('SELECT InitSpatialMetaData(1);')
