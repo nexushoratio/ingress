@@ -16,6 +16,10 @@ if typing.TYPE_CHECKING:  # pragma: no cover
 
     from mundane import app
 
+Portal: typing.TypeAlias = dict[str, str | float]
+
+Portals: typing.TypeAlias = dict[str, Portal]
+
 
 def mundane_shared_flags(ctx: app.ArgparseApp):
     """Register shared flags."""
@@ -159,11 +163,11 @@ def flatten(args: argparse.Namespace) -> int:
     return 0
 
 
-def load(filename):
+def load(filename: str) -> Portals:
     """Load a particular bookmarks file returning a dict of portals."""
     bookmarks = json.load(filename)
     portals_by_folder = bookmarks['portals']
-    portals = dict()
+    portals: Portals = dict()
     for folder in list(portals_by_folder.values()):
         portals_in_folder = folder['bkmrk']
         for portal in list(portals_in_folder.values()):
@@ -174,7 +178,7 @@ def load(filename):
     return portals
 
 
-def save(portals, filename):
+def save(portals: Portals, filename: str):
     """Save a dictionary of portals into a particular bookmarks file."""
     new_bookmarks = new()
     new_bookmarks['portals']['idOthers']['bkmrk'] = portals
@@ -197,13 +201,14 @@ def find_missing_labels(args: argparse.Namespace) -> int:
     add them to a newly created bookmarks file instead.  The contents of
     the destination bookmarks file will be destroyed.
     """
-    missing_portals: dict[str, dict] = dict()
+    missing_portals: Portals = dict()
     save(missing_portals, args.bookmarks)
     for filename in itertools.chain(*args.glob):
-        missing_guids = set()
+        missing_guids: set[str] = set()
         portals = load(filename)
-        for portal in list(portals.values()):
+        for portal in portals.values():
             if 'label' not in portal:
+                assert isinstance(portal['guid'], str)
                 missing_guids.add(portal['guid'])
         if missing_guids:
             for guid in missing_guids:
