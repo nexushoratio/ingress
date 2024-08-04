@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import dataclasses
+import difflib
 import logging
 import pathlib
 import typing
@@ -16,6 +18,17 @@ if typing.TYPE_CHECKING:  # pragma: no cover
     from mundane import app
 
 # pylint: disable=too-few-public-methods
+
+
+@dataclasses.dataclass(kw_only=True)
+class ExistingTable:
+    """Information about existing tables for use with sanity checking."""
+    ddls: set[tuple[int, str]]
+    table: sqlalchemy.sql.schema.Table
+
+
+class Error(Exception):
+    """Base module exception."""
 
 
 def mundane_global_flags(ctx: app.ArgparseApp):
@@ -101,8 +114,7 @@ class Portal(Base):  # pylint: disable=missing-docstring
         sqlalchemy.Integer, nullable=False, index=True)
     last_seen = sqlalchemy.Column(
         sqlalchemy.Integer, nullable=False, index=True)
-    latlng = sqlalchemy.Column(
-        geoalchemy2.Geometry('POINT', srid=4326), nullable=False)
+    latlng = sqlalchemy.Column(geoalchemy2.Geometry('POINT', srid=4326))
 
     def from_iitc(self, **kwargs):
         """Populate a row with an IITC bookmark style dict."""
@@ -199,6 +211,22 @@ class Address(Base):  # pylint: disable=missing-docstring
     date = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
 
 
+# Work around bugs in sqlite reflection
+# 'tablename': {'create_table_outpt': hand_rolled_clean_ddl}
+_FALLBACK_DDL: dict[str, dict[str, set[tuple[int, str]]]] = {}
+
+_DUMMY_DDL = frozenset((-1, ''),)
+
+_AUTO_DROPS = (
+    'addresses',
+    'addr',
+    'cluster_leaders',
+    'legs',
+    'path_legs',
+    'paths',
+)
+
+
 class Database:  # pylint: disable=missing-docstring
 
     def __init__(self, directory: str, filename: str):
@@ -206,7 +234,83 @@ class Database:  # pylint: disable=missing-docstring
         sql_logger = logging.getLogger('sqlalchemy')
         root_logger = logging.getLogger()
         sql_logger.setLevel(root_logger.getEffectiveLevel())
-        engine = sqlalchemy.create_engine(
+        self._engine = sqlalchemy.create_engine(
             f'sqlite:///{directory}/{filename}', future=True)
-        self.session = orm.sessionmaker(bind=engine, future=True)()
-        Base.metadata.create_all(engine)
+        self._sanity_check()
+        self.session = orm.sessionmaker(bind=self._engine, future=True)()
+        Base.metadata.create_all(self._engine)
+
+    def _sanity_check(self):
+        """This is a proxy for doing proper migrations."""
+        no_drop = set()
+        to_drop = set()
+        existing_tables = self._load_existing_tables()
+        for tablename, defined_table in Base.metadata.tables.items():
+            table = existing_tables.get(tablename)
+            if table:
+                raw_ddl = str(
+                    sqlalchemy.schema.CreateTable(defined_table).compile(
+                        bind=self._engine)).strip()
+                dt_ddl = self._clean_ddl(raw_ddl)
+                fallback_ddl = _FALLBACK_DDL.get(tablename, dict()).get(
+                    raw_ddl, _DUMMY_DDL)
+                if not (dt_ddl.issubset(table.ddls)
+                        or fallback_ddl.issubset(table.ddls)):
+                    dt_sql = [f'{x}\n' for x in sorted(dt_ddl)]
+                    et_sql = [f'{x}\n' for x in sorted(table.ddls)]
+                    diffs = ''.join(
+                        list(
+                            difflib.unified_diff(
+                                et_sql,
+                                dt_sql,
+                                fromfile='existing',
+                                tofile='defined',
+                                n=2)))
+                    if tablename in _AUTO_DROPS:
+                        to_drop.add((tablename, diffs))
+                    else:
+                        no_drop.add((tablename, diffs))
+
+        if no_drop:
+            msg = ['Unhandled tables with differences:']
+            for tablename, diffs in no_drop:
+                msg.append(f'  {tablename}:\n{diffs}')
+            msg.append('')
+            raise Error('\n'.join(msg))
+
+        for tablename, diffs in to_drop:
+            print(f'dropping: {tablename}\n{diffs}')
+            table = existing_tables.get(tablename)
+            if table:
+                table.table.drop(bind=self._engine)
+
+    def _load_existing_tables(self) -> dict[str, ExistingTable]:
+        """Get information about existing tables."""
+        existing_tables = dict()
+        with self._engine.connect() as conn:
+            existing = sqlalchemy.schema.MetaData()
+            existing.reflect(bind=conn)
+            for table in existing.tables.values():
+                existing_tables[table.name] = ExistingTable(
+                    ddls=self._clean_ddl(
+                        str(sqlalchemy.schema.CreateTable(table))),
+                    table=table)
+
+            # https://github.com/sqlalchemy/sqlalchemy/discussions/11580
+            if conn.dialect.driver == 'pysqlite':
+                for row in conn.execute(sqlalchemy.text("""
+                        SELECT name,sql
+                        FROM sqlite_master
+                        WHERE type = "table"
+                        """)):
+                    table = existing_tables.get(row.name)
+                    if table:
+                        table.ddls.update(self._clean_ddl(row.sql))
+
+        return existing_tables
+
+    def _clean_ddl(self, ddl: str) -> set[tuple[int, str]]:
+        tuples = set(
+            (number, line.strip())
+            for number, line in enumerate(ddl.strip().splitlines()))
+        return tuples
