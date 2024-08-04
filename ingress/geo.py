@@ -676,7 +676,7 @@ def _grouper(iterable, size):
 
 
 def _update_addresses(dbc: database.Database, portals: bookmarks.Portals):
-    """Placeholder docstring for private function."""
+    """Update addresses and other information for portals."""
     now = time.time()
 
     for portal in portals.values():
