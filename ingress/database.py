@@ -225,7 +225,6 @@ _DUMMY_DDL = frozenset((-1, ''),)
 
 _AUTO_DROPS = (
     'addresses',
-    'addr',
     'cluster_leaders',
     'legs',
     'path_legs',
