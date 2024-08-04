@@ -205,8 +205,14 @@ sqlalchemy.event.listen(
 class Address(Base):  # pylint: disable=missing-docstring
     __tablename__ = 'addresses'
 
-    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)  # pylint: disable=invalid-name
-    latlng = sqlalchemy.Column(sqlalchemy.String, nullable=False, unique=True)
+    latlng = sqlalchemy.Column(
+        sqlalchemy.String, nullable=False, primary_key=True)
+    lat = sqlalchemy.Column(
+        sqlalchemy.String,
+        sqlalchemy.Computed('SUBSTR(latlng, 1, INSTR(latlng, ",") - 1)'))
+    lng = sqlalchemy.Column(
+        sqlalchemy.String,
+        sqlalchemy.Computed('SUBSTR(latlng, INSTR(latlng, ",") + 1)'))
     address = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     date = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
 

@@ -678,24 +678,19 @@ def _grouper(iterable, size):
 def _update_addresses(dbc: database.Database, portals: bookmarks.Portals):
     """Placeholder docstring for private function."""
     now = time.time()
-    needed = set()
-    latlng_groups = _grouper(
-        (portal['latlng'] for portal in list(portals.values())), 64)
-    for latlng_group in latlng_groups:
-        filtered_latlng_group = [x for x in latlng_group if x is not None]
-        needed.update(filtered_latlng_group)
-        rows = dbc.session.query(database.Address).filter(
-            database.Address.latlng.in_(filtered_latlng_group))
-        have = {row.latlng for row in rows}
-        needed.difference_update(have)
 
-    print(f'Addresses needed: {len(needed)}')
-    for latlng in needed:
-        street_address = google.latlng_to_address(latlng)
-        db_address = database.Address(
-            latlng=latlng, address=street_address, date=now)
-        dbc.session.add(db_address)
-        dbc.session.commit()
+    for portal in portals.values():
+        # XXX: Portal fields can be multiple types, so this makes typing
+        # happy.
+        latlng = str(portal['latlng'])
+        address = dbc.session.get(database.Address, latlng)
+        if address is None:
+            print(f'Fetching for {portal["label"]}')
+            street_address = google.latlng_to_address(latlng)
+            db_address = database.Address(
+                latlng=latlng, address=street_address, date=now)
+            dbc.session.add(db_address)
+            dbc.session.commit()
 
 
 def _update_directions(dbc: database.Database, portals: bookmarks.Portals):
