@@ -106,7 +106,7 @@ def latlng_to_address(latlng: str) -> AddressDetails:
         'latlng': latlng,
     }
     result = _call_api(GEOCODE_BASE_URL, args)
-    logging.info('latlng=%s:\nresult=%s', latlng, pprint.pformat(result))
+    logging.info('latlng=%s:\nresult=\n%s', latlng, pprint.pformat(result))
 
     # The API result has a lot of information.  We want to score the results
     # so we can select the "best" one.  So we use a simple tuple where the
