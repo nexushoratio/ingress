@@ -686,9 +686,9 @@ def _update_addresses(dbc: database.Database, portals: bookmarks.Portals):
         address = dbc.session.get(database.Address, latlng)
         if address is None:
             print(f'Fetching for {portal["label"]}')
-            street_address = google.latlng_to_address(latlng)
+            address_detail = google.latlng_to_address(latlng)
             db_address = database.Address(
-                latlng=latlng, address=street_address, date=now)
+                latlng=latlng, address=address_detail.address, date=now)
             dbc.session.add(db_address)
             dbc.session.commit()
 

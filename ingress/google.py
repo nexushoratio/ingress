@@ -1,6 +1,6 @@
 """Work with Google APIs."""
 
-import collections
+import dataclasses
 import http.client
 import json
 import logging
@@ -50,6 +50,20 @@ class NetworkError(Error):
     """Generic network issue."""
 
 
+@dataclasses.dataclass(kw_only=True, order=True, frozen=True)
+class AddressTypeValue:
+    """A particular value returned from the Maps API."""
+    typ: str
+    val: str
+
+
+@dataclasses.dataclass(kw_only=True, frozen=True)
+class AddressDetails:
+    """Address details."""
+    address: str
+    type_values: set[AddressTypeValue]
+
+
 @attr.s
 class Directions:  # pylint: disable=missing-docstring,too-few-public-methods
     begin_latlng = attr.ib()
@@ -86,28 +100,7 @@ def directions(origin, destination, mode):
     return answer
 
 
-PREFERRED_TYPES = frozenset(
-    (
-        'administrative_area_level_1',
-        'administrative_area_level_2',
-        'administrative_area_level_3',
-        'country',
-        'locality',
-        'neighborhood',
-        'postal_code',
-    ))
-ESTABLISHMENT_POI_TYPES = frozenset(('establishment', 'point_of_interest'))
-OTHER_TYPES = frozenset(
-    (
-        'plus_code',
-        'political',
-        'premise',
-        'route',
-        'street_address',
-    ))
-
-
-def latlng_to_address(latlng: str) -> str:
+def latlng_to_address(latlng: str) -> AddressDetails:
     """Get a textual address for a specific location."""
     args = {
         'latlng': latlng,
@@ -115,14 +108,12 @@ def latlng_to_address(latlng: str) -> str:
     result = _call_api(GEOCODE_BASE_URL, args)
     logging.info('latlng=%s:\nresult=%s', latlng, pprint.pformat(result))
 
-    types_: dict[str, set[str]] = collections.defaultdict(set)
-
     # The API result has a lot of information.  We want to score the results
     # so we can select the "best" one.  So we use a simple tuple where the
     # first item is the score and second the address.  We seed the answers
     # with our worst score.
-    answers: list[tuple[int, str]] = [
-        (LOCATION_TYPE_SCORES['UNKNOWN'], 'No known street address')
+    answers: list[tuple[int, str, set[AddressTypeValue]]] = [
+        (LOCATION_TYPE_SCORES['UNKNOWN'], 'No known street address', set())
     ]
 
     # Google really likes their plus codes.  We use them as a fallback.
@@ -130,36 +121,25 @@ def latlng_to_address(latlng: str) -> str:
     address: str
     for type_, address in list(result['plus_code'].items()):
         score: int = LOCATION_TYPE_SCORES['PLUS'] + PLUS_CODE_SCORES[type_]
-        answers.append((score, address))
+        answers.append((score, address, set()))
 
     for entry in result['results']:
-        entry_types = frozenset(entry['types'])
-        if ESTABLISHMENT_POI_TYPES.issubset(entry_types):
-            logging.info(
-                'ignoring types: %s',
-                ' | '.join(sorted(entry_types - ESTABLISHMENT_POI_TYPES)))
-        else:
-            for type_ in entry['types']:
-                if type_ in PREFERRED_TYPES:
-                    types_[type_].add(entry['formatted_address'])
-                elif type_ not in OTHER_TYPES:
-                    raise RuntimeError(
-                        f'Unknown type: {type_} ({entry["types"]})')
-        logging.info(
-            'entry_types: %s, location_type: %s, addr: %s, loc: %s',
-            entry['types'], entry['geometry']['location_type'],
-            entry['formatted_address'], entry['geometry']['location'])
         if 'street_address' in entry['types']:
+            type_values: set[AddressTypeValue] = set()
+            for component in entry['address_components']:
+                name = component['long_name']
+                for typ in component['types']:
+                    type_values.add(AddressTypeValue(typ=typ, val=name))
             score = LOCATION_TYPE_SCORES[entry['geometry']['location_type']]
-            answers.append((score, entry['formatted_address']))
+            answers.append((score, entry['formatted_address'], type_values))
 
     answers.sort()
-    score, address = answers[0]
+    score, address, type_values = answers[0]
     print(f'{latlng}: {address} ({score=})')
-    for type_ in sorted(types_.keys()):
-        logging.info('%s: %s', type_, ' | '.join(types_[type_]))
+    for type_value in sorted(type_values):
+        logging.info('%s: %s', type_value.typ, type_value.val)
 
-    return address
+    return AddressDetails(address=address, type_values=type_values)
 
 
 def encode_polyline(coords):
