@@ -223,6 +223,7 @@ class AddressType(Base):  # pylint: disable=missing-docstring
     type = sqlalchemy.Column(
         sqlalchemy.String, nullable=False, primary_key=True)
     track = sqlalchemy.Column(sqlalchemy.Boolean)
+    note = sqlalchemy.Column(sqlalchemy.String)
 
 
 # Work around bugs in sqlite reflection
