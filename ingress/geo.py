@@ -63,6 +63,14 @@ def mundane_commands(ctx: app.ArgparseApp):
     file_flags = ctx.get_shared_parser('file')
     glob_flags = ctx.get_shared_parser('glob')
 
+    address_type_flag = ctx.argparse_api.ArgumentParser(add_help=False)
+    address_type_flag.add_argument(
+        '-t',
+        '--type',
+        action='store',
+        required=True,
+        help='Address type to modify')
+
     parser = ctx.register_command(update, parents=[bm_flags])
     parser.add_argument(
         '--addresses',
@@ -75,9 +83,24 @@ def mundane_commands(ctx: app.ArgparseApp):
         default=True,
         help='Update directions. (Default: %(default)s)')
 
+    ctx.register_command(address_type_list)
+
+    parser = ctx.register_command(
+        address_type_set, parents=[address_type_flag])
+    parser.add_argument(
+        '--track',
+        action=ctx.argparse_api.BooleanOptionalAction,
+        help='Should the address type be tracked (Default: %(default)s)')
+    parser.add_argument(
+        '-N',
+        '--note',
+        action='store',
+        help='Optional note to add to the address')
+
+    ctx.register_command(address_type_delete, parents=[address_type_flag])
+
     ctx.register_command(bounds, parents=[dt_flags, glob_flags])
     ctx.register_command(trim, parents=[bm_flags, dt_flags])
-
     ctx.register_command(cluster, parents=[file_flags])
 
     parser = ctx.register_command(donuts, parents=[dt_flags])
@@ -141,6 +164,51 @@ def update(args: argparse.Namespace) -> int:
         _update_directions(args.dbc, portals)
 
     return 0
+
+
+def address_type_list(args: argparse.Namespace) -> int:
+    """(V) List the known address types."""
+    dbc = args.dbc
+    query = dbc.session.query(database.AddressType)
+    query = query.order_by(database.AddressType.type)
+    print('Type'.center(27), '| Tracking | Note')
+    for row in query:
+        tracking = str(row.track if row.track is not None else '~~')
+        print(f'{row.type:27} | {tracking:^8} | {row.note}')
+
+    return 0
+
+
+def address_type_set(args: argparse.Namespace) -> int:
+    """(V) Update settings on a known address type."""
+    dbc = args.dbc
+    address_type = dbc.session.get(database.AddressType, args.type)
+    ret = 0
+    if address_type is not None:
+        if args.track is not None:
+            address_type.track = args.track
+        if args.note is not None:
+            address_type.note = args.note
+        dbc.session.add(address_type)
+        dbc.session.commit()
+    else:
+        print(f'Unknown address type: "{args.type}"')
+        ret = 1
+    return ret
+
+
+def address_type_delete(args: argparse.Namespace) -> int:
+    """(V) Delete a known address type."""
+    dbc = args.dbc
+    address_type = dbc.session.get(database.AddressType, args.type)
+    ret = 0
+    if address_type is not None:
+        dbc.session.delete(address_type)
+        dbc.session.commit()
+    else:
+        print(f'Unknown address type: "{args.type}"')
+        ret = 1
+    return ret
 
 
 def bounds(args: argparse.Namespace) -> int:
@@ -675,6 +743,20 @@ def _grouper(iterable, size):
         yield tuple(item for item in group if item is not filler)
 
 
+def _handle_address_type_values(
+        dbc: database.Database, detail: google.AddressDetails):
+    """Process the type_values field, adding anything that is necessary.
+
+    The caller is responsible for issuing the COMMIT.
+    """
+    for type_value in detail.type_values:
+        address_type = dbc.session.get(database.AddressType, type_value.typ)
+        if address_type is None:
+            print(f'Adding new address type: {type_value.typ}')
+            address_type = database.AddressType(type=type_value.typ)
+            dbc.session.add(address_type)
+
+
 def _update_addresses(dbc: database.Database, portals: bookmarks.Portals):
     """Update addresses and other information for portals."""
     now = time.time()
@@ -690,6 +772,7 @@ def _update_addresses(dbc: database.Database, portals: bookmarks.Portals):
             db_address = database.Address(
                 latlng=latlng, address=address_detail.address, date=now)
             dbc.session.add(db_address)
+            _handle_address_type_values(dbc, address_detail)
             dbc.session.commit()
 
 
