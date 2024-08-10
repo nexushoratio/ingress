@@ -217,6 +217,14 @@ class Address(Base):  # pylint: disable=missing-docstring
     date = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
 
 
+class AddressType(Base):  # pylint: disable=missing-docstring
+    __tablename__ = 'address_types'
+
+    type = sqlalchemy.Column(
+        sqlalchemy.String, nullable=False, primary_key=True)
+    track = sqlalchemy.Column(sqlalchemy.Boolean)
+
+
 # Work around bugs in sqlite reflection
 # 'tablename': {'create_table_outpt': hand_rolled_clean_ddl}
 _FALLBACK_DDL: dict[str, dict[str, set[tuple[int, str]]]] = {}
@@ -225,6 +233,7 @@ _DUMMY_DDL = frozenset((-1, ''),)
 
 _AUTO_DROPS = (
     'addresses',
+    'address_types',
     'cluster_leaders',
     'legs',
     'path_legs',
