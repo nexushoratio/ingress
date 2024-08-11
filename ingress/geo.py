@@ -95,7 +95,7 @@ def mundane_commands(ctx: app.ArgparseApp):
         '-N',
         '--note',
         action='store',
-        help='Optional note to add to the address')
+        help='Optional note to add to the address type')
 
     ctx.register_command(address_type_delete, parents=[address_type_flag])
 
