@@ -758,11 +758,8 @@ def _handle_address_type_values(
     The caller is responsible for issuing the COMMIT.
     """
     for type_value in detail.type_values:
-        address_type = dbc.session.get(database.AddressType, type_value.typ)
-        if address_type is None:
-            print(f'Adding new address type: {type_value.typ}')
-            address_type = database.AddressType(type=type_value.typ)
-            dbc.session.add(address_type)
+        address_type = database.AddressType(type=type_value.typ)
+        dbc.session.merge(address_type)
 
 
 def _update_addresses(dbc: database.Database, portals: bookmarks.Portals):
