@@ -227,7 +227,7 @@ class AddressType(Base):  # pylint: disable=missing-docstring
 
 
 # Work around bugs in sqlite reflection
-# 'tablename': {'create_table_outpt': hand_rolled_clean_ddl}
+# 'tablename': {'create_table_output': hand_rolled_clean_ddl}
 _FALLBACK_DDL: dict[str, dict[str, set[tuple[int, str]]]] = {}
 
 _DUMMY_DDL = frozenset((-1, ''),)
