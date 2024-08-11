@@ -222,7 +222,11 @@ class AddressType(Base):  # pylint: disable=missing-docstring
 
     type = sqlalchemy.Column(
         sqlalchemy.String, nullable=False, primary_key=True)
-    track = sqlalchemy.Column(sqlalchemy.Boolean)
+    visibility = sqlalchemy.Column(
+        sqlalchemy.Enum(
+            'new', 'hide', 'show', create_constraint=True, name='visibility'),
+        server_default='new',
+        nullable=False)
     note = sqlalchemy.Column(sqlalchemy.String)
 
 

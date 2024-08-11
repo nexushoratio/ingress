@@ -88,9 +88,11 @@ def mundane_commands(ctx: app.ArgparseApp):
     parser = ctx.register_command(
         address_type_set, parents=[address_type_flag])
     parser.add_argument(
-        '--track',
-        action=ctx.argparse_api.BooleanOptionalAction,
-        help='Should the address type be tracked (Default: %(default)s)')
+        '-v',
+        '--visibility',
+        action='store',
+        choices=('show', 'hide'),
+        help='The visibility of given address type.')
     parser.add_argument(
         '-N',
         '--note',
@@ -171,10 +173,16 @@ def address_type_list(args: argparse.Namespace) -> int:
     dbc = args.dbc
     query = dbc.session.query(database.AddressType)
     query = query.order_by(database.AddressType.type)
-    print('Type'.center(27), '| Tracking | Note')
+    type_col_header = 'Type'
+    type_col_width = len('administrative_area_level_N')
+    vis_col_header = 'Visibility'
+    vis_col_width = len(vis_col_header)
+    print(f'{type_col_header:^{type_col_width}} | {vis_col_header} | Note')
     for row in query:
-        tracking = str(row.track if row.track is not None else '~~')
-        print(f'{row.type:27} | {tracking:^8} | {row.note}')
+        print(
+            f'{row.type:{type_col_width}}'
+            f' | {row.visibility:^{vis_col_width}}'
+            f' | {row.note if row.note else "~~"}')
 
     return 0
 
@@ -185,8 +193,8 @@ def address_type_set(args: argparse.Namespace) -> int:
     address_type = dbc.session.get(database.AddressType, args.type)
     ret = 0
     if address_type is not None:
-        if args.track is not None:
-            address_type.track = args.track
+        if args.visibility is not None:
+            address_type.visibility = args.visibility
         if args.note is not None:
             address_type.note = args.note
         dbc.session.add(address_type)
