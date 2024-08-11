@@ -257,10 +257,11 @@ class Database:  # pylint: disable=missing-docstring
 
     def _sanity_check(self):
         """This is a proxy for doing proper migrations."""
-        no_drop = set()
-        to_drop = set()
+        no_drop = list()
+        to_drop = list()
         existing_tables = self._load_existing_tables()
-        for tablename, defined_table in Base.metadata.tables.items():
+        for defined_table in reversed(Base.metadata.sorted_tables):
+            tablename = defined_table.name
             table = existing_tables.get(tablename)
             if table:
                 raw_ddl = str(
@@ -282,9 +283,10 @@ class Database:  # pylint: disable=missing-docstring
                                 tofile='defined',
                                 n=2)))
                     if tablename in _AUTO_DROPS:
-                        to_drop.add((tablename, diffs))
+                        print(table.table.constraints)
+                        to_drop.append((tablename, diffs))
                     else:
-                        no_drop.add((tablename, diffs))
+                        no_drop.append((tablename, diffs))
 
         if no_drop:
             msg = ['Unhandled tables with differences:']
