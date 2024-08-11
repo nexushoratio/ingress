@@ -283,7 +283,6 @@ class Database:  # pylint: disable=missing-docstring
                                 tofile='defined',
                                 n=2)))
                     if tablename in _AUTO_DROPS:
-                        print(table.table.constraints)
                         to_drop.append((tablename, diffs))
                     else:
                         no_drop.append((tablename, diffs))
