@@ -1,6 +1,6 @@
 """Perform a number of Ingress related functions.
 
-Mostly this works on data saved via IITC, like saved bookmarks and drawtools.
+Mostly this works on data saved via IITC, like bookmarks and drawtools.
 """
 
 import sys
