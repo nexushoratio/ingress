@@ -683,6 +683,9 @@ def _handle_address_type_values(
     for type_value in detail.type_values:
         address_type = database.AddressType(type=type_value.typ)
         dbc.session.merge(address_type)
+        address_type_value = database.AddressTypeValue(
+            type=type_value.typ, value=type_value.val)
+        dbc.session.merge(address_type_value)
 
 
 def _update_addresses(dbc: database.Database, portals: bookmarks.Portals):
