@@ -63,18 +63,7 @@ def mundane_commands(ctx: app.ArgparseApp):
     file_flags = ctx.get_shared_parser('file')
     glob_flags = ctx.get_shared_parser('glob')
 
-    parser = ctx.register_command(update, parents=[bm_flags])
-    parser.add_argument(
-        '--addresses',
-        action=ctx.argparse_api.BooleanOptionalAction,
-        default=True,
-        help='Update addresses. (Default: %(default)s)')
-    parser.add_argument(
-        '--directions',
-        action=ctx.argparse_api.BooleanOptionalAction,
-        default=True,
-        help='Update directions. (Default: %(default)s)')
-
+    ctx.register_command(update, parents=[bm_flags])
     ctx.register_command(bounds, parents=[dt_flags, glob_flags])
     ctx.register_command(trim, parents=[bm_flags, dt_flags])
     ctx.register_command(cluster, parents=[file_flags])
@@ -131,13 +120,10 @@ def mundane_commands(ctx: app.ArgparseApp):
 
 
 def update(args: argparse.Namespace) -> int:
-    """Update the locations and directions for portals in a bookmarks file."""
+    """Update the directions between portals in a bookmarks file."""
     portals = bookmarks.load(args.bookmarks)
     _clean(args.dbc)
-    if args.addresses:
-        _update_addresses(args.dbc, portals)
-    if args.directions:
-        _update_directions(args.dbc, portals)
+    _update_directions(args.dbc, portals)
 
     return 0
 
@@ -674,39 +660,6 @@ def _grouper(iterable, size):
         yield tuple(item for item in group if item is not filler)
 
 
-def _handle_address_type_values(
-        dbc: database.Database, detail: google.AddressDetails):
-    """Process the type_values field, adding anything that is necessary.
-
-    The caller is responsible for issuing the COMMIT.
-    """
-    for type_value in detail.type_values:
-        address_type = database.AddressType(type=type_value.typ)
-        dbc.session.merge(address_type)
-        address_type_value = database.AddressTypeValue(
-            type=type_value.typ, value=type_value.val)
-        dbc.session.merge(address_type_value)
-
-
-def _update_addresses(dbc: database.Database, portals: bookmarks.Portals):
-    """Update addresses and other information for portals."""
-    now = time.time()
-
-    for portal in portals.values():
-        # XXX: Portal fields can be multiple types, so this makes typing
-        # happy.
-        latlng = str(portal['latlng'])
-        address = dbc.session.get(database.Address, latlng)
-        if address is None:
-            print(f'Fetching for {portal["label"]}')
-            address_detail = google.latlng_to_address(latlng)
-            db_address = database.Address(
-                latlng=latlng, address=address_detail.address, date=now)
-            dbc.session.add(db_address)
-            _handle_address_type_values(dbc, address_detail)
-            dbc.session.commit()
-
-
 def _update_directions(dbc: database.Database, portals: bookmarks.Portals):
     """Placeholder docstring for private function."""
     _update_paths(dbc, portals)
@@ -885,11 +838,6 @@ def _clean(dbc: database.Database):
     """Clean out old cached data."""
     now = time.time()
     oldest_allowed = now - MAX_AGE
-    rows = dbc.session.query(
-        database.Address).filter(database.Address.date < oldest_allowed)
-    for row in rows:
-        print('Deleting ', row.date, row.address)
-        dbc.session.delete(row)
     rows = dbc.session.query(
         database.Leg).filter(database.Leg.date < oldest_allowed)
     for row in rows:
