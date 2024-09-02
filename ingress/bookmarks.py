@@ -69,7 +69,9 @@ def mundane_commands(ctx: app.ArgparseApp):
         action='store',
         default=3 * 1024 * 1024,
         type=int,
-        help='Rough upper limit on the size of each flattened output file.')
+        help=(
+            'Rough upper limit on the size (in bytes) of each flattened'
+            ' output file.  (Default: %(default)s)'))
     parser.add_argument(
         '-p',
         '--pattern',
@@ -78,7 +80,7 @@ def mundane_commands(ctx: app.ArgparseApp):
         help=(
             'Pattern used to name the output files.  Uses PEP 3101'
             ' formatting strings with the following fields:  size,'
-            ' width, count'))
+            ' width, count.  (Default: %(default)s)'))
 
     ctx.register_command(find_missing_labels, parents=[bm_flags, glob_flags])
     ctx.register_command(merge, parents=[bm_flags, glob_flags])
