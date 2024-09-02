@@ -158,7 +158,7 @@ def export(args: argparse.Namespace) -> int:
 
 
 def flatten(args: argparse.Namespace) -> int:
-    """(V) Load portals from BOOKMARKS and create new ones using PATTERN."""
+    """(V) Load portals from BOOKMARKS and save flat lists using PATTERN."""
     portals = load(args.bookmarks)
     json.save_by_size(list(portals.values()), args.size, args.pattern)
 
