@@ -100,21 +100,21 @@ def ingest(args: argparse.Namespace) -> int:
         portal['last_seen'] = timestamp
 
     # Look for existing portals first
-    rows = dbc.session.query(database.Portal).filter(
-        database.Portal.guid.in_(portals))
+    rows = dbc.session.query(database.PortalV2).filter(
+        database.PortalV2.guid.in_(portals))
     for row in rows:
         guid = row.guid
         portal = portals[guid]
         # only update if newer
         if portal['last_seen'] > row.last_seen:
-            row.from_iitc(**portal)
+            dbc.session.merge(database.PortalV2(**portal))
 
         del portals[guid]
 
     # Whatever is left is a new portal
     for portal in portals.values():
         portal['first_seen'] = timestamp
-        dbc.session.add(database.Portal().from_iitc(**portal))
+        dbc.session.add(database.PortalV2(**portal))
 
     dbc.session.commit()
 
@@ -125,8 +125,8 @@ def expunge(args: argparse.Namespace) -> int:
     """(V) Remove portals listed in a bookmarks file from the database."""
     dbc = args.dbc
     portals = load(args.bookmarks)
-    for db_portal in dbc.session.query(database.Portal).filter(
-            database.Portal.guid.in_(portals)):
+    for db_portal in dbc.session.query(database.PortalV2).filter(
+            database.PortalV2.guid.in_(portals)):
         print('Deleting', db_portal.label, db_portal.last_seen)
         dbc.session.delete(db_portal)
 
@@ -140,22 +140,22 @@ def export(args: argparse.Namespace) -> int:
     dbc = args.dbc
     if args.samples is None:
         guids = set(
-            result[0] for result in dbc.session.query(database.Portal.guid))
+            result[0] for result in dbc.session.query(database.PortalV2.guid))
         save_from_guids(guids, args.bookmarks, dbc)
     else:
         hull = dbc.session.query(
             database.geoalchemy2.functions.ST_ConvexHull(
                 database.geoalchemy2.functions.ST_Union(
-                    database.Portal.latlng))).scalar_subquery()
-        result = dbc.session.query(database.Portal.guid).filter(
+                    database.PortalV2.point))).scalar_subquery()
+        result = dbc.session.query(database.PortalV2.guid).filter(
             database.geoalchemy2.functions.ST_Touches(
-                hull, database.Portal.latlng))
+                hull, database.PortalV2.point))
         guids = set(row._mapping['guid'] for row in result)
         limit = max(len(guids), args.samples)
         count = limit - len(guids)
-        result = dbc.session.query(database.Portal.guid).filter(
-            database.Portal.guid.not_in(guids)).order_by(
-                database.Portal.guid).limit(count)
+        result = dbc.session.query(database.PortalV2.guid).filter(
+            database.PortalV2.guid.not_in(guids)).order_by(
+                database.PortalV2.guid).limit(count)
         guids.update(row._mapping['guid'] for row in result)
         save_from_guids(guids, args.bookmarks, dbc)
     return 0
@@ -194,8 +194,8 @@ def save(portals: Portals, filename: str):
 def save_from_guids(guids, filename, dbc):
     """Save portals specified by guids into a particular bookmarks file."""
     portals = dict()
-    for db_portal in dbc.session.query(database.Portal).filter(
-            database.Portal.guid.in_(guids)):
+    for db_portal in dbc.session.query(database.PortalV2).filter(
+            database.PortalV2.guid.in_(guids)):
         portals[db_portal.guid] = db_portal.to_iitc()
     save(portals, filename)
 

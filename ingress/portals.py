@@ -56,17 +56,15 @@ def show(args: argparse.Namespace) -> int:  # pylint: disable=too-many-locals
     dbc = args.dbc
     start = args.start or 0
     stop = args.stop or float('inf')
-    query = dbc.session.query(database.Portal)
+    query = dbc.session.query(database.PortalV2)
     if args.field == 'first_seen':
-        field = database.Portal.first_seen
+        field = database.PortalV2.first_seen
     if args.field == 'last_seen':
-        field = database.Portal.last_seen
+        field = database.PortalV2.last_seen
 
     query = query.filter(field.between(start, stop))
     groups = collections.defaultdict(list)
     portals = dict()
-    known_columns = frozenset(
-        x.key for x in database.Portal.__table__.columns)  # pylint: disable=no-member
 
     dates = list()
     for row in query:
@@ -92,24 +90,13 @@ def show(args: argparse.Namespace) -> int:  # pylint: disable=too-many-locals
                 '{label}: {date}\n'  # pylint: disable=consider-using-f-string
                 'https://www.ingress.com/intel?pll={latlng}\n\n').format(
                     **portal)
+            del portal['date']
         text_output.append(line)
 
     print('=======\n\n'.join(text_output))
-    _save_cleaned_bookmarks(portals, known_columns, args.bookmarks)
+    bookmarks.save(portals, args.bookmarks)
 
     return 0
-
-
-def _save_cleaned_bookmarks(portals, known_columns, filename):
-    """Placeholder docstring for private function."""
-    for portal in list(portals.values()):
-        keys_to_delete = set()
-        for key in list(portal.keys()):
-            if key not in known_columns:
-                keys_to_delete.add(key)
-        for key in keys_to_delete:
-            del portal[key]
-    bookmarks.save(portals, filename)
 
 
 def _parse_date(date_string):

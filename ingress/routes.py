@@ -69,8 +69,8 @@ def _cost(dbc, mode_cost_map, max_walking_time_allowed, begin, end):  # pylint: 
     if mode_cost:
         return mode_cost[1]
     costs = dict()
-    begin_portal = dbc.session.query(database.Portal).get(begin)
-    end_portal = dbc.session.query(database.Portal).get(end)
+    begin_portal = dbc.session.query(database.PortalV2).get(begin)
+    end_portal = dbc.session.query(database.PortalV2).get(end)
     paths = dbc.session.query(database.Path).filter(
         database.Path.begin_latlng == begin_portal.latlng,
         database.Path.end_latlng == end_portal.latlng)
@@ -106,8 +106,8 @@ def _path_info(dbc, opt_path, mode_cost_map):
     items = list()
     for begin, end in zip(opt_path, opt_path[1:]):
         mode, _ = mode_cost_map[(begin, end)]
-        db_begin = dbc.session.query(database.Portal).get(begin)
-        db_end = dbc.session.query(database.Portal).get(end)
+        db_begin = dbc.session.query(database.PortalV2).get(begin)
+        db_end = dbc.session.query(database.PortalV2).get(end)
         db_address = dbc.session.query(database.Address).filter(
             database.Address.latlng == db_begin.latlng).one()
         items.append(('portal', db_begin, db_address))

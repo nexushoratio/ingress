@@ -66,9 +66,8 @@ def _node_map(dbc):
     """Create a mapping from latlngs to portal guids."""
     logging.info('entered _node_map')
     node_map = collections.defaultdict(NodeData)
-    for db_portal in dbc.session.query(database.Portal):
-        point = _latlng_str_to_point(
-            database.point_to_latlng(db_portal.latlng))
+    for db_portal in dbc.session.query(database.PortalV2):
+        point = shapely.geometry.Point(db_portal.lng, db_portal.lat)
         node = node_map[point.wkt]
         node.latlng_point = point
         node.latlng_point_wkt = point.wkt
@@ -87,18 +86,6 @@ class NodeData:  # pylint: disable=missing-docstring,too-few-public-methods
     # We use a set for guids because we may have two portals at the same
     # latlng.
     guids = attr.ib(init=False, default=attr.Factory(set))
-
-
-def _latlng_str_to_point(latlng_as_str):
-    """Placeholder docstring for private function."""
-    lat, lng = _latlng_str_to_floats(latlng_as_str)
-    return shapely.geometry.Point(lng, lat)
-
-
-def _latlng_str_to_floats(latlng_as_str):
-    """Placeholder docstring for private function."""
-    lat, lng = latlng_as_str.split(',')
-    return float(lat), float(lng)
 
 
 def _closest_point(target, points):

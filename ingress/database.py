@@ -83,13 +83,6 @@ metadata = sqlalchemy.schema.MetaData(naming_convention=convention)
 Base = orm.declarative_base(metadata=metadata)  # pylint: disable=invalid-name
 
 
-def latlng_to_point(latlng: str) -> geoalchemy2.elements.WKTElement:
-    """Convert lat,lng to a geoalchemy wrapped POINT."""
-    lat, lng = latlng.split(',')
-    point = geoalchemy2.elements.WKTElement(f'POINT({lng} {lat})', srid=4326)
-    return point
-
-
 def latlng_dict_to_point(
         latlng: dict[str, str]) -> geoalchemy2.elements.WKTElement:
     """Convert lat,lng to a geoalchemy wrapped POINT."""
@@ -98,13 +91,20 @@ def latlng_dict_to_point(
     return point
 
 
-def point_to_latlng(point: geoalchemy2.elements.WKTElement) -> str:
+def _latlng_to_point(latlng: str) -> geoalchemy2.elements.WKTElement:
+    """Convert lat,lng to a geoalchemy wrapped POINT."""
+    lat, lng = latlng.split(',')
+    point = geoalchemy2.elements.WKTElement(f'POINT({lng} {lat})', srid=4326)
+    return point
+
+
+def _point_to_latlng(point: geoalchemy2.elements.WKTElement) -> str:
     """Convert a geoalchemy wrapped POINT to a lat,lng string."""
     shape = geoalchemy2.shape.to_shape(point)
     return f'{shape.y},{shape.x}'
 
 
-class Portal(Base):  # pylint: disable=missing-docstring
+class _Portal(Base):  # pylint: disable=missing-docstring
     __tablename__ = 'portals'
 
     guid = sqlalchemy.Column(
@@ -116,16 +116,6 @@ class Portal(Base):  # pylint: disable=missing-docstring
         sqlalchemy.Integer, nullable=False, index=True)
     latlng = sqlalchemy.Column(geoalchemy2.Geometry('POINT', srid=4326))
 
-    def from_iitc(self, **kwargs):
-        """Populate a row with an IITC bookmark style dict."""
-        logging.debug('populating with: %s', kwargs)
-        for key, value in list(kwargs.items()):
-            if key == 'latlng':
-                value = latlng_to_point(value)
-            setattr(self, key, value)
-        logging.debug('populated')
-        return self
-
     def to_iitc(self):
         """Generate an IITC bookmark style dict."""
         portal = dict()
@@ -133,7 +123,43 @@ class Portal(Base):  # pylint: disable=missing-docstring
         for key in self.__mapper__.c.keys():
             portal[key] = getattr(self, key)
             if key == 'latlng':
-                portal[key] = point_to_latlng(portal[key])
+                portal[key] = _point_to_latlng(portal[key])
+
+        return portal
+
+
+class PortalV2(Base):  # pylint: disable=missing-docstring
+    __tablename__ = 'v2_portals'
+
+    guid = sqlalchemy.Column(
+        sqlalchemy.String, primary_key=True, nullable=False)
+    label = sqlalchemy.Column(sqlalchemy.Unicode, nullable=False)
+    first_seen = sqlalchemy.Column(
+        sqlalchemy.Integer, nullable=False, index=True)
+    last_seen = sqlalchemy.Column(
+        sqlalchemy.Integer, nullable=False, index=True)
+    latlng = sqlalchemy.Column(sqlalchemy.String, nullable=False)
+    lat = sqlalchemy.Column(
+        sqlalchemy.String,
+        sqlalchemy.Computed(
+            'SUBSTR(latlng, 1, INSTR(latlng, ",") - 1)', persisted=False))
+    lng = sqlalchemy.Column(
+        sqlalchemy.String,
+        sqlalchemy.Computed(
+            'SUBSTR(latlng, INSTR(latlng, ",") + 1)', persisted=False))
+    point = sqlalchemy.Column(
+        geoalchemy2.Geometry('POINT', srid=4326),
+        sqlalchemy.Computed(
+            'ST_POINT(CAST(lng AS FLOAT), CAST(lat AS FLOAT))',
+            persisted=True))
+
+    def to_iitc(self):
+        """Generate an IITC bookmark style dict."""
+        portal = dict()
+
+        for key in self.__mapper__.c.keys():
+            if key not in ('lat', 'lng', 'point'):
+                portal[key] = getattr(self, key)
 
         return portal
 
@@ -250,10 +276,55 @@ class AddressTypeValue(Base):  # pylint: disable=missing-docstring
     note = sqlalchemy.Column(sqlalchemy.String)
 
 
+# The .strip() at the end is important
+_KNOWN_PORTALS_V2 = """
+CREATE TABLE v2_portals (
+	guid VARCHAR NOT NULL, 
+	label VARCHAR NOT NULL, 
+	first_seen INTEGER NOT NULL, 
+	last_seen INTEGER NOT NULL, 
+	latlng VARCHAR NOT NULL, 
+	lat VARCHAR GENERATED ALWAYS AS (SUBSTR(latlng, 1, INSTR(latlng, ",") - 1)) VIRTUAL, 
+	lng VARCHAR GENERATED ALWAYS AS (SUBSTR(latlng, INSTR(latlng, ",") + 1)) VIRTUAL, 
+	point geometry(POINT,4326) GENERATED ALWAYS AS (ST_POINT(CAST(lng AS FLOAT), CAST(lat AS FLOAT))) STORED, 
+	CONSTRAINT pk_v2_portals PRIMARY KEY (guid)
+)
+""".strip()
+
+_ACCEPTABLE_PORTALS_V2 = set(
+    (
+        (0, 'CREATE TABLE v2_portals ('),
+        (1, 'guid VARCHAR NOT NULL,'),
+        (2, 'label VARCHAR NOT NULL,'),
+        (3, 'first_seen INTEGER NOT NULL,'),
+        (4, 'last_seen INTEGER NOT NULL,'),
+        (5, 'latlng VARCHAR NOT NULL,'),
+        (6, 'lat VARCHAR GENERATED ALWAYS AS () VIRTUAL,'),
+        (
+            6, 'lat VARCHAR GENERATED ALWAYS AS'
+            ' (SUBSTR(latlng, 1, INSTR(latlng, ",") - 1)) VIRTUAL,'),
+        (7, 'lng VARCHAR GENERATED ALWAYS AS () VIRTUAL,'),
+        (
+            7, 'lng VARCHAR GENERATED ALWAYS AS'
+            ' (SUBSTR(latlng, INSTR(latlng, ",") + 1)) VIRTUAL,'),
+        (
+            8, 'point GEOMETRY GENERATED ALWAYS AS'
+            ' (ST_POINT(CAST(lng AS FLOAT), CAST(lat AS FLOAT))) STORED,'),
+        (
+            8, 'point geometry(POINT,4326) GENERATED ALWAYS AS'
+            ' (ST_POINT(CAST(lng AS FLOAT) STORED,'),
+        (9, 'CONSTRAINT pk_v2_portals PRIMARY KEY (guid)'),
+        (10, ')'),
+    ))
+
 # Work around bugs in sqlite reflection
 # https://github.com/sqlalchemy/sqlalchemy/issues/11582
 # 'tablename': {'create_table_output': hand_rolled_clean_ddl}
-_FALLBACK_DDL: dict[str, dict[str, set[tuple[int, str]]]] = {}
+_FALLBACK_DDL: dict[str, dict[str, set[tuple[int, str]]]] = {
+    'v2_portals': {
+        _KNOWN_PORTALS_V2: _ACCEPTABLE_PORTALS_V2,
+    },
+}
 
 _DUMMY_DDL = frozenset((-1, ''),)
 
@@ -280,6 +351,7 @@ class Database:  # pylint: disable=missing-docstring
         self._sanity_check()
         self.session = orm.sessionmaker(bind=self._engine, future=True)()
         Base.metadata.create_all(self._engine)
+        self._post_create_migrations()
 
     def _sanity_check(self):
         """This is a proxy for doing proper migrations."""
@@ -358,3 +430,25 @@ class Database:  # pylint: disable=missing-docstring
             (number, line.strip())
             for number, line in enumerate(ddl.strip().splitlines()))
         return tuples
+
+    def _post_create_migrations(self):
+        # portals to v2_portals
+        count = self.session.query(_Portal).count()
+        if count:
+            print('Performing a database migration.')
+            print(
+                f'Migrating {count} portals'
+                f' from table "{_Portal.__tablename__}"'
+                f' to table "{PortalV2.__tablename__}".')
+            logging.info('migrating count: %d', count)
+            portals = [
+                portal.to_iitc() for portal in self.session.query(_Portal)
+            ]
+            logging.info('portal dictionaries generated: %d', len(portals))
+            self.session.bulk_insert_mappings(PortalV2, portals)
+            logging.info('bulk inserts completed')
+            self.session.query(_Portal).delete()
+            logging.info('bulk delete completed')
+            self.session.commit()
+            logging.info('finished migration')
+            print('Migration complete.')

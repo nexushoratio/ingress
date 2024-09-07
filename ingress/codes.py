@@ -157,7 +157,7 @@ def pruner(args):
         if db_code.keep is False:
             delete_codes.add(db_code.code)
 
-    for db_portal in dbc.session.query(database.Portal):
+    for db_portal in dbc.session.query(database.PortalV2):
         code = db_portal.code
         if code not in all_codes:
             print(f'New code: {code}')

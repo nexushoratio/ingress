@@ -209,8 +209,8 @@ def donuts(args: argparse.Namespace) -> int:
     result = dbc.session.query(
         database.geoalchemy2.functions.ST_ConvexHull(
             database.geoalchemy2.functions.ST_Union(
-                database.Portal.latlng))).filter(
-                    database.Portal.guid.in_(guids)).one()[0]
+                database.PortalV2.point))).filter(
+                    database.PortalV2.guid.in_(guids)).one()[0]
 
     max_area = dbc.session.scalar(result.ST_Area(1)) * FUDGE_FACTOR
     max_length = delta * 2
@@ -270,16 +270,16 @@ def _load_portal_distances(
         distance = operator.add(
             distance,
             database.geoalchemy2.functions.ST_Distance(
-                point, database.Portal.latlng, 0))
+                point, database.PortalV2.point, 0))
     rows = dbc.session.query(
-        database.Portal,
+        database.PortalV2,
         distance.label('distance'),
     ).order_by('distance')
     return [
         Sprinkle(
             distance=row.distance,
             azimuth=0,
-            guid=row.Portal.guid,
+            guid=row.PortalV2.guid,
         ) for row in rows
     ]
 
@@ -560,8 +560,8 @@ def _bite(
     guids = frozenset(x.guid for x in donut)
     db_points = dbc.session.query(
         database.geoalchemy2.functions.ST_Collect(
-            database.Portal.latlng)).filter(
-                database.Portal.guid.in_(guids)).one()[0]
+            database.PortalV2.point)).filter(
+                database.PortalV2.guid.in_(guids)).one()[0]
 
     hull = db_points.ST_ConvexHull()
     ring = hull.ST_ExteriorRing()
@@ -628,17 +628,17 @@ def _load_sprinkles(
         dbc: database.Database) -> Bite:
     """Load all portal information needed for donuts."""
     rows = dbc.session.query(
-        database.Portal,
+        database.PortalV2,
         database.geoalchemy2.functions.ST_Distance(
-            center_point, database.Portal.latlng, 0).label('distance'),
+            center_point, database.PortalV2.point, 0).label('distance'),
         database.geoalchemy2.functions.ST_Azimuth(
-            center_point, database.Portal.latlng).label('azimuth'),
+            center_point, database.PortalV2.point).label('azimuth'),
     )
     return [
         Sprinkle(
             distance=row.distance,
             azimuth=row.azimuth,
-            guid=row.Portal.guid,
+            guid=row.PortalV2.guid,
         ) for row in rows
     ]
 
