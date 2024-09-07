@@ -252,7 +252,7 @@ def _format_date(timestamp: float):
 
 def _handle_address_type_values(
         dbc: database.Database, detail: google.AddressDetails):
-    """Process the type_values field, adding anything that is necessary.
+    """Process the type_values field, updating the database as appropriate.
 
     The caller is responsible for issuing the COMMIT.
     """
