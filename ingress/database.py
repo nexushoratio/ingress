@@ -251,6 +251,7 @@ class AddressTypeValue(Base):  # pylint: disable=missing-docstring
 
 
 # Work around bugs in sqlite reflection
+# https://github.com/sqlalchemy/sqlalchemy/issues/11582
 # 'tablename': {'create_table_output': hand_rolled_clean_ddl}
 _FALLBACK_DDL: dict[str, dict[str, set[tuple[int, str]]]] = {}
 
