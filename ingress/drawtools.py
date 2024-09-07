@@ -98,7 +98,7 @@ def load_point(filename: str) -> database.geoalchemy2.elements.WKTElement:
 
 def load_points(
         filename: str) -> frozenset[database.geoalchemy2.elements.WKTElement]:
-    """Find a collection of point from a drawtools file.
+    """Find a collection of points from a drawtools file.
 
     Args:
       filename: name of the file
