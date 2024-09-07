@@ -92,6 +92,10 @@ def ingest(args: argparse.Namespace) -> int:
     portals = load(args.bookmarks)
     timestamp = os.stat(args.bookmarks).st_mtime
 
+    # Of all of the variations I tried for doing these updates, this algorithm
+    # is the fastest.  At some point, the data may be too large for the `in_`
+    # query, but by that point, it is likely that the bookmarks could not be
+    # loaded into memory either.
     for portal in portals.values():
         portal['last_seen'] = timestamp
 
