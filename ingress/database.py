@@ -276,6 +276,27 @@ class AddressTypeValue(Base):  # pylint: disable=missing-docstring
     note = sqlalchemy.Column(sqlalchemy.String)
 
 
+class AddressTypeValueAssociation(Base):  # pylint: disable=missing-docstring
+    __tablename__ = 'address_type_value_associations'
+
+    latlng = sqlalchemy.Column(
+        sqlalchemy.ForeignKey('addresses.latlng', ondelete='CASCADE'),
+        primary_key=True)
+    type = sqlalchemy.Column(
+        sqlalchemy.String, nullable=False, primary_key=True)
+    value = sqlalchemy.Column(
+        sqlalchemy.String, nullable=False, primary_key=True)
+
+    __table_args__ = (
+        sqlalchemy.ForeignKeyConstraint(
+            ['type', 'value'],
+            ['address_type_values.type', 'address_type_values.value'],
+            ondelete='CASCADE'
+        ),
+    )  # yapf: disable
+
+
+
 # The .strip() at the end is important
 _KNOWN_PORTALS_V2 = """
 CREATE TABLE v2_portals (
@@ -332,6 +353,7 @@ _AUTO_DROPS = (
     'addresses',
     'address_types',
     'address_type_values',
+    'address_type_value_associations',
     'cluster_leaders',
     'legs',
     'path_legs',

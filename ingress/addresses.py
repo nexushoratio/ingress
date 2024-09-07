@@ -105,7 +105,7 @@ def address_update(args: argparse.Namespace) -> int:
             db_address = database.Address(
                 latlng=latlng, address=address_detail.address, date=now)
             dbc.session.add(db_address)
-            _handle_address_type_values(dbc, address_detail)
+            _handle_address_type_values(dbc, latlng, address_detail)
             dbc.session.commit()
             fetched += 1
             if fetched >= args.limit:
@@ -251,7 +251,7 @@ def _format_date(timestamp: float):
 
 
 def _handle_address_type_values(
-        dbc: database.Database, detail: google.AddressDetails):
+        dbc: database.Database, latlng: str, detail: google.AddressDetails):
     """Process the type_values field, updating the database as appropriate.
 
     The caller is responsible for issuing the COMMIT.
@@ -262,3 +262,6 @@ def _handle_address_type_values(
         address_type_value = database.AddressTypeValue(
             type=type_value.typ, value=type_value.val)
         dbc.session.merge(address_type_value)
+        association = database.AddressTypeValueAssociation(
+            latlng=latlng, type=type_value.typ, value=type_value.val)
+        dbc.session.merge(association)
