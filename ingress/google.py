@@ -135,7 +135,7 @@ def latlng_to_address(latlng: str) -> AddressDetails:
 
     answers.sort()
     score, address, type_values = answers[0]
-    print(f'{latlng}: {address} ({score=})')
+    logging.info('%s: %s (score=%s)', latlng, address, score)
     for type_value in sorted(type_values):
         logging.info('%s: %s', type_value.typ, type_value.val)
 
