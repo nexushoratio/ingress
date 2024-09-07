@@ -311,6 +311,8 @@ class Database:  # pylint: disable=missing-docstring
                     if tablename in _AUTO_DROPS:
                         to_drop.append((tablename, diffs))
                     else:
+                        logging.debug('raw_ddl:\n%s', raw_ddl)
+                        logging.debug('et_sql:\n%s', ''.join(et_sql))
                         no_drop.append((tablename, diffs))
 
         if no_drop:
