@@ -84,6 +84,13 @@ def mundane_commands(ctx: app.ArgparseApp):
         address_type_value_delete,
         parents=[address_type_flag, address_value_flag])
 
+    parser = ctx.register_command(address_prune)
+    parser.add_argument(
+        '--commit',
+        default=False,
+        action=ctx.argparse_api.BooleanOptionalAction,
+        help='Commit the pruning operation. (Default: %(default)s)')
+
 
 # pylint: disable=duplicate-code
 def address_update(args: argparse.Namespace) -> int:
@@ -283,6 +290,38 @@ def address_type_value_delete(args: argparse.Namespace) -> int:
         print(f'Unknown address type: "{args.type}"/"{args.value}"')
         ret = 1
     return ret
+
+
+def address_prune(args: argparse.Namespace) -> int:
+    """(V) Remove portals from the database that do not match criteria.
+
+    Prune portals from the database where its address has an
+    address-type-value for the pruning operation set to "remove".
+
+    Hint: See the 'address-update', 'address-type-*', and
+    'address-type-value-*' family of command for more information.
+    """
+    dbc = args.dbc
+
+    query = dbc.session.query(database.PortalV2)
+    query = query.join(
+        database.AddressTypeValueAssociation, database.PortalV2.latlng ==
+        database.AddressTypeValueAssociation.latlng)
+    query = query.join(database.AddressTypeValue)
+    query = query.filter(database.AddressTypeValue.pruning == 'remove')
+    query = query.join(database.AddressType)
+    query = query.filter(database.AddressType.visibility != 'hide')
+
+    for portal in query:
+        print(f'Pruning {portal.guid} - {portal.label}')
+        dbc.session.delete(portal)
+
+    if args.commit:
+        dbc.session.commit()
+    else:
+        dbc.session.rollback()
+
+    return 0
 
 
 def _clean(dbc: database.Database):
