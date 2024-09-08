@@ -87,7 +87,11 @@ def mundane_commands(ctx: app.ArgparseApp):
 
 
 def ingest(args: argparse.Namespace) -> int:
-    """(V) Update the database with portals listed in a bookmarks file."""
+    """(V) Update the database with portals listed in a bookmarks file.
+
+    Hint: Use the 'address-update' command after this to populate address
+    related information.
+    """
     dbc = args.dbc
     portals = load(args.bookmarks)
     timestamp = os.stat(args.bookmarks).st_mtime

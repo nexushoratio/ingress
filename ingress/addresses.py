@@ -87,7 +87,25 @@ def mundane_commands(ctx: app.ArgparseApp):
 
 # pylint: disable=duplicate-code
 def address_update(args: argparse.Namespace) -> int:
-    """Update the address related data for portals in a bookmarks file."""
+    """(V) Update address related data for portals in a BOOKMARKS file.
+
+    This command uses the Google Maps API to fetch address and other data
+    about portal locations.  Run it with the same BOOKMARKS file after the
+    'ingest' command.
+
+    In order to run this command, a Google Maps API key must exist in the
+    environment variable GOOGLE_API_KEY.
+
+    Hint: A LIMIT may be set to prevent the command from going through your
+    quota.
+
+    Hint: See 'address-type-*' and 'address-type-value-*' family of commands
+    to examine and control how some of this data may be used to affect other
+    commands.
+
+    Hint: The 'export' command can be used to generate an initial BOOKMARKS
+    file if needed.
+    """
     dbc = args.dbc
     now = time.time()
     portals = bookmarks.load(args.bookmarks)
@@ -116,7 +134,13 @@ def address_update(args: argparse.Namespace) -> int:
 
 
 def address_type_list(args: argparse.Namespace) -> int:
-    """(V) List the known address types."""
+    """(V) List the known address types and current settings.
+
+    These values are populated by the 'address-update' command.
+
+    Hint: Use the 'address-type-set' and 'address-type-delete' commands to
+    modify the settings.
+    """
     dbc = args.dbc
     query = dbc.session.query(database.AddressType)
     query = query.order_by(database.AddressType.type)
@@ -135,7 +159,14 @@ def address_type_list(args: argparse.Namespace) -> int:
 
 
 def address_type_set(args: argparse.Namespace) -> int:
-    """(V) Update settings on a known address type."""
+    """(V) Update settings on a known address type.
+
+    Setting the visibility to "hide" will hide it in the
+    'address-type-value-list' output and prevent the type from affecting
+    dependent operations.
+
+    These values are populated by the 'address-update' command.
+    """
     dbc = args.dbc
     address_type = dbc.session.get(database.AddressType, args.type)
     ret = 0
@@ -153,7 +184,16 @@ def address_type_set(args: argparse.Namespace) -> int:
 
 
 def address_type_delete(args: argparse.Namespace) -> int:
-    """(V) Delete a known address type."""
+    """(V) Delete a known address type.
+
+    Deleting an address type will also delete the related (address, type,
+    value) combinations.
+
+    Mostly this is used to reduce clutter while fine-tuning settings during
+    initial configuration or moving to a new area.
+
+    These values are populated by the 'address-update' command.
+    """
     dbc = args.dbc
     address_type = dbc.session.get(database.AddressType, args.type)
     ret = 0
@@ -167,7 +207,13 @@ def address_type_delete(args: argparse.Namespace) -> int:
 
 
 def address_type_value_list(args: argparse.Namespace) -> int:
-    """(V) List the known address types and values."""
+    """(V) List the known address (types, values) and settings.
+
+    These values are populated by the 'address-update' command.
+
+    Hint: Use the 'address-type-value-set' and 'address-type-value-delete'
+    commands to modify the settings.
+    """
     dbc = args.dbc
     query = dbc.session.query(database.AddressTypeValue).join(
         database.AddressType).filter(
@@ -196,7 +242,12 @@ def address_type_value_list(args: argparse.Namespace) -> int:
 
 
 def address_type_value_set(args: argparse.Namespace) -> int:
-    """(V) Update settings on a known address type and value."""
+    """(V) Update settings on a known address (type, value).
+
+    These settings are used to control other commands.
+
+    These values are populated by the 'address-update' command.
+    """
     dbc = args.dbc
     address_type_value = dbc.session.get(
         database.AddressTypeValue, (args.type, args.value))
@@ -215,7 +266,12 @@ def address_type_value_set(args: argparse.Namespace) -> int:
 
 
 def address_type_value_delete(args: argparse.Namespace) -> int:
-    """(V) Delete a known address type and value."""
+    """(V) Delete a known address (type, value).
+
+    Mostly this is used for testing.
+
+    These values are populated by the 'address-update' command.
+    """
     dbc = args.dbc
     address_type_value = dbc.session.get(
         database.AddressTypeValue, (args.type, args.value))
