@@ -76,7 +76,6 @@ class Directions:  # pylint: disable=missing-docstring,too-few-public-methods
 def directions(origin, destination, mode):
     """Get directions from origin to destination."""
     args = {
-        'command': 'directions',
         'origin': origin,
         'destination': destination,
         'mode': mode,
