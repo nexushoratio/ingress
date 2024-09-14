@@ -15,13 +15,12 @@ import urllib.request
 import attr
 
 API_KEY = os.getenv('GOOGLE_API_KEY', default='TBD')
-REAL_DIRECTIONS_BASE_URL = (
-    'https://maps.googleapis.com/maps/api/directions/json')
-FAKE_DIRECTIONS_BASE_URL = (
-    'https://script.google.com/macros/s'
-    '/AKfycbzz6mcFX79LS2HAB6JmWtFfOqV-lWjI4WqPHbdH8W6_kG8ZkcE0/exec')
-DIRECTIONS_BASE_URL = FAKE_DIRECTIONS_BASE_URL
-GEOCODE_BASE_URL = 'https://maps.googleapis.com/maps/api/geocode/json'
+DIRECTIONS_BASE_URL = os.getenv(
+    'GMAPS_DIRECTIONS_URL',
+    default='https://maps.googleapis.com/maps/api/directions/json')
+GEOCODE_BASE_URL = os.getenv(
+    'GMAPS_GEOCODE_URL',
+    default='https://maps.googleapis.com/maps/api/geocode/json')
 
 LOCATION_TYPE_SCORES = {
     'ROOFTOP': 0,
