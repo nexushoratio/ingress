@@ -122,14 +122,13 @@ def latlng_to_address(latlng: str) -> AddressDetails:
         answers.append((score, address, set()))
 
     for entry in result['results']:
-        if 'street_address' in entry['types']:
-            type_values: set[AddressTypeValue] = set()
-            for component in entry['address_components']:
-                name = component['long_name']
-                for typ in component['types']:
-                    type_values.add(AddressTypeValue(typ=typ, val=name))
-            score = LOCATION_TYPE_SCORES[entry['geometry']['location_type']]
-            answers.append((score, entry['formatted_address'], type_values))
+        type_values: set[AddressTypeValue] = set()
+        for component in entry['address_components']:
+            name = component['long_name']
+            for typ in component['types']:
+                type_values.add(AddressTypeValue(typ=typ, val=name))
+        score = LOCATION_TYPE_SCORES[entry['geometry']['location_type']]
+        answers.append((score, entry['formatted_address'], type_values))
 
     answers.sort()
     score, address, type_values = answers[0]
