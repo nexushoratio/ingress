@@ -243,7 +243,9 @@ def _call_api(base_url, parameters):
         attempts += 1
         try:
             with urllib.request.urlopen(url, timeout=30) as response_data:
-                result = json.loads(response_data.read())
+                resp = response_data.read()
+                logging.debug('resp: %s', resp)
+                result = json.loads(resp)
         except (ValueError, urllib.error.URLError, http.client.BadStatusLine,
                 socket.error) as err:
             result = {'error_message': str(err), 'status': 'NOTOK'}
