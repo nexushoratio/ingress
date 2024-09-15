@@ -61,8 +61,8 @@ def mundane_commands(ctx: app.ArgparseApp):
         action='append',
         choices=GROUP_BY.keys(),
         help=(
-            'Group portals by the specified fields.  Date oriented fields'
-            ' will be converted to a calendar date.'))
+            'Group portals by the specified fields.  Time stamp oriented'
+            ' fields will be converted to a calendar date.'))
 
 
 def show(args: argparse.Namespace) -> int:  # pylint: disable=too-many-branches
