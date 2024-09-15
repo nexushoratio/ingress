@@ -16,9 +16,7 @@ if typing.TYPE_CHECKING:  # pragma: no cover
 
     from mundane import app
 
-Portal: typing.TypeAlias = dict[str, str | float]
-
-Portals: typing.TypeAlias = dict[str, Portal]
+Portals: typing.TypeAlias = dict[str, database.PortalDict]
 
 
 def mundane_shared_flags(ctx: app.ArgparseApp):
@@ -94,7 +92,7 @@ def ingest(args: argparse.Namespace) -> int:
     """
     dbc = args.dbc
     portals = load(args.bookmarks)
-    timestamp = os.stat(args.bookmarks).st_mtime
+    timestamp = int(os.stat(args.bookmarks).st_mtime)
 
     # Of all of the variations I tried for doing these updates, this algorithm
     # is the fastest.  At some point, the data may be too large for the `in_`
@@ -239,7 +237,7 @@ def merge(args: argparse.Namespace) -> int:
     Inputs will be the files specified by the glob arguments.  The
     contents of the destination bookmarks file will be destroyed.
     """
-    portals: dict[str, dict] = dict()
+    portals: Portals = dict()
     save(portals, args.bookmarks)
     for filename in itertools.chain(*args.glob):
         portals.update(load(filename))

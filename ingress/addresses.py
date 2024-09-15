@@ -120,9 +120,7 @@ def address_update(args: argparse.Namespace) -> int:
 
     fetched = 0
     for portal in portals.values():
-        # XXX: Portal fields can be multiple types, so this makes typing
-        # happy.
-        latlng = str(portal['latlng'])
+        latlng = portal['latlng']
         address = dbc.session.get(database.Address, latlng)
         if address is None:
             print(f'Fetching for {portal["label"]}')

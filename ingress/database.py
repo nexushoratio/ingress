@@ -128,6 +128,18 @@ class _Portal(Base):  # pylint: disable=missing-docstring
         return portal
 
 
+class PortalDict(typing.TypedDict, total=False):
+    """A dict equivalent for PortalV2.
+
+    This is useful for processing JSON files.
+    """
+    guid: str
+    label: str
+    first_seen: int
+    last_seen: int
+    latlng: str
+
+
 class PortalV2(Base):  # pylint: disable=missing-docstring
     __tablename__ = 'v2_portals'
 
@@ -153,13 +165,14 @@ class PortalV2(Base):  # pylint: disable=missing-docstring
             'ST_POINT(CAST(lng AS FLOAT), CAST(lat AS FLOAT))',
             persisted=True))
 
-    def to_iitc(self):
+    def to_iitc(self) -> PortalDict:
         """Generate an IITC bookmark style dict."""
-        portal = dict()
+        portal = PortalDict()
 
         for key in self.__mapper__.c.keys():
-            if key not in ('lat', 'lng', 'point'):
-                portal[key] = getattr(self, key)
+            if key in PortalDict.__optional_keys__:  # pylint: disable=no-member
+                portal[key] = getattr(  # type: ignore[literal-required]
+                    self, key)
 
         return portal
 
