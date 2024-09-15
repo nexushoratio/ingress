@@ -17,7 +17,7 @@ if typing.TYPE_CHECKING:  # pragma: no cover
 
 def mundane_commands(ctx: app.ArgparseApp):
     """Register commands."""
-    bm_flags = ctx.get_shared_parser('bookmarks')
+    bm_flags = ctx.get_shared_parser('bookmarks_optional')
 
     parser = ctx.register_command(show, parents=[bm_flags])
     parser.add_argument(
@@ -51,7 +51,7 @@ def mundane_commands(ctx: app.ArgparseApp):
 def show(args: argparse.Namespace) -> int:  # pylint: disable=too-many-locals
     """(V) Show portals sorted by date.
 
-    They will be exported to a bookmarks file.
+    They can also be exported to a bookmarks file.
     """
     dbc = args.dbc
     start = args.start or 0
@@ -94,7 +94,8 @@ def show(args: argparse.Namespace) -> int:  # pylint: disable=too-many-locals
         text_output.append(line)
 
     print('=======\n\n'.join(text_output))
-    bookmarks.save(portals, args.bookmarks)
+    if args.bookmarks:
+        bookmarks.save(portals, args.bookmarks)
 
     return 0
 

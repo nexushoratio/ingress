@@ -30,6 +30,14 @@ def mundane_shared_flags(ctx: app.ArgparseApp):
             required=True,
             help='IITC bookmarks json file to use')
 
+    parser = ctx.new_shared_parser('bookmarks_optional')
+    if parser:
+        parser.add_argument(
+            '-b',
+            '--bookmarks',
+            action='store',
+            help='IITC bookmarks json file to use')
+
     parser = ctx.new_shared_parser('glob')
     if parser:
         parser.add_argument(
