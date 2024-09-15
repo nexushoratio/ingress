@@ -74,9 +74,7 @@ def show(args: argparse.Namespace) -> int:  # pylint: disable=too-many-branches
 
     criteria = list()
     group_by: list[RowBuilder] = list()
-    query = dbc.session.query(database.PortalV2, database.Address)
-    query = query.outerjoin(
-        database.Address, database.PortalV2.latlng == database.Address.latlng)
+    query = dbc.session.query(database.PortalV2).only_return_tuples(True)
     if args.first_seen_after:
         query = query.filter(
             database.PortalV2.first_seen > args.first_seen_after)
