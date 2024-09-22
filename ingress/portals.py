@@ -92,7 +92,7 @@ def show(args: argparse.Namespace) -> int:  # pylint: disable=too-many-branches
             f'Last Seen After: {_format_date(args.last_seen_after)}')
     if args.last_seen_before:
         query = query.filter(
-            database.PortalV2.last_seen > args.last_seen_before)
+            database.PortalV2.last_seen < args.last_seen_before)
         criteria.append(
             f'Last Seen Before: {_format_date(args.last_seen_before)}')
     if args.order_by:
