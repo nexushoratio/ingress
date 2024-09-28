@@ -14,13 +14,13 @@ if typing.TYPE_CHECKING:  # pragma: no cover
 
     from mundane import app
 
-Query: typing.TypeAlias = database.sqlalchemy.orm.query.Query
-QueryUpdater: typing.TypeAlias = typing.Callable[[Query], Query]
+Statement: typing.TypeAlias = database.sqlalchemy.sql.selectable.Select
+StatementUpdater: typing.TypeAlias = typing.Callable[[Statement], Statement]
 
 Row: typing.TypeAlias = database.sqlalchemy.engine.row.Row
 RowBuilder: typing.TypeAlias = typing.Callable[[Row], str]
 
-ORDER_BY: dict[str, QueryUpdater] = dict()
+ORDER_BY: dict[str, StatementUpdater] = dict()
 GROUP_BY: dict[str, RowBuilder] = dict()
 
 
@@ -71,45 +71,45 @@ def show(args: argparse.Namespace) -> int:  # pylint: disable=too-many-branches
     They can also be exported to a bookmarks file.
     """
     dbc = args.dbc
+    sqla = database.sqlalchemy
 
     criteria = list()
     group_by: list[RowBuilder] = list()
-    query = dbc.session.query(database.PortalV2).only_return_tuples(True)
+    stmt = sqla.select(database.PortalV2)
+
     if args.first_seen_after:
-        query = query.filter(
+        stmt = stmt.where(
             database.PortalV2.first_seen > args.first_seen_after)
         criteria.append(
             f'First Seen After: {_format_date(args.first_seen_after)}')
     if args.first_seen_before:
-        query = query.filter(
+        stmt = stmt.where(
             database.PortalV2.first_seen < args.first_seen_before)
         criteria.append(
             f'First Seen Before: {_format_date(args.first_seen_before)}')
     if args.last_seen_after:
-        query = query.filter(
-            database.PortalV2.last_seen > args.last_seen_after)
+        stmt = stmt.where(database.PortalV2.last_seen > args.last_seen_after)
         criteria.append(
             f'Last Seen After: {_format_date(args.last_seen_after)}')
     if args.last_seen_before:
-        query = query.filter(
-            database.PortalV2.last_seen < args.last_seen_before)
+        stmt = stmt.where(database.PortalV2.last_seen < args.last_seen_before)
         criteria.append(
             f'Last Seen Before: {_format_date(args.last_seen_before)}')
     if args.order_by:
         for order in args.order_by:
-            query = ORDER_BY[order](query)
+            stmt = ORDER_BY[order](stmt)
     if args.group_by:
         group_by.extend(GROUP_BY[group] for group in args.group_by)
     if args.limit:
-        query = query.limit(args.limit)
+        stmt = stmt.limit(args.limit)
     if args.query:
-        print(query)
+        print(stmt)
         return 0
 
     portals: bookmarks.Portals = dict()
     groups = collections.defaultdict(list)
 
-    for row in query:
+    for row in dbc.session.execute(stmt):
         group = tuple(fn(row) for fn in group_by)
         portal = row.PortalV2.to_iitc()
         groups[group].append(portal)
@@ -145,16 +145,16 @@ def _format_date(timestamp):
     return time.strftime('%Y-%m-%d', time.localtime(timestamp))
 
 
-def _order_by_first_seen(query: Query) -> Query:
-    return query.order_by(database.PortalV2.first_seen)
+def _order_by_first_seen(stmt: Statement) -> Statement:
+    return stmt.order_by(database.PortalV2.first_seen)
 
 
-def _order_by_last_seen(query: Query) -> Query:
-    return query.order_by(database.PortalV2.last_seen)
+def _order_by_last_seen(stmt: Statement) -> Statement:
+    return stmt.order_by(database.PortalV2.last_seen)
 
 
-def _order_by_label(query: Query) -> Query:
-    return query.order_by(database.PortalV2.label)
+def _order_by_label(stmt: Statement) -> Statement:
+    return stmt.order_by(database.PortalV2.label)
 
 
 def _group_by_first_seen(row: Row) -> str:
