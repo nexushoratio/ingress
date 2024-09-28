@@ -110,8 +110,10 @@ def latlng_to_address(latlng: str) -> AddressDetails:
     # so we can select the "best" one.  So we use a simple tuple where the
     # first item is the score and second the address.  We seed the answers
     # with our worst score.
-    answers: list[tuple[int, str, set[AddressTypeValue]]] = [
-        (LOCATION_TYPE_SCORES['UNKNOWN'], 'No known street address', set())
+    answers: list[tuple[int, int, str, set[AddressTypeValue]]] = [
+        (
+            LOCATION_TYPE_SCORES['UNKNOWN'], 0, 'No known street address',
+            set())
     ]
 
     # Google really likes their plus codes.  We use them as a fallback.
@@ -119,7 +121,7 @@ def latlng_to_address(latlng: str) -> AddressDetails:
     address: str
     for type_, address in list(result['plus_code'].items()):
         score: int = LOCATION_TYPE_SCORES['PLUS'] + PLUS_CODE_SCORES[type_]
-        answers.append((score, address, set()))
+        answers.append((score, 0, address, set()))
 
     for entry in result['results']:
         type_values: set[AddressTypeValue] = set()
@@ -128,10 +130,14 @@ def latlng_to_address(latlng: str) -> AddressDetails:
             for typ in component['types']:
                 type_values.add(AddressTypeValue(typ=typ, val=name))
         score = LOCATION_TYPE_SCORES[entry['geometry']['location_type']]
-        answers.append((score, entry['formatted_address'], type_values))
+        answers.append(
+            (
+                score, -len(type_values), entry['formatted_address'],
+                type_values))
 
     answers.sort()
-    score, address, type_values = answers[0]
+    score, _, address, type_values = answers[0]
+    logging.info(pprint.pformat(answers))
     logging.info('%s: %s (score=%s)', latlng, address, score)
     for type_value in sorted(type_values):
         logging.info('%s: %s', type_value.typ, type_value.val)
