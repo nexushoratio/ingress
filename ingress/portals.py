@@ -120,7 +120,9 @@ def show(args: argparse.Namespace) -> int:  # pylint: disable=too-many-branches
         f'Portals matching the search criteria: {len(portals)}\n'
         f'  {", ".join(criteria)}\n\n')
     for group in groups:
-        line = f'{", ".join(group)}\n\n'
+        line = ''
+        if group:
+            line += f'{", ".join(group)}\n\n'
         for portal in groups[group]:
             line += (
                 '{label}\n'  # pylint: disable=consider-using-f-string
