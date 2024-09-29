@@ -55,7 +55,10 @@ def mundane_commands(ctx: app.ArgparseApp):
         '--group-by',
         action='append',
         choices=GROUP_BY.keys(),
-        help='Group portals by the specified fields.')
+        help=(
+            'Group portals by the specified fields.  Grouping does NOT'
+            ' imply ordering.'))
+
 
 
 def show(args: argparse.Namespace) -> int:  # pylint: disable=too-many-branches,too-many-locals
