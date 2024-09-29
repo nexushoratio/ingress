@@ -95,8 +95,12 @@ def show(args: argparse.Namespace) -> int:  # pylint: disable=too-many-branches,
         group_by.extend(GROUP_BY[group] for group in args.group_by)
     if args.limit:
         stmt = stmt.limit(args.limit)
+
     if args.query:
-        print(stmt)
+        print(
+            stmt.compile(
+                dbc.session.get_bind(),
+                compile_kwargs={"literal_binds": True}))
         return 0
 
     portals: bookmarks.Portals = dict()
