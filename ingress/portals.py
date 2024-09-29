@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import collections
-import time
 import typing
 
 from ingress import bookmarks
@@ -41,31 +40,25 @@ def mundane_commands(ctx: app.ArgparseApp):
         help='Sort results on these fields.')
     parser.add_argument(
         '--first-seen-after',
-        type=_parse_date,
         help='Restrict to portals first seen after this date')
     parser.add_argument(
         '--first-seen-before',
-        type=_parse_date,
         help='Restrict to portals first seen before this date')
     parser.add_argument(
         '--last-seen-after',
-        type=_parse_date,
         help='Restrict to portals last seen after this date')
     parser.add_argument(
         '--last-seen-before',
-        type=_parse_date,
         help='Restrict to portals last seen before this date')
     parser.add_argument(
         '-g',
         '--group-by',
         action='append',
         choices=GROUP_BY.keys(),
-        help=(
-            'Group portals by the specified fields.  Time stamp oriented'
-            ' fields will be converted to a calendar date.'))
+        help='Group portals by the specified fields.')
 
 
-def show(args: argparse.Namespace) -> int:  # pylint: disable=too-many-branches
+def show(args: argparse.Namespace) -> int:  # pylint: disable=too-many-branches,too-many-locals
     """Show portals selected and sorted by criteria.
 
     They can also be exported to a bookmarks file.
@@ -75,26 +68,26 @@ def show(args: argparse.Namespace) -> int:  # pylint: disable=too-many-branches
 
     criteria = list()
     group_by: list[RowBuilder] = list()
-    stmt = sqla.select(database.PortalV2)
+    first_seen = sqla.sql.func.date(
+        database.PortalV2.first_seen, 'unixepoch',
+        'localtime').label('local_first_seen')
+    last_seen = sqla.sql.func.date(
+        database.PortalV2.last_seen, 'unixepoch',
+        'localtime').label('local_last_seen')
+    stmt = sqla.select(database.PortalV2, first_seen, last_seen)
 
     if args.first_seen_after:
-        stmt = stmt.where(
-            database.PortalV2.first_seen > args.first_seen_after)
-        criteria.append(
-            f'First Seen After: {_format_date(args.first_seen_after)}')
+        stmt = stmt.where(first_seen >= args.first_seen_after)
+        criteria.append(f'First Seen After: {args.first_seen_after}')
     if args.first_seen_before:
-        stmt = stmt.where(
-            database.PortalV2.first_seen < args.first_seen_before)
-        criteria.append(
-            f'First Seen Before: {_format_date(args.first_seen_before)}')
+        stmt = stmt.where(first_seen < args.first_seen_before)
+        criteria.append(f'First Seen Before: {args.first_seen_before}')
     if args.last_seen_after:
-        stmt = stmt.where(database.PortalV2.last_seen > args.last_seen_after)
-        criteria.append(
-            f'Last Seen After: {_format_date(args.last_seen_after)}')
+        stmt = stmt.where(last_seen >= args.last_seen_after)
+        criteria.append(f'Last Seen After: {args.last_seen_after}')
     if args.last_seen_before:
-        stmt = stmt.where(database.PortalV2.last_seen < args.last_seen_before)
-        criteria.append(
-            f'Last Seen Before: {_format_date(args.last_seen_before)}')
+        stmt = stmt.where(last_seen < args.last_seen_before)
+        criteria.append(f'Last Seen Before: {args.last_seen_before}')
     if args.order_by:
         for order in args.order_by:
             stmt = ORDER_BY[order](stmt)
@@ -137,36 +130,26 @@ def show(args: argparse.Namespace) -> int:  # pylint: disable=too-many-branches
     return 0
 
 
-def _parse_date(date_string):
-    return time.mktime(time.strptime(date_string, '%Y-%m-%d'))
-
-
-def _format_date(timestamp):
-    return time.strftime('%Y-%m-%d', time.localtime(timestamp))
-
-
 def _order_by_first_seen(stmt: Statement) -> Statement:
-    return stmt.order_by(database.PortalV2.first_seen)
+    return stmt.order_by(stmt.exported_columns.get('local_first_seen'))
 
 
 def _order_by_last_seen(stmt: Statement) -> Statement:
-    return stmt.order_by(database.PortalV2.last_seen)
+    return stmt.order_by(stmt.exported_columns.get('local_last_seen'))
 
 
 def _order_by_label(stmt: Statement) -> Statement:
-    return stmt.order_by(database.PortalV2.label)
+    return stmt.order_by(stmt.exported_columns.get('label'))
 
 
 def _group_by_first_seen(row: Row) -> str:
     """Extract and format first_seen column."""
-    date = _format_date(row.PortalV2.first_seen)  # type: ignore[attr-defined]
-    return f'First seen: {date}'
+    return f'First seen: {row.local_first_seen}'  # type: ignore[attr-defined]
 
 
 def _group_by_last_seen(row: Row) -> str:
     """Extract and format last_seen column."""
-    date = _format_date(row.PortalV2.last_seen)  # type: ignore[attr-defined]
-    return f'Last seen: {date}'
+    return f'Last seen: {row.local_last_seen}'  # type: ignore[attr-defined]
 
 
 ORDER_BY.update(
