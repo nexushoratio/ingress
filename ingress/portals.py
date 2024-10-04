@@ -152,10 +152,10 @@ def mundane_commands(ctx: app.ArgparseApp):
 
 
 def show(args: argparse.Namespace) -> int:
-    """Show portals selected, sorted and grouped by criteria.
+    """Show portals selected, sorted and grouped by constraints.
 
-    Many fields can be used to define the criteria.  The fields can be found
-    using the --list-fields flag.
+    Many fields can be used to define the constraints.  The fields can be
+    found using the --list-fields flag.
 
     Some fields will always be present, however, others may be controlled by
     other command sets.  For example, the values from the "address-type-*"
@@ -171,7 +171,6 @@ def show(args: argparse.Namespace) -> int:
 
     Hint: Multiple BOOKMARKS could be generated then the 'merge' command could
     be used to combine them.
-
     """
     try:
         return _show_impl(args)
@@ -184,7 +183,7 @@ def _show_impl(args: argparse.Namespace) -> int:
     """Implementation for the `show` command."""
     dbc = args.dbc
 
-    criteria: list[str] = list()
+    constraints: list[str] = list()
 
     stmt = _init_select(dbc)
     field_map = dict(
@@ -198,8 +197,8 @@ def _show_impl(args: argparse.Namespace) -> int:
         print('\n'.join(field_map.keys()))
         return 0
 
-    stmt = _apply_filters(stmt, args, criteria, field_map)
-    stmt = _apply_numerics(stmt, criteria, args)
+    stmt = _apply_filters(stmt, args, constraints, field_map)
+    stmt = _apply_numerics(stmt, constraints, args)
     stmt = _apply_orderings(stmt, args, field_map)
 
     group_by = _assemble_groups(args, field_map)
@@ -223,7 +222,7 @@ def _show_impl(args: argparse.Namespace) -> int:
     text_output = list()
     text_output.append(
         f'Matching portals: {len(portals)}\n'
-        f'  {", ".join(criteria)}')
+        f'  {", ".join(constraints)}')
     for group in groups:
         section = ''
         if group:
@@ -304,9 +303,9 @@ LIST_OP_MAP = {
 
 
 def _apply_filters(
-        stmt: Statement, args: argparse.Namespace, criteria: list[str],
+        stmt: Statement, args: argparse.Namespace, constraints: list[str],
         field_map) -> Statement:
-    """Apply filter clauses to the statement and update "criteria"."""
+    """Apply filter clauses to the statement, update "constraints"."""
     sqla = database.sqlalchemy
 
     params: dict[str, list[str]] = collections.defaultdict(list)
@@ -316,7 +315,7 @@ def _apply_filters(
         if opr in SCALAR_OPR_TO_STR_MAP:
             op_str = SCALAR_OPR_TO_STR_MAP[opr]
             stmt = stmt.where(SCALAR_STR_TO_FUNC_MAP[op_str](column, value))
-            criteria.append(f'{_make_title(field)} {op_str} {value}')
+            constraints.append(f'{_make_title(field)} {op_str} {value}')
         elif opr in LIST_OP_MAP:
             op_str = LIST_OP_MAP[opr]
             key = f'{opr}=={field}'
@@ -326,34 +325,34 @@ def _apply_filters(
                 stmt = stmt.where(
                     this_op(
                         sqla.sql.expression.bindparam(key, expanding=True)))
-                criteria.append(f'{_make_title(field)} {opr} ({{{key}}})')
+                constraints.append(f'{_make_title(field)} {opr} ({{{key}}})')
         else:
             raise NotImplementedError(f'Unsupported operator: {opr}')
 
-    _update_criteria_placeholders(criteria, params)
+    _update_constraints_placeholders(constraints, params)
     return stmt.params(params)
 
 
-def _update_criteria_placeholders(
-        criteria: list[str], params: dict[str, list[str]]):
+def _update_constraints_placeholders(
+        constraints: list[str], params: dict[str, list[str]]):
     """Some clauses (e.g., IN), have placeholders, update them in place."""
 
     # At this point, assuming that all params are lists of strings.
     processed_params = dict(
         (key, ', '.join(values)) for key, values in params.items())
-    for pos, item in enumerate(criteria):
-        criteria[pos] = item.format_map(processed_params)
+    for pos, item in enumerate(constraints):
+        constraints[pos] = item.format_map(processed_params)
 
 
 def _apply_numerics(
-        stmt: Statement, criteria: list[str],
+        stmt: Statement, constraints: list[str],
         args: argparse.Namespace) -> Statement:
-    """Apply numeric based clauses to the statement and update "criteria"."""
+    """Apply numeric based clauses to the statement, update "constraints"."""
     for opr, value in args.numerics:
         this_op = getattr(stmt, opr, None)
         if this_op:
             stmt = this_op(value)
-            criteria.append(f'{_make_title(opr)} {value}')
+            constraints.append(f'{_make_title(opr)} {value}')
         else:
             raise NotImplementedError(f'Unsupported operator: {opr}')
 
