@@ -180,9 +180,11 @@ def _show_impl(args: argparse.Namespace) -> int:
 
     stmt = _init_select()
     field_map = dict(
-        (str(item.name), item)
-        for item in stmt.exported_columns
-        if not hasattr(item, 'entity_namespace'))
+        (key, value)
+        for key, value in stmt.exported_columns.items()
+        if not isinstance(
+            getattr(value, 'table', None),
+            database.sqlalchemy.sql.schema.Table))
 
     if args.list_fields:
         print('\n'.join(field_map.keys()))
@@ -251,7 +253,7 @@ def _init_select() -> Statement:
         'localtime',
         type_=sqla.Unicode).label('last-seen')
 
-    return sqla.select(database.PortalV2, label, first_seen, last_seen)
+    return sqla.select(label, first_seen, last_seen, database.PortalV2)
 
 
 # XXX: The following dictionaries are cascading rather than nested because the
