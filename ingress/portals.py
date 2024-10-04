@@ -216,7 +216,7 @@ def _show_impl(args: argparse.Namespace) -> int:
     for row in dbc.session.execute(stmt).mappings():
         group = ', '.join(fmt.format_map(row) for fmt in group_by)
         portal = row.PortalV2.to_iitc()
-        groups[group].append(portal)
+        groups[group].append(row)
         portals[portal['guid']] = portal
 
     text_output = list()
