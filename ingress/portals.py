@@ -151,19 +151,24 @@ def mundane_commands(ctx: app.ArgparseApp):
 def show(args: argparse.Namespace) -> int:
     """Show portals selected, sorted and grouped by criteria.
 
-    Many fields can be used to define the criteria.  The field can be found
-    using the --list-field flag.
+    Many fields can be used to define the criteria.  The fields can be found
+    using the --list-fields flag.
+
+    Some fields will always be present, however, others may be controlled by
+    other command sets.  For example, the values from the "address-type-*"
+    commands will show up here depending on visibility set there.
 
     Filter flags take a "FIELD:VALUE" argument, where the name of the field is
     separated by a literal colon (:) character.  In most cases, if a field is
     repeated for the same filter, the most restrictive one will take
-    precedence.  If you need fancier reports, a separate SQL reporting engine
-    may be necessary.
+    precedence, in others, they will be additive.  If you need fancier
+    reports, a separate SQL reporting engine may be necessary.
 
     They can also be exported to a BOOKMARKS file.
 
     Hint: Multiple BOOKMARKS could be generated then the 'merge' command could
     be used to combine them.
+
     """
     try:
         return _show_impl(args)
@@ -178,7 +183,7 @@ def _show_impl(args: argparse.Namespace) -> int:
 
     criteria: list[str] = list()
 
-    stmt = _init_select()
+    stmt = _init_select(dbc)
     field_map = dict(
         (key, value)
         for key, value in stmt.exported_columns.items()
@@ -234,7 +239,7 @@ def _show_impl(args: argparse.Namespace) -> int:
     return 0
 
 
-def _init_select() -> Statement:
+def _init_select(dbc: database.Database) -> Statement:
     """Generate an initial SELECT statement."""
     sqla = database.sqlalchemy
 
@@ -253,7 +258,23 @@ def _init_select() -> Statement:
         'localtime',
         type_=sqla.Unicode).label('last-seen')
 
-    return sqla.select(label, first_seen, last_seen, database.PortalV2)
+    cols = tuple(
+        sqla.func.max(
+            sqla.case(
+                (
+                    database.AddressTypeValueAssociation.type == typ,
+                    database.AddressTypeValueAssociation.value
+                ))).label(typ.replace('_', '-'))
+        for typ in _visible_address_types(dbc))
+
+    atva = sqla.select(
+        database.AddressTypeValueAssociation.latlng,
+        *cols).group_by(database.AddressTypeValueAssociation.latlng).subquery(
+            name='atva')
+
+    return sqla.select(label, first_seen, last_seen, atva,
+                       database.PortalV2).outerjoin(
+                           atva, database.PortalV2.latlng == atva.c.latlng)
 
 
 # XXX: The following dictionaries are cascading rather than nested because the
@@ -382,3 +403,13 @@ def _validate_field(field: str, valid_fields: ValidFields):
     """Ensure the field is valid, raising Error if not."""
     if field not in valid_fields:
         raise Error(f'Unknown field: {field}')
+
+
+def _visible_address_types(dbc: database.Database) -> tuple[str, ...]:
+    """Fetch user acceptable address types."""
+    stmt = database.sqlalchemy.select(database.AddressType)\
+               .where(database.AddressType.visibility != 'hide')\
+               .order_by(database.AddressType.type)
+
+    return tuple(
+        str(row.AddressType.type) for row in dbc.session.execute(stmt))
