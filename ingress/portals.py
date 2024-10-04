@@ -22,6 +22,9 @@ class Error(Exception):
     """Base module exception."""
 
 
+SHOW_FORMAT = '{label}\nhttps://www.ingress.com/intel?pll={latlng}'
+
+
 def mundane_commands(ctx: app.ArgparseApp):
     """Register commands."""
 
@@ -219,20 +222,17 @@ def _show_impl(args: argparse.Namespace) -> int:
 
     text_output = list()
     text_output.append(
-        f'Portals matching the search criteria: {len(portals)}\n'
-        f'  {", ".join(criteria)}\n\n')
+        f'Matching portals: {len(portals)}\n'
+        f'  {", ".join(criteria)}')
     for group in groups:
-        line = ''
+        section = ''
         if group:
-            line += f'Group: {group}\n\n'
-        for portal in groups[group]:
-            line += (
-                '{label}\n'  # pylint: disable=consider-using-f-string
-                'https://www.ingress.com/intel?pll={latlng}\n\n').format(
-                    **portal)
-        text_output.append(line)
+            section += f'Group: {group}\n\n'
+        entries = (SHOW_FORMAT.format_map(portal) for portal in groups[group])
+        section += '\n\n'.join(entries)
+        text_output.append(section)
 
-    print('=======\n\n'.join(text_output))
+    print('\n\n=======\n\n'.join(text_output))
     if args.bookmarks:
         bookmarks.save(portals, args.bookmarks)
 
