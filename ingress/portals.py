@@ -246,6 +246,7 @@ def _init_select(dbc: database.Database) -> Statement:
     # XXX: We explicitly set the type_ on certain columns.  This is so that
     # the "literal_binds" option knows how to render the output when showing a
     # query that has bindparams in it (e.g., IN clauses).
+    guid = database.PortalV2.guid.label('guid')
     label = database.PortalV2.label.label('label')
     first_seen = sqla.sql.func.date(
         database.PortalV2.first_seen,
@@ -272,9 +273,10 @@ def _init_select(dbc: database.Database) -> Statement:
         *cols).group_by(database.AddressTypeValueAssociation.latlng).subquery(
             name='atva')
 
-    return sqla.select(label, first_seen, last_seen, atva,
-                       database.PortalV2).outerjoin(
-                           atva, database.PortalV2.latlng == atva.c.latlng)
+    return sqla.select(
+        guid, label, first_seen, last_seen, atva,
+        database.PortalV2).outerjoin(
+            atva, database.PortalV2.latlng == atva.c.latlng)
 
 
 # XXX: The following dictionaries are cascading rather than nested because the
