@@ -208,7 +208,7 @@ def _show_impl(args: argparse.Namespace) -> int:
         print(
             stmt.compile(
                 dbc.session.get_bind(),
-                compile_kwargs={"literal_binds": True}))
+                compile_kwargs={'literal_binds': True}))
         return 0
 
     portals: bookmarks.Portals = dict()
