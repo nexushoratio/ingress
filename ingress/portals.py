@@ -190,8 +190,8 @@ def _show_impl(args: argparse.Namespace) -> int:
         (key, value)
         for key, value in stmt.exported_columns.items()
         if not isinstance(
-            getattr(value, 'table', None),
-            database.sqlalchemy.sql.schema.Table))
+            getattr(value, 'table', None), database.sqlalchemy.sql.schema
+            .Table) and not value.name.startswith('EXCLUDE_'))
 
     if args.list_fields:
         print('\n'.join(field_map.keys()))
@@ -247,6 +247,7 @@ def _init_select(dbc: database.Database) -> Statement:
     # query that has bindparams in it (e.g., IN clauses).
     guid = database.PortalV2.guid.label('guid')
     label = database.PortalV2.label.label('label')
+    latlng = database.PortalV2.latlng.label('latlng')
     first_seen = sqla.sql.func.date(
         database.PortalV2.first_seen,
         'unixepoch',
@@ -268,14 +269,14 @@ def _init_select(dbc: database.Database) -> Statement:
         for typ in _visible_address_types(dbc))
 
     atva = sqla.select(
-        database.AddressTypeValueAssociation.latlng,
+        database.AddressTypeValueAssociation.latlng.label('EXCLUDE_latlng'),
         *cols).group_by(database.AddressTypeValueAssociation.latlng).subquery(
             name='atva')
 
     return sqla.select(
-        guid, label, first_seen, last_seen, atva,
+        guid, label, latlng, first_seen, last_seen, atva,
         database.PortalV2).outerjoin(
-            atva, database.PortalV2.latlng == atva.c.latlng)
+            atva, database.PortalV2.latlng == atva.c.EXCLUDE_latlng)
 
 
 # XXX: The following dictionaries are cascading rather than nested because the
