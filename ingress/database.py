@@ -176,6 +176,14 @@ class PortalV2(Base):  # pylint: disable=missing-docstring
 
         return portal
 
+    def __repr__(self):
+        return (
+            'PortalV2('
+            f'label={self.label},'
+            f' first_seen={self.first_seen},'
+            f' last_seen={self.last_seen}'
+            ')')
+
 
 class ClusterLeader(Base):  # pylint: disable=missing-docstring
     __tablename__ = 'cluster_leaders'
@@ -255,6 +263,14 @@ class Address(Base):  # pylint: disable=missing-docstring
     address = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     date = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
 
+    def __repr__(self):
+        return (
+            'Address('
+            f'latlng={self.latlng!r},'
+            f' address={self.address!r},'
+            f' date={self.date!r}'
+            ')')
+
 
 class AddressType(Base):  # pylint: disable=missing-docstring
     __tablename__ = 'address_types'
@@ -267,6 +283,9 @@ class AddressType(Base):  # pylint: disable=missing-docstring
         server_default='new',
         nullable=False)
     note = sqlalchemy.Column(sqlalchemy.String)
+
+    def __repr__(self):
+        return f'AddressType(type={self.type!r})'
 
 
 class AddressTypeValue(Base):  # pylint: disable=missing-docstring
@@ -299,6 +318,14 @@ class AddressTypeValueAssociation(Base):  # pylint: disable=missing-docstring
         sqlalchemy.String, nullable=False, primary_key=True)
     value = sqlalchemy.Column(
         sqlalchemy.String, nullable=False, primary_key=True)
+
+    def __repr__(self):
+        return (
+            'AddressTypeValueAssociation('
+            f'latlng={self.latlng!r},'
+            f' type={self.type!r},'
+            f' value={self.value!r}'
+            ')')
 
     __table_args__ = (
         sqlalchemy.ForeignKeyConstraint(
