@@ -5,6 +5,7 @@ from __future__ import annotations
 import collections
 import operator
 import typing
+import urllib.parse
 
 from ingress import bookmarks
 from ingress import database
@@ -22,7 +23,39 @@ class Error(Exception):
     """Base module exception."""
 
 
-SHOW_FORMAT = '{label}\nhttps://www.ingress.com/intel?pll={latlng}'
+def _encode(query: dict[str, str]) -> str:
+    return urllib.parse.urlencode(query, safe='{}')
+
+
+# See https://firebase.google.com/docs/dynamic-links/create-manually
+BASE = 'https://link.ingress.com/?'
+LINK = {
+    'link': 'https://intel.ingress.com/portal/{guid}',
+}
+ANDROID = {
+    'apn': 'com.nianticproject.ingress',
+}
+IOS = {
+    'isi': '576505181',
+    'ibi': 'com.google.ingress',
+    'ifl': 'https://apps.apple.com/app/ingress/id576505181',
+}
+PLL = r'https://intel.ingress.com/intel?pll={latlng}'
+OTHER = {
+    'ofl': PLL,
+}
+LABEL = r'{label}\n'
+
+LABEL_BASE = LABEL + BASE
+
+SHOW_FORMATS = {
+    ':url:': LABEL + PLL,
+    ':deep:': LABEL_BASE + _encode(LINK | ANDROID | IOS | OTHER),
+    ':android:': LABEL_BASE + _encode(LINK | ANDROID | OTHER),
+    ':ios:': LABEL_BASE + _encode(LINK | IOS | OTHER),
+}
+
+LIST_FORMAT = ':list:'
 
 
 def mundane_commands(ctx: app.ArgparseApp):
@@ -150,6 +183,18 @@ def mundane_commands(ctx: app.ArgparseApp):
             'Group portals by the specified fields.  Grouping does NOT'
             ' imply ordering.'))
 
+    parser.add_argument(
+        '-f',
+        '--format',
+        action='store',
+        default=tuple(SHOW_FORMATS.keys())[0],
+        help=(
+            'Python PEP 3101 style string used to format the output of each'
+            ' portal.  The same set of fields are available.  A number of'
+            ' predefined formats are available.  The special value'
+            f' "{LIST_FORMAT}"'
+            ' will show them.  (Default: %(default)s)'))
+
 
 def show(args: argparse.Namespace) -> int:
     """Show portals selected, sorted and grouped by constraints.
@@ -182,6 +227,10 @@ def show(args: argparse.Namespace) -> int:
 def _show_impl(args: argparse.Namespace) -> int:
     """Implementation for the `show` command."""
     dbc = args.dbc
+
+    portal_format = _process_format_flag(args)
+    if not portal_format:
+        return 0
 
     constraints: list[str] = list()
 
@@ -227,7 +276,8 @@ def _show_impl(args: argparse.Namespace) -> int:
         section = ''
         if group:
             section += f'Group: {group}\n\n'
-        entries = (SHOW_FORMAT.format_map(portal) for portal in groups[group])
+        entries = (
+            portal_format.format_map(portal) for portal in groups[group])
         section += '\n\n'.join(entries)
         text_output.append(section)
 
@@ -236,6 +286,27 @@ def _show_impl(args: argparse.Namespace) -> int:
         bookmarks.save(portals, args.bookmarks)
 
     return 0
+
+
+def _process_format_flag(args: argparse.Namespace) -> str:
+    """Special handling for `--format`.
+
+    Returns:
+      An empty string when listing was requested.
+    """
+    value = args.format
+    if value == LIST_FORMAT:
+        print('Predefined formats are:')
+        for key, fmt in SHOW_FORMATS.items():
+            print(f'\n{key}')
+            print(fmt)
+        value = ''
+    else:
+        value = SHOW_FORMATS.get(value, value)
+
+    result = value.encode().decode('unicode-escape')
+
+    return result
 
 
 def _init_select(dbc: database.Database) -> Statement:
