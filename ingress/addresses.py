@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import random
+import statistics
 import sys
 import time
 import typing
@@ -52,6 +54,15 @@ def mundane_commands(ctx: app.ArgparseApp):
         help=
         'Maximum number of updates to perform in a run (Default: %(default)s)'
     )
+    parser.add_argument(
+        '-d',
+        '--delay',
+        action='store',
+        type=float,
+        default=5.0,
+        help=(
+            'Average random delay, in seconds, between each fetch.'
+            '  (Default: %(default)s)'))
 
     ctx.register_command(address_type_list)
 
@@ -114,6 +125,7 @@ def address_update(args: argparse.Namespace) -> int:
     file if needed.
     """
     dbc = args.dbc
+    delay_base = _tune_delay_base(args.delay)
     now = time.time()
     portals = bookmarks.load(args.bookmarks)
     _clean(args.dbc)
@@ -124,6 +136,10 @@ def address_update(args: argparse.Namespace) -> int:
         address = dbc.session.get(database.Address, latlng)
         if address is None:
             print(f'Fetching for {portal["label"]}')
+            if fetched:
+                delay = _random_delay(delay_base)
+                print(f'will delay for {delay:.2f} seconds')
+                time.sleep(delay)
             address_detail = google.latlng_to_address(latlng)
             db_address = database.Address(
                 latlng=latlng, address=address_detail.address, date=now)
@@ -358,3 +374,25 @@ def _handle_address_type_values(
         association = database.AddressTypeValueAssociation(
             latlng=latlng, type=type_value.typ, value=type_value.val)
         dbc.session.merge(association)
+
+
+def _random_delay(base: float) -> float:
+    """Get a random number to sleep."""
+    return abs(
+        random.weibullvariate(base, 1.5)
+        - random.weibullvariate(base / 2, 1.25))
+
+
+def _tune_delay_base(target: float) -> float:
+    """Find a base for the delay function that gets close to the target."""
+    base = target
+
+    def mean(num: float) -> float:
+        return statistics.mean([_random_delay(num) for _ in range(10000)])
+
+    while mean(base) < target:
+        base *= 1.05
+    while mean(base) > target:
+        base *= 0.99
+
+    return base
