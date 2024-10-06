@@ -231,7 +231,7 @@ def donuts(args: argparse.Namespace) -> int:
 
 
 def ellipse(args: argparse.Namespace) -> int:
-    """Find a number of n-ellipse containing portals.
+    """(V) Find a number of n-ellipse containing portals.
 
     An n-ellipse is a generalization of the 2-foci ellipse and 1-focus ellipse
     (aka, the circle).  The idea is that the sum of distances from any given

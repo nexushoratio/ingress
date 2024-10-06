@@ -197,7 +197,7 @@ def mundane_commands(ctx: app.ArgparseApp):
 
 
 def show(args: argparse.Namespace) -> int:
-    """Show portals selected, sorted and grouped by constraints.
+    """(V) Show portals selected, sorted and grouped by constraints.
 
     Many fields can be used to define the constraints.  The fields can be
     found using the --list-fields flag.

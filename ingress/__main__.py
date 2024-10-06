@@ -1,6 +1,10 @@
 """Perform a number of Ingress related functions.
 
 Mostly this works on data saved via IITC, like bookmarks and drawtools.
+
+Note: This tool is currently being updated to use geometry/geographic
+databases instead of python libraries for certain calculations.  Commands
+marked with "(V)" have been verified to work under those conditions.
 """
 
 import sys
