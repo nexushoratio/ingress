@@ -131,15 +131,17 @@ def address_update(args: argparse.Namespace) -> int:
     _clean(args.dbc)
 
     fetched = 0
+    delay = 0.0
     for portal in portals.values():
         latlng = portal['latlng']
         address = dbc.session.get(database.Address, latlng)
         if address is None:
-            print(f'Fetching for {portal["label"]}')
             if fetched:
                 delay = _random_delay(delay_base)
-                print(f'will delay for {delay:.2f} seconds')
-                time.sleep(delay)
+            print(
+                f'Fetching for {portal["label"]}'
+                f' (delayed by {delay:.2f} seconds)')
+            time.sleep(delay)
             address_detail = google.latlng_to_address(latlng)
             db_address = database.Address(
                 latlng=latlng, address=address_detail.address, date=now)
