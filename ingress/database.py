@@ -70,6 +70,16 @@ def on_connect(dbapi_connection, _connection_record):
         dbapi_connection.execute('SELECT InitSpatialMetaData(1);')
 
 
+@sqlalchemy.event.listens_for(sqlalchemy.engine.Engine, 'close')
+def on_close(dbapi_connection, _connection_record):
+    """Maintenance on close."""
+    count = dbapi_connection.execute('PRAGMA freelist_count').fetchone()[0]
+    if count > 10:
+        print(f'Performing VACUUM as freelist {count=}')
+        for row in dbapi_connection.execute('VACUUM'):
+            print(row)
+
+
 convention = {
     'ix': 'ix_%(column_0_label)s',
     'uq': 'uq_%(table_name)s_%(column_0_name)s',
