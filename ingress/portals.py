@@ -63,7 +63,7 @@ def mundane_commands(ctx: app.ArgparseApp):
 
     class QueryBuilder(ctx.argparse_api.Action):  # type: ignore[name-defined] # pylint: disable=too-few-public-methods
         """Callback action to accumulate flags by type, in order."""
-        FILTERS = ('gt', 'ge', 'in', 'not_in', 'lt', 'le')
+        FILTERS = ('gt', 'ge', 'in', 'not_in', 'lt', 'le', 'like', 'not_like')
         ORDERINGS = ('asc', 'desc')
         NUMERIC = ('limit',)
         GROUPINGS = ('group_by',)
@@ -146,6 +146,22 @@ def mundane_commands(ctx: app.ArgparseApp):
         action=QueryBuilder,
         metavar=fv_mv,
         help='Filter portals where FIELD is greater than or equal to VALUE.')
+    parser.add_argument(
+        '--like',
+        action=QueryBuilder,
+        metavar=fv_mv,
+        help=(
+            'Filter portals where FIELD matches VALUE using the SQL LIKE'
+            ' operator.  In SQL, the "%%" character will match zero or more'
+            ' characters, and "_" will match any single character.'))
+    parser.add_argument(
+        '--not-like',
+        action=QueryBuilder,
+        metavar=fv_mv,
+        help=(
+            'Filter portals where FIELD matches VALUE using the SQL NOT LIKE'
+            ' operator.  In SQL, the "%%" character will match zero or more'
+            ' characters, and "_" will match any single character.'))
     parser.add_argument(
         '--in',
         action=QueryBuilder,
@@ -359,6 +375,8 @@ SCALAR_OPR_TO_STR_MAP = {
     'ge': '>=',
     'lt': '<',
     'le': '<=',
+    'like': 'LIKE',
+    'not_like': 'NOT LIKE',
 }
 
 SCALAR_STR_TO_FUNC_MAP = {
@@ -366,6 +384,8 @@ SCALAR_STR_TO_FUNC_MAP = {
     '>=': operator.ge,
     '<': operator.lt,
     '<=': operator.le,
+    'LIKE': database.sqlalchemy.sql.operators.like_op,
+    'NOT LIKE': database.sqlalchemy.sql.operators.not_like_op,
 }
 
 LIST_OP_MAP = {
@@ -386,7 +406,8 @@ def _apply_filters(
         column = field_map[field]
         if opr in SCALAR_OPR_TO_STR_MAP:
             op_str = SCALAR_OPR_TO_STR_MAP[opr]
-            stmt = stmt.where(SCALAR_STR_TO_FUNC_MAP[op_str](column, value))
+            stmt = stmt.where(
+                SCALAR_STR_TO_FUNC_MAP[op_str](column, value))  # type: ignore
             constraints.append(f'{_make_title(field)} {op_str} {value}')
         elif opr in LIST_OP_MAP:
             op_str = LIST_OP_MAP[opr]
