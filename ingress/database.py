@@ -7,6 +7,7 @@ import difflib
 import logging
 import pathlib
 import typing
+import uuid
 
 import geoalchemy2  # type: ignore[import]
 import sqlalchemy
@@ -341,10 +342,74 @@ class AddressTypeValueAssociation(Base):  # pylint: disable=missing-docstring
         sqlalchemy.ForeignKeyConstraint(
             ['type', 'value'],
             ['address_type_values.type', 'address_type_values.value'],
-            ondelete='CASCADE'
-        ),
+            ondelete='CASCADE'),
     )  # yapf: disable
 
+
+class UuidMixin:
+    """Automatically support UUID as a PK."""
+
+    def __init__(self, **kwargs):
+        if 'uuid' not in kwargs:
+            kwargs['uuid'] = uuid.uuid4().hex
+        super().__init__(**kwargs)
+
+    uuid = sqlalchemy.Column(
+        sqlalchemy.String, nullable=False, primary_key=True)
+
+
+class Place(UuidMixin, Base):  # pylint: disable=missing-docstring
+    __tablename__ = 'places'
+
+    label = sqlalchemy.Column(sqlalchemy.Unicode)
+    latlng = sqlalchemy.Column(sqlalchemy.String, nullable=False, unique=True)
+    lat = sqlalchemy.Column(
+        sqlalchemy.String,
+        sqlalchemy.Computed(
+            'SUBSTR(latlng, 1, INSTR(latlng, ",") - 1)', persisted=False))
+    lng = sqlalchemy.Column(
+        sqlalchemy.String,
+        sqlalchemy.Computed(
+            'SUBSTR(latlng, INSTR(latlng, ",") + 1)', persisted=False))
+    point = sqlalchemy.Column(
+        geoalchemy2.Geometry('POINT', srid=4326),
+        sqlalchemy.Computed(
+            'ST_POINT(CAST(lng AS FLOAT), CAST(lat AS FLOAT))',
+            persisted=True))
+    note = sqlalchemy.Column(sqlalchemy.Unicode)
+
+
+class BookmarkFolder(UuidMixin, Base):  # pylint: disable=missing-docstring
+    __tablename__ = 'bookmark_folders'
+
+    label = sqlalchemy.Column(sqlalchemy.Unicode, nullable=False, unique=True)
+
+
+class MapBookmark(Base):  # pylint: disable=missing-docstring
+    __tablename__ = 'map_bookmarks'
+
+    folder_id = sqlalchemy.Column(
+        sqlalchemy.ForeignKey('bookmark_folders.uuid', ondelete='CASCADE'),
+        nullable=False,
+        primary_key=True)
+    place_id = sqlalchemy.Column(
+        sqlalchemy.ForeignKey('places.uuid', ondelete='CASCADE'),
+        nullable=False,
+        primary_key=True)
+    zoom = sqlalchemy.Column(sqlalchemy.Integer)
+
+
+class PortalBookmark(Base):  # pylint: disable=missing-docstring
+    __tablename__ = 'portal_bookmarks'
+
+    folder_uuid = sqlalchemy.Column(
+        sqlalchemy.ForeignKey('bookmark_folders.uuid', ondelete='CASCADE'),
+        nullable=False,
+        primary_key=True)
+    portal_uuid = sqlalchemy.Column(
+        sqlalchemy.ForeignKey('v2_portals.guid', ondelete='CASCADE'),
+        nullable=False,
+        primary_key=True)
 
 
 # The .strip() at the end is important
@@ -388,12 +453,55 @@ _ACCEPTABLE_PORTALS_V2 = set(
         (10, ')'),
     ))
 
+_KNOWN_PLACES = """
+CREATE TABLE places (
+	uuid VARCHAR NOT NULL, 
+	label VARCHAR, 
+	latlng VARCHAR NOT NULL, 
+	lat VARCHAR GENERATED ALWAYS AS (SUBSTR(latlng, 1, INSTR(latlng, ",") - 1)) VIRTUAL, 
+	lng VARCHAR GENERATED ALWAYS AS (SUBSTR(latlng, INSTR(latlng, ",") + 1)) VIRTUAL, 
+	point geometry(POINT,4326) GENERATED ALWAYS AS (ST_POINT(CAST(lng AS FLOAT), CAST(lat AS FLOAT))) STORED, 
+	note VARCHAR, 
+	CONSTRAINT pk_places PRIMARY KEY (uuid), 
+	CONSTRAINT uq_places_latlng UNIQUE (latlng)
+)
+""".strip()
+
+_ACCEPTABLE_PLACES = set(
+    (
+        (0, 'CREATE TABLE places ('),
+        (1, 'uuid VARCHAR NOT NULL,'),
+        (2, 'label VARCHAR,'),
+        (3, 'latlng VARCHAR NOT NULL,'),
+        (4, 'lat VARCHAR GENERATED ALWAYS AS () VIRTUAL,'),
+        (
+            4, 'lat VARCHAR GENERATED ALWAYS AS'
+            ' (SUBSTR(latlng, 1, INSTR(latlng, ",") - 1)) VIRTUAL,'),
+        (5, 'lng VARCHAR GENERATED ALWAYS AS () VIRTUAL,'),
+        (
+            5, 'lng VARCHAR GENERATED ALWAYS AS'
+            ' (SUBSTR(latlng, INSTR(latlng, ",") + 1)) VIRTUAL,'),
+        (
+            6, 'point geometry(POINT,4326) GENERATED ALWAYS AS'
+            ' (ST_POINT(CAST(lng AS FLOAT) STORED,'),
+        (
+            6, 'point GEOMETRY GENERATED ALWAYS AS'
+            ' (ST_POINT(CAST(lng AS FLOAT), CAST(lat AS FLOAT))) STORED,'),
+        (7, 'note VARCHAR,'),
+        (8, 'CONSTRAINT pk_places PRIMARY KEY (uuid),'),
+        (9, 'CONSTRAINT uq_places_latlng UNIQUE (latlng)'),
+        (10, ')'),
+    ))
+
 # Work around bugs in sqlite reflection
 # https://github.com/sqlalchemy/sqlalchemy/issues/11582
 # 'tablename': {'create_table_output': hand_rolled_clean_ddl}
 _FALLBACK_DDL: dict[str, dict[str, set[tuple[int, str]]]] = {
     'v2_portals': {
         _KNOWN_PORTALS_V2: _ACCEPTABLE_PORTALS_V2,
+    },
+    'places': {
+        _KNOWN_PLACES: _ACCEPTABLE_PLACES,
     },
 }
 
@@ -404,6 +512,8 @@ _AUTO_DROPS = (
     'legs',
     'path_legs',
     'paths',
+    'places',
+    'bookmark_folders',
 )
 
 
