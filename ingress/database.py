@@ -400,10 +400,6 @@ _FALLBACK_DDL: dict[str, dict[str, set[tuple[int, str]]]] = {
 _DUMMY_DDL = frozenset((-1, ''),)
 
 _AUTO_DROPS = (
-    'addresses',
-    'address_types',
-    'address_type_values',
-    'address_type_value_associations',
     'cluster_leaders',
     'legs',
     'path_legs',
