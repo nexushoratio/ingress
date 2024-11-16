@@ -18,6 +18,8 @@ if typing.TYPE_CHECKING:  # pragma: no cover
 
 Portals: typing.TypeAlias = dict[str, database.PortalDict]
 
+sqla = database.sqlalchemy
+
 
 def mundane_shared_flags(ctx: app.ArgparseApp):
     """Register shared flags."""
@@ -90,6 +92,23 @@ def mundane_commands(ctx: app.ArgparseApp):
 
     ctx.register_command(find_missing_labels, parents=[bm_flags, glob_flags])
     ctx.register_command(merge, parents=[bm_flags, glob_flags])
+
+    label_req_flag = ctx.argparse_api.ArgumentParser(add_help=False)
+    label_req_flag.add_argument(
+        '--label', action='store', required=True, help='Label to use.')
+    label_opt_flag = ctx.argparse_api.ArgumentParser(add_help=False)
+    label_opt_flag.add_argument(
+        '--label', action='store', help='Label to use.')
+
+    uuid_req_flag = ctx.argparse_api.ArgumentParser(add_help=False)
+    uuid_req_flag.add_argument(
+        '--uuid', action='store', required=True, help='UUID to use.')
+
+    ctx.register_command(bookmark_folders_list)
+    ctx.register_command(bookmark_folders_add, parents=[label_req_flag])
+    ctx.register_command(
+        bookmark_folders_set, parents=[uuid_req_flag, label_opt_flag])
+    ctx.register_command(bookmark_folders_delete, parents=[uuid_req_flag])
 
 
 def ingest(args: argparse.Namespace) -> int:
@@ -253,6 +272,67 @@ def merge(args: argparse.Namespace) -> int:
     save(portals, args.bookmarks)
 
     return 0
+
+
+def bookmark_folders_list(args: argparse.Namespace) -> int:
+    """(V) List existing bookmark folders in the database."""
+    dbc = args.dbc
+
+    stmt = sqla.select(database.BookmarkFolder)
+
+    uuid_col_header = 'UUID'
+    uuid_col_width = 32
+    print(f'{uuid_col_header:^{uuid_col_width}} | Label')
+    for row in dbc.session.execute(stmt):
+        print(
+            f'{row.BookmarkFolder.uuid:{uuid_col_width}}'
+            f' | {row.BookmarkFolder.label}')
+
+    return 0
+
+
+def bookmark_folders_add(args: argparse.Namespace) -> int:
+    """(V) Add a new bookmark folder to the database."""
+    dbc = args.dbc
+    folder = database.BookmarkFolder(label=args.label)
+    dbc.session.add(folder)
+    dbc.session.commit()
+
+    return 0
+
+
+def bookmark_folders_set(args: argparse.Namespace) -> int:
+    """(V) Update settings on a bookmark folder in the database."""
+    dbc = args.dbc
+
+    folder = dbc.session.get(database.BookmarkFolder, args.uuid)
+    ret = 0
+    if folder:
+        if args.label:
+            folder.label = args.label
+        dbc.session.add(folder)
+        dbc.session.commit()
+    else:
+        print(f'Unknown uuid: "{args.uuid}"')
+        ret = 1
+
+    return ret
+
+
+def bookmark_folders_delete(args: argparse.Namespace) -> int:
+    """(V) Delete a bookmark folder from the database."""
+    dbc = args.dbc
+
+    folder = dbc.session.get(database.BookmarkFolder, args.uuid)
+    ret = 0
+    if folder:
+        dbc.session.delete(folder)
+        dbc.session.commit()
+    else:
+        print(f'Unknown uuid: "{args.uuid}"')
+        ret = 1
+
+    return ret
 
 
 def new():
