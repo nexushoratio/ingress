@@ -115,6 +115,16 @@ def _point_to_latlng(point: geoalchemy2.elements.WKTElement) -> str:
     return f'{shape.y},{shape.x}'
 
 
+class ReprMixin:
+    """A reasonable default __repr__ implementation."""
+
+    def __repr__(self):
+        params = ', '.join(
+            f'{key}={getattr(self, key)!r}'
+            for key in self.__mapper__.c.keys())
+        return f'{self.__class__.__name__}({params})'
+
+
 class _Portal(Base):  # pylint: disable=missing-docstring
     __tablename__ = 'portals'
 
@@ -379,7 +389,7 @@ class Place(UuidMixin, Base):  # pylint: disable=missing-docstring
     note = sqlalchemy.Column(sqlalchemy.Unicode)
 
 
-class BookmarkFolder(UuidMixin, Base):  # pylint: disable=missing-docstring
+class BookmarkFolder(ReprMixin, UuidMixin, Base):  # pylint: disable=missing-docstring
     __tablename__ = 'bookmark_folders'
 
     label = sqlalchemy.Column(sqlalchemy.Unicode, nullable=False, unique=True)
