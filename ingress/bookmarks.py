@@ -104,11 +104,36 @@ def mundane_commands(ctx: app.ArgparseApp):
     uuid_req_flag.add_argument(
         '--uuid', action='store', required=True, help='UUID to use.')
 
+    latlng_req_flag = ctx.argparse_api.ArgumentParser(add_help=False)
+    latlng_req_flag.add_argument(
+        '--latlng',
+        action='store',
+        required=True,
+        help='Latitude/longitude value to use.')
+
+    latlng_opt_flag = ctx.argparse_api.ArgumentParser(add_help=False)
+    latlng_opt_flag.add_argument(
+        '--latlng', action='store', help='Latitude/longitude value to use.')
+
+    note_opt_flag = ctx.argparse_api.ArgumentParser(add_help=False)
+    note_opt_flag.add_argument(
+        '--note', action='store', help='Optional note to add')
+
     ctx.register_command(bookmark_folders_list)
     ctx.register_command(bookmark_folders_add, parents=[label_req_flag])
     ctx.register_command(
         bookmark_folders_set, parents=[uuid_req_flag, label_opt_flag])
     ctx.register_command(bookmark_folders_delete, parents=[uuid_req_flag])
+
+    ctx.register_command(place_list)
+    ctx.register_command(
+        place_add, parents=[label_req_flag, latlng_req_flag, note_opt_flag])
+    ctx.register_command(
+        place_set,
+        parents=[
+            uuid_req_flag, label_opt_flag, latlng_opt_flag, note_opt_flag
+        ])
+    ctx.register_command(place_delete, parents=[uuid_req_flag])
 
 
 def ingest(args: argparse.Namespace) -> int:
@@ -327,6 +352,85 @@ def bookmark_folders_delete(args: argparse.Namespace) -> int:
     ret = 0
     if folder:
         dbc.session.delete(folder)
+        dbc.session.commit()
+    else:
+        print(f'Unknown uuid: "{args.uuid}"')
+        ret = 1
+
+    return ret
+
+
+def place_list(args: argparse.Namespace) -> int:
+    """(V) List specific places in the database."""
+    dbc = args.dbc
+    stmt = sqla.select(database.Place)
+
+    uuid_col_header = 'UUID'
+    uuid_col_width = 32
+    label_col_header = 'Label'
+    # 14 allows an empty note to fit on an 80 col term
+    label_col_width = 14
+    latlng_col_header = 'Lat/Lng'
+    lat_col_width = len('-89.123456')
+    lng_col_width = len('-179.123456')
+    latlng_col_width = lat_col_width + lng_col_width + 1
+
+    print(
+        f'{uuid_col_header:^{uuid_col_width}}'
+        f' | {label_col_header:^{label_col_width}}'
+        f' | {latlng_col_header:^{latlng_col_width}} | Note')
+    for row in dbc.session.execute(stmt):
+        print(
+            f'{row.Place.uuid:{uuid_col_width}}'
+            f' | {row.Place.label:{label_col_width}}'
+            f' |{row.Place.lat:>{lng_col_width}}'
+            f',{row.Place.lng:<{lng_col_width}}'
+            f' | {row.Place.note if row.Place.note else "~~"}')
+
+    return 0
+
+
+def place_add(args: argparse.Namespace) -> int:
+    """(V) Add a specific place to the database."""
+    dbc = args.dbc
+    place = database.Place(
+        label=args.label, latlng=args.latlng, note=args.note)
+    dbc.session.add(place)
+    dbc.session.commit()
+
+    return 0
+
+
+def place_set(args: argparse.Namespace) -> int:
+    """(V) Update settings on a specific place in the database."""
+    dbc = args.dbc
+
+    place = dbc.session.get(database.Place, args.uuid)
+    ret = 0
+    if place:
+        if args.label:
+            place.label = args.label
+        if args.latlng:
+            place.latlng = args.latlng
+        # note can be an empty string
+        if args.note is not None:
+            place.note = args.note
+        dbc.session.add(place)
+        dbc.session.commit()
+    else:
+        print(f'Unknown uuid: "{args.uuid}"')
+        ret = 1
+
+    return ret
+
+
+def place_delete(args: argparse.Namespace) -> int:
+    """(V) Delete a specific place from the database."""
+    dbc = args.dbc
+    place = dbc.session.get(database.Place, args.uuid)
+    ret = 0
+    if place:
+        dbc.session.delete(place)
         dbc.session.commit()
     else:
         print(f'Unknown uuid: "{args.uuid}"')
