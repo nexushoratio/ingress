@@ -16,6 +16,11 @@ if typing.TYPE_CHECKING:  # pragma: no cover
 
     from mundane import app
 
+
+class Error(Exception):
+    """Base module exception."""
+
+
 Portals: typing.TypeAlias = dict[str, database.PortalDict]
 
 sqla = database.sqlalchemy
@@ -125,15 +130,32 @@ def mundane_commands(ctx: app.ArgparseApp):
         bookmark_folders_set, parents=[uuid_req_flag, label_opt_flag])
     ctx.register_command(bookmark_folders_delete, parents=[uuid_req_flag])
 
-    ctx.register_command(place_list)
+    parser = ctx.register_command(place_holder, name='place', usage_only=True)
+    place_cmds = ctx.new_subparser(parser)
+
+    ctx.register_command(place_list, name='list', subparser=place_cmds)
     ctx.register_command(
-        place_add, parents=[label_req_flag, latlng_req_flag, note_opt_flag])
+        place_add,
+        name='add',
+        subparser=place_cmds,
+        parents=[label_req_flag, latlng_req_flag, note_opt_flag])
     ctx.register_command(
         place_set,
+        name='set',
+        subparser=place_cmds,
         parents=[
             uuid_req_flag, label_opt_flag, latlng_opt_flag, note_opt_flag
         ])
-    ctx.register_command(place_delete, parents=[uuid_req_flag])
+    ctx.register_command(
+        place_delete,
+        name='del',
+        subparser=place_cmds,
+        parents=[uuid_req_flag])
+
+
+def place_holder(args: argparse.Namespace) -> int:
+    """(V) A family of commands for working with places."""
+    raise Error('This function should never be called.')
 
 
 def ingest(args: argparse.Namespace) -> int:
