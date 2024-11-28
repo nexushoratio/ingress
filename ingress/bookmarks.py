@@ -124,11 +124,29 @@ def mundane_commands(ctx: app.ArgparseApp):
     note_opt_flag.add_argument(
         '--note', action='store', help='Optional note to add')
 
-    ctx.register_command(bookmark_folders_list)
-    ctx.register_command(bookmark_folders_add, parents=[label_req_flag])
+    parser = ctx.register_command(bookmark, usage_only=True)
+    bookmark_cmds = ctx.new_subparser(parser)
+
+    parser = ctx.register_command(
+        folder_, name='folder', usage_only=True, subparser=bookmark_cmds)
+    folder_cmds = ctx.new_subparser(parser)
+
+    ctx.register_command(folder_list, name='list', subparser=folder_cmds)
     ctx.register_command(
-        bookmark_folders_set, parents=[uuid_req_flag, label_opt_flag])
-    ctx.register_command(bookmark_folders_delete, parents=[uuid_req_flag])
+        folder_add,
+        name='add',
+        subparser=folder_cmds,
+        parents=[label_req_flag])
+    ctx.register_command(
+        folder_set,
+        name='set',
+        subparser=folder_cmds,
+        parents=[uuid_req_flag, label_opt_flag])
+    ctx.register_command(
+        folder_del,
+        name='del',
+        subparser=folder_cmds,
+        parents=[uuid_req_flag])
 
     parser = ctx.register_command(place_holder, name='place', usage_only=True)
     place_cmds = ctx.new_subparser(parser)
@@ -155,6 +173,16 @@ def mundane_commands(ctx: app.ArgparseApp):
 
 def place_holder(args: argparse.Namespace) -> int:
     """(V) A family of commands for working with places."""
+    raise Error('This function should never be called.')
+
+
+def bookmark(args: argparse.Namespace) -> int:
+    """(V) A family of commands for working with bookmarks in the database."""
+    raise Error('This function should never be called.')
+
+
+def folder_(args: argparse.Namespace) -> int:
+    """(V) A family of commands for working with bookmark folders."""
     raise Error('This function should never be called.')
 
 
@@ -321,7 +349,7 @@ def merge(args: argparse.Namespace) -> int:
     return 0
 
 
-def bookmark_folders_list(args: argparse.Namespace) -> int:
+def folder_list(args: argparse.Namespace) -> int:
     """(V) List existing bookmark folders in the database."""
     dbc = args.dbc
 
@@ -338,7 +366,7 @@ def bookmark_folders_list(args: argparse.Namespace) -> int:
     return 0
 
 
-def bookmark_folders_add(args: argparse.Namespace) -> int:
+def folder_add(args: argparse.Namespace) -> int:
     """(V) Add a new bookmark folder to the database."""
     dbc = args.dbc
     folder = database.BookmarkFolder(label=args.label)
@@ -348,7 +376,7 @@ def bookmark_folders_add(args: argparse.Namespace) -> int:
     return 0
 
 
-def bookmark_folders_set(args: argparse.Namespace) -> int:
+def folder_set(args: argparse.Namespace) -> int:
     """(V) Update settings on a bookmark folder in the database."""
     dbc = args.dbc
 
@@ -366,7 +394,7 @@ def bookmark_folders_set(args: argparse.Namespace) -> int:
     return ret
 
 
-def bookmark_folders_delete(args: argparse.Namespace) -> int:
+def folder_del(args: argparse.Namespace) -> int:
     """(V) Delete a bookmark folder from the database."""
     dbc = args.dbc
 
