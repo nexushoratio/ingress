@@ -48,8 +48,7 @@ def mundane_commands(ctx: app.ArgparseApp):
     note_flag.add_argument(
         '-N', '--note', action='store', help='Optional note to add')
 
-    parser = ctx.register_command(address)
-    parser.set_defaults(func=lambda x, y=parser: _usage(x, y))
+    parser = ctx.register_command(address, usage_only=True)
     address_cmds = ctx.new_subparser(parser)
 
     parser = ctx.register_command(
@@ -80,8 +79,8 @@ def mundane_commands(ctx: app.ArgparseApp):
         action=ctx.argparse_api.BooleanOptionalAction,
         help='Commit the pruning operation. (Default: %(default)s)')
 
-    parser = ctx.register_command(type_, name='type', subparser=address_cmds)
-    parser.set_defaults(func=lambda x, y=parser: _usage(x, y))
+    parser = ctx.register_command(
+        type_, name='type', usage_only=True, subparser=address_cmds)
     type_cmds = ctx.new_subparser(parser)
 
     ctx.register_command(type_list, name='list', subparser=type_cmds)
@@ -101,8 +100,7 @@ def mundane_commands(ctx: app.ArgparseApp):
     ctx.register_command(
         type_del, name='del', subparser=type_cmds, parents=[type_flag])
 
-    parser = ctx.register_command(value, subparser=type_cmds)
-    parser.set_defaults(func=lambda x, y=parser: _usage(x, y))
+    parser = ctx.register_command(value, usage_only=True, subparser=type_cmds)
     value_cmds = ctx.new_subparser(parser)
 
     ctx.register_command(value_list, name='list', subparser=value_cmds)
@@ -126,15 +124,6 @@ def mundane_commands(ctx: app.ArgparseApp):
         name='del',
         subparser=value_cmds,
         parents=[type_flag, value_flag])
-
-
-def _usage(args: argparse.Namespace, parser: argparse.ArgumentParser) -> int:
-    """A function called simply to display help output."""
-    del args
-
-    parser.print_help()
-
-    return 1
 
 
 def address(args: argparse.Namespace) -> int:
