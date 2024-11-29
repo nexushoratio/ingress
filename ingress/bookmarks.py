@@ -120,12 +120,12 @@ def mundane_commands(ctx: app.ArgparseApp):
     note_opt_flag.add_argument(
         '--note', action='store', help='Optional note to add')
 
-    parser = ctx.register_command(bookmark, usage_only=True)
-    bookmark_cmds = ctx.new_subparser(parser)
+    bookmark_cmds = ctx.new_subparser(
+        ctx.register_command(bookmark, usage_only=True))
 
-    parser = ctx.register_command(
-        folder_, name='folder', usage_only=True, subparser=bookmark_cmds)
-    folder_cmds = ctx.new_subparser(parser)
+    folder_cmds = ctx.new_subparser(
+        ctx.register_command(
+            folder_, name='folder', usage_only=True, subparser=bookmark_cmds))
 
     ctx.register_command(folder_list, name='list', subparser=folder_cmds)
     ctx.register_command(
@@ -144,8 +144,8 @@ def mundane_commands(ctx: app.ArgparseApp):
         subparser=folder_cmds,
         parents=[uuid_req_flag])
 
-    parser = ctx.register_command(place_holder, name='place', usage_only=True)
-    place_cmds = ctx.new_subparser(parser)
+    place_cmds = ctx.new_subparser(
+        ctx.register_command(place_holder, name='place', usage_only=True))
 
     ctx.register_command(place_list, name='list', subparser=place_cmds)
     ctx.register_command(
