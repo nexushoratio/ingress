@@ -62,14 +62,14 @@ def mundane_commands(ctx: app.ArgparseApp):
     ctx.register_command(ingest, parents=[bm_flags])
     ctx.register_command(expunge, parents=[bm_flags])
 
-    parser = ctx.register_command(export, parents=[bm_flags])
-    parser.add_argument(
-        '-s',
-        '--samples',
-        action='store',
-        default=None,
-        type=int,
-        help='Roughly how many portals should be in the output.')
+    ctx.register_command(
+        export, parents=[bm_flags]).add_argument(
+            '-s',
+            '--samples',
+            action='store',
+            default=None,
+            type=int,
+            help='Roughly how many portals should be in the output.')
 
     parser = ctx.register_command(flatten, parents=[bm_flags])
     parser.add_argument(
