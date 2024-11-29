@@ -94,29 +94,29 @@ def mundane_commands(ctx: app.ArgparseApp):
     ctx.register_command(find_missing_labels, parents=[bm_flags, glob_flags])
     ctx.register_command(merge, parents=[bm_flags, glob_flags])
 
-    label_req_flag = ctx.argparse_api.ArgumentParser(add_help=False)
+    label_req_flag = ctx.new_parser()
     label_req_flag.add_argument(
         '--label', action='store', required=True, help='Label to use.')
-    label_opt_flag = ctx.argparse_api.ArgumentParser(add_help=False)
+    label_opt_flag = ctx.new_parser()
     label_opt_flag.add_argument(
         '--label', action='store', help='Label to use.')
 
-    uuid_req_flag = ctx.argparse_api.ArgumentParser(add_help=False)
+    uuid_req_flag = ctx.new_parser()
     uuid_req_flag.add_argument(
         '--uuid', action='store', required=True, help='UUID to use.')
 
-    latlng_req_flag = ctx.argparse_api.ArgumentParser(add_help=False)
+    latlng_req_flag = ctx.new_parser()
     latlng_req_flag.add_argument(
         '--latlng',
         action='store',
         required=True,
         help='Latitude/longitude value to use.')
 
-    latlng_opt_flag = ctx.argparse_api.ArgumentParser(add_help=False)
+    latlng_opt_flag = ctx.new_parser()
     latlng_opt_flag.add_argument(
         '--latlng', action='store', help='Latitude/longitude value to use.')
 
-    note_opt_flag = ctx.argparse_api.ArgumentParser(add_help=False)
+    note_opt_flag = ctx.new_parser()
     note_opt_flag.add_argument(
         '--note', action='store', help='Optional note to add')
 
