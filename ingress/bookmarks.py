@@ -28,22 +28,18 @@ sqla = database.sqlalchemy
 
 def mundane_shared_flags(ctx: app.ArgparseApp):
     """Register shared flags."""
+    bm_args = ('-b', '--bookmarks')
+    bm_kwargs: app.AddArgumentKwargs = {
+        'action': 'store',
+        'help': 'IITC bookmarks json file to use.',
+    }
     parser = ctx.new_shared_parser('bookmarks')
     if parser:
-        parser.add_argument(
-            '-b',
-            '--bookmarks',
-            action='store',
-            required=True,
-            help='IITC bookmarks json file to use')
+        parser.add_argument(*bm_args, required=True, **bm_kwargs)
 
     parser = ctx.new_shared_parser('bookmarks_optional')
     if parser:
-        parser.add_argument(
-            '-b',
-            '--bookmarks',
-            action='store',
-            help='IITC bookmarks json file to use')
+        parser.add_argument(*bm_args, **bm_kwargs)
 
     parser = ctx.new_shared_parser('glob')
     if parser:
