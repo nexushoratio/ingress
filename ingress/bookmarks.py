@@ -306,9 +306,9 @@ def folder_(args: argparse.Namespace) -> int:
 
 
 def map_(args: argparse.Namespace) -> int:
-    """(V) A family of commands for working with bookmarked map entries.
+    """(V) A family of commands for working with map bookmarks.
 
-    A map consists of a (folder, place. zoom) combination.
+    A map bookmark consists of a (folder, place, zoom) combination.
     """
     raise Error('This function should never be called.')
 
@@ -617,7 +617,7 @@ def place_delete(args: argparse.Namespace) -> int:
 
 
 def map_list(args: argparse.Namespace) -> int:
-    """(V) List existing bookmark maps in the database.
+    """(V) List existing map bookmarks in the database.
 
     This report is really wide.  Sorry.
     """
@@ -653,7 +653,7 @@ def map_list(args: argparse.Namespace) -> int:
 
 
 def map_add(args: argparse.Namespace) -> int:
-    """(V) Add a new bookmark map to the database."""
+    """(V) Add a new map bookmark to the database."""
     dbc = args.dbc
     this_map = database.MapBookmark(
         folder_id=args.folder_id, place_id=args.place_id, zoom=args.zoom)
@@ -664,7 +664,7 @@ def map_add(args: argparse.Namespace) -> int:
 
 
 def map_set(args: argparse.Namespace) -> int:
-    """(V) Update settings on a bookmark map in the database."""
+    """(V) Update settings on a map bookmark in the database."""
     dbc = args.dbc
 
     this_map = dbc.session.get(database.MapBookmark, args.uuid)
@@ -686,7 +686,7 @@ def map_set(args: argparse.Namespace) -> int:
 
 
 def map_del(args: argparse.Namespace) -> int:
-    """(V) Delete a bookmark map from the database."""
+    """(V) Delete a map bookmark from the database."""
     dbc = args.dbc
 
     this_map = dbc.session.get(database.MapBookmark, args.uuid)
