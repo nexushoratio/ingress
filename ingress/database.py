@@ -395,18 +395,20 @@ class BookmarkFolder(ReprMixin, UuidMixin, Base):  # pylint: disable=missing-doc
     label = sqlalchemy.Column(sqlalchemy.Unicode, nullable=False, unique=True)
 
 
-class MapBookmark(Base):  # pylint: disable=missing-docstring
+class MapBookmark(UuidMixin, Base):  # pylint: disable=missing-docstring
     __tablename__ = 'map_bookmarks'
 
     folder_id = sqlalchemy.Column(
         sqlalchemy.ForeignKey('bookmark_folders.uuid', ondelete='CASCADE'),
-        nullable=False,
-        primary_key=True)
+        nullable=False)
     place_id = sqlalchemy.Column(
         sqlalchemy.ForeignKey('places.uuid', ondelete='CASCADE'),
-        nullable=False,
-        primary_key=True)
-    zoom = sqlalchemy.Column(sqlalchemy.Integer)
+        nullable=False)
+    zoom = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
+
+    __table_args__ = (
+        sqlalchemy.UniqueConstraint('folder_id', 'place_id'),
+    )  # yapf: disable
 
 
 class PortalBookmark(Base):  # pylint: disable=missing-docstring
@@ -524,6 +526,7 @@ _AUTO_DROPS = (
     'paths',
     'places',
     'bookmark_folders',
+    'map_bookmarks',
 )
 
 
