@@ -152,6 +152,25 @@ class _CommonFlags:
         return parser
 
     @functools.cached_property
+    def portal_id_req(self) -> argparse.ArgumentParser:
+        """Required --portal-id flag."""
+        parser = self._parser()
+        parser.add_argument(
+            '--portal-id',
+            action='store',
+            required=True,
+            help='Portal GUID to use.')
+        return parser
+
+    @functools.cached_property
+    def portal_id_opt(self) -> argparse.ArgumentParser:
+        """Optional --portal-id flag."""
+        parser = self._parser()
+        parser.add_argument(
+            '--portal-id', action='store', help='Portal GUID to use.')
+        return parser
+
+    @functools.cached_property
     def uuid_req(self) -> argparse.ArgumentParser:
         """Required --uuid flag."""
         parser = self._parser()
@@ -289,6 +308,27 @@ def mundane_commands(ctx: app.ArgparseApp):
     ctx.register_command(
         map_del, name='del', subparser=map_cmds, parents=[flags.uuid_req])
 
+    portal_cmds = ctx.new_subparser(
+        ctx.register_command(
+            portal_, name='portal', usage_only=True, subparser=bookmark_cmds))
+
+    ctx.register_command(portal_list, name='list', subparser=portal_cmds)
+    ctx.register_command(
+        portal_add,
+        name='add',
+        subparser=portal_cmds,
+        parents=[flags.folder_id_req, flags.portal_id_req])
+    ctx.register_command(
+        portal_set,
+        name='set',
+        subparser=portal_cmds,
+        parents=[flags.uuid_req, flags.folder_id_opt, flags.portal_id_opt])
+    ctx.register_command(
+        portal_del,
+        name='del',
+        subparser=portal_cmds,
+        parents=[flags.uuid_req])
+
 
 def place_holder(args: argparse.Namespace) -> int:
     """(V) A family of commands for working with places."""
@@ -309,6 +349,14 @@ def map_(args: argparse.Namespace) -> int:
     """(V) A family of commands for working with map bookmarks.
 
     A map bookmark consists of a (folder, place, zoom) combination.
+    """
+    raise Error('This function should never be called.')
+
+
+def portal_(args: argparse.Namespace) -> int:
+    """(V) A family of commands for working with portal bookmarks.
+
+    A portal bookmark consists of a (folder, portal) combination.
     """
     raise Error('This function should never be called.')
 
@@ -693,6 +741,95 @@ def map_del(args: argparse.Namespace) -> int:
     ret = 0
     if this_map:
         dbc.session.delete(this_map)
+        dbc.session.commit()
+    else:
+        print(f'Unknown uuid: "{args.uuid}"')
+        ret = 1
+
+    return ret
+
+
+def portal_list(args: argparse.Namespace) -> int:
+    """(V) List existing portal bookmarks in the database.
+
+    This report is really wide.  Sorry.
+    """
+    dbc = args.dbc
+
+    stmt = sqla.select(database.PortalBookmark)
+
+    uuid_col_header = 'UUID'
+    folder_col_header = 'Folder'
+    portal_col_header = 'Portal'
+    uuid_col_width = 32
+    guid_col_width = 35
+    # consisent with place_list
+    label_width = 14
+    # About 80% of the portals are less than this
+    portal_label_width = 34
+    folder_col_width = uuid_col_width + label_width + 3
+    portal_col_width = guid_col_width + portal_label_width + 3
+    print(
+        f'{uuid_col_header:^{uuid_col_width}}'
+        f' | {folder_col_header:^{folder_col_width}}'
+        f' | {portal_col_header:^{portal_col_width}}')
+
+    for row in dbc.session.execute(stmt):
+        this_folder = dbc.session.get(
+            database.BookmarkFolder, row.PortalBookmark.folder_id)
+        this_portal = dbc.session.get(
+            database.PortalV2, row.PortalBookmark.portal_id)
+        print(
+            f'{row.PortalBookmark.uuid:{uuid_col_width}}'
+            f' | {this_folder.label:{label_width}}'
+            f' - {this_folder.uuid:{uuid_col_width}}'
+            f' | {this_portal.label:{portal_label_width}}'
+            f' - {this_portal.guid:{guid_col_width}}')
+
+    return 0
+
+
+def portal_add(args: argparse.Namespace) -> int:
+    """(V) Add a new portal bookmark to the database."""
+    dbc = args.dbc
+    this_portal = database.PortalBookmark(
+        folder_id=args.folder_id, portal_id=args.portal_id)
+    dbc.session.add(this_portal)
+    dbc.session.commit()
+
+    return 0
+
+
+def portal_set(args: argparse.Namespace) -> int:
+    """(V) Update settings on a portal bookmark in the database."""
+    dbc = args.dbc
+
+    this_portal = dbc.session.get(database.PortalBookmark, args.uuid)
+    ret = 0
+    if this_portal:
+        if args.folder_id:
+            this_portal.folder_id = args.folder_id
+        if args.portal_id:
+            this_portal.portal_id = args.portal_id
+        if args.zoom:
+            this_portal.zoom = args.zoom
+        dbc.session.add(this_portal)
+        dbc.session.commit()
+    else:
+        print(f'Unknown uuid: "{args.uuid}"')
+        ret = 1
+
+    return ret
+
+
+def portal_del(args: argparse.Namespace) -> int:
+    """(V) Delete a portal bookmark from the database."""
+    dbc = args.dbc
+
+    this_portal = dbc.session.get(database.PortalBookmark, args.uuid)
+    ret = 0
+    if this_portal:
+        dbc.session.delete(this_portal)
         dbc.session.commit()
     else:
         print(f'Unknown uuid: "{args.uuid}"')
