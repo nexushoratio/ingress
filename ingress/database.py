@@ -411,18 +411,19 @@ class MapBookmark(UuidMixin, Base):  # pylint: disable=missing-docstring
     )  # yapf: disable
 
 
-class PortalBookmark(Base):  # pylint: disable=missing-docstring
+class PortalBookmark(UuidMixin, Base):  # pylint: disable=missing-docstring
     __tablename__ = 'portal_bookmarks'
 
-    folder_uuid = sqlalchemy.Column(
+    folder_id = sqlalchemy.Column(
         sqlalchemy.ForeignKey('bookmark_folders.uuid', ondelete='CASCADE'),
-        nullable=False,
-        primary_key=True)
-    portal_uuid = sqlalchemy.Column(
+        nullable=False)
+    portal_id = sqlalchemy.Column(
         sqlalchemy.ForeignKey('v2_portals.guid', ondelete='CASCADE'),
-        nullable=False,
-        primary_key=True)
+        nullable=False)
 
+    __table_args__ = (
+        sqlalchemy.UniqueConstraint('folder_id', 'portal_id'),
+    )  # yapf: disable
 
 # The .strip() at the end is important
 _KNOWN_PORTALS_V2 = """
@@ -527,6 +528,7 @@ _AUTO_DROPS = (
     'places',
     'bookmark_folders',
     'map_bookmarks',
+    'portal_bookmarks',
 )
 
 
