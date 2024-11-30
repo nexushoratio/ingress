@@ -674,8 +674,8 @@ def map_list(args: argparse.Namespace) -> int:
     stmt = sqla.select(database.MapBookmark)
 
     uuid_col_header = 'UUID'
-    folder_col_header = 'Folder'
-    place_col_header = 'Place'
+    folder_col_header = 'Folder (label - uuid)'
+    place_col_header = 'Place (label - uuid)'
     uuid_col_width = 32
     # consisent with place_list
     label_width = 14
@@ -759,8 +759,8 @@ def portal_list(args: argparse.Namespace) -> int:
     stmt = sqla.select(database.PortalBookmark)
 
     uuid_col_header = 'UUID'
-    folder_col_header = 'Folder'
-    portal_col_header = 'Portal'
+    folder_col_header = 'Folder (label - uuid)'
+    portal_col_header = 'Portal (label - uuid)'
     uuid_col_width = 32
     guid_col_width = 35
     # consisent with place_list
