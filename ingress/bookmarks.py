@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 import glob
 import itertools
 import logging
@@ -54,6 +55,73 @@ def mundane_shared_flags(ctx: app.ArgparseApp):
                 ' instead of the shell.  May be specified multiple times.'))
 
 
+class _CommonFlags:
+    """A module level container for flags used across multiple commands."""
+
+    def __init__(self, ctx: app.ArgparseApp):
+        """Initialize the container.
+
+        Args:
+            ctx: The ArgparseApp instance to use.
+        """
+        self.ctx = ctx
+
+    def _parser(self) -> argparse.ArgumentParser:
+        return self.ctx.new_parser()
+
+    @functools.cached_property
+    def label_req(self) -> argparse.ArgumentParser:
+        """Required --label flag."""
+        parser = self._parser()
+        parser.add_argument(
+            '--label', action='store', required=True, help='Label to use.')
+        return parser
+
+    @functools.cached_property
+    def label_opt(self) -> argparse.ArgumentParser:
+        """Optional --label flag."""
+        parser = self._parser()
+        parser.add_argument('--label', action='store', help='Label to use.')
+        return parser
+
+    @functools.cached_property
+    def latlng_req(self) -> argparse.ArgumentParser:
+        """Required --latlng flag."""
+        parser = self._parser()
+        parser.add_argument(
+            '--latlng',
+            action='store',
+            required=True,
+            help='Latitude/longitude value to use.')
+        return parser
+
+    @functools.cached_property
+    def latlng_opt(self) -> argparse.ArgumentParser:
+        """Optional --latlng flag."""
+        parser = self._parser()
+        parser.add_argument(
+            '--latlng',
+            action='store',
+            help='Latitude/longitude value to use.')
+        return parser
+
+    @functools.cached_property
+    def note_opt(self) -> argparse.ArgumentParser:
+        """Optional --note flag."""
+        parser = self._parser()
+        parser.add_argument(
+            '--note', action='store', help='Optional note to use.')
+        return parser
+
+    @functools.cached_property
+    def uuid_req(self) -> argparse.ArgumentParser:
+        """Required --uuid flag."""
+        parser = self._parser()
+        parser.add_argument(
+            '--uuid', action='store', required=True, help='UUID to use.')
+        return parser
+
+
 def mundane_commands(ctx: app.ArgparseApp):
     """Register commands."""
     bm_flags = ctx.get_shared_parser('bookmarks')
@@ -94,31 +162,7 @@ def mundane_commands(ctx: app.ArgparseApp):
     ctx.register_command(find_missing_labels, parents=[bm_flags, glob_flags])
     ctx.register_command(merge, parents=[bm_flags, glob_flags])
 
-    label_req_flag = ctx.new_parser()
-    label_req_flag.add_argument(
-        '--label', action='store', required=True, help='Label to use.')
-    label_opt_flag = ctx.new_parser()
-    label_opt_flag.add_argument(
-        '--label', action='store', help='Label to use.')
-
-    uuid_req_flag = ctx.new_parser()
-    uuid_req_flag.add_argument(
-        '--uuid', action='store', required=True, help='UUID to use.')
-
-    latlng_req_flag = ctx.new_parser()
-    latlng_req_flag.add_argument(
-        '--latlng',
-        action='store',
-        required=True,
-        help='Latitude/longitude value to use.')
-
-    latlng_opt_flag = ctx.new_parser()
-    latlng_opt_flag.add_argument(
-        '--latlng', action='store', help='Latitude/longitude value to use.')
-
-    note_opt_flag = ctx.new_parser()
-    note_opt_flag.add_argument(
-        '--note', action='store', help='Optional note to add')
+    flags = _CommonFlags(ctx)
 
     bookmark_cmds = ctx.new_subparser(
         ctx.register_command(bookmark, usage_only=True))
@@ -132,17 +176,17 @@ def mundane_commands(ctx: app.ArgparseApp):
         folder_add,
         name='add',
         subparser=folder_cmds,
-        parents=[label_req_flag])
+        parents=[flags.label_req])
     ctx.register_command(
         folder_set,
         name='set',
         subparser=folder_cmds,
-        parents=[uuid_req_flag, label_opt_flag])
+        parents=[flags.uuid_req, flags.label_opt])
     ctx.register_command(
         folder_del,
         name='del',
         subparser=folder_cmds,
-        parents=[uuid_req_flag])
+        parents=[flags.uuid_req])
 
     place_cmds = ctx.new_subparser(
         ctx.register_command(place_holder, name='place', usage_only=True))
@@ -152,19 +196,19 @@ def mundane_commands(ctx: app.ArgparseApp):
         place_add,
         name='add',
         subparser=place_cmds,
-        parents=[label_req_flag, latlng_req_flag, note_opt_flag])
+        parents=[flags.label_req, flags.latlng_req, flags.note_opt])
     ctx.register_command(
         place_set,
         name='set',
         subparser=place_cmds,
         parents=[
-            uuid_req_flag, label_opt_flag, latlng_opt_flag, note_opt_flag
+            flags.uuid_req, flags.label_opt, flags.latlng_opt, flags.note_opt
         ])
     ctx.register_command(
         place_delete,
         name='del',
         subparser=place_cmds,
-        parents=[uuid_req_flag])
+        parents=[flags.uuid_req])
 
 
 def place_holder(args: argparse.Namespace) -> int:
