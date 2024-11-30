@@ -70,6 +70,25 @@ class _CommonFlags:
         return self.ctx.new_parser()
 
     @functools.cached_property
+    def folder_id_req(self) -> argparse.ArgumentParser:
+        """Required --folder-id flag."""
+        parser = self._parser()
+        parser.add_argument(
+            '--folder-id',
+            action='store',
+            required=True,
+            help='Folder UUID to use.')
+        return parser
+
+    @functools.cached_property
+    def folder_id_opt(self) -> argparse.ArgumentParser:
+        """Optional --folder-id flag."""
+        parser = self._parser()
+        parser.add_argument(
+            '--folder-id', action='store', help='Folder UUID to use.')
+        return parser
+
+    @functools.cached_property
     def label_req(self) -> argparse.ArgumentParser:
         """Required --label flag."""
         parser = self._parser()
@@ -114,11 +133,50 @@ class _CommonFlags:
         return parser
 
     @functools.cached_property
+    def place_id_req(self) -> argparse.ArgumentParser:
+        """Required --place-id flag."""
+        parser = self._parser()
+        parser.add_argument(
+            '--place-id',
+            action='store',
+            required=True,
+            help='Place UUID to use.')
+        return parser
+
+    @functools.cached_property
+    def place_id_opt(self) -> argparse.ArgumentParser:
+        """Optional --place-id flag."""
+        parser = self._parser()
+        parser.add_argument(
+            '--place-id', action='store', help='Place UUID to use.')
+        return parser
+
+    @functools.cached_property
     def uuid_req(self) -> argparse.ArgumentParser:
         """Required --uuid flag."""
         parser = self._parser()
         parser.add_argument(
             '--uuid', action='store', required=True, help='UUID to use.')
+        return parser
+
+    @functools.cached_property
+    def zoom_req(self) -> argparse.ArgumentParser:
+        """Required --zoom flag."""
+        parser = self._parser()
+        parser.add_argument(
+            '--zoom',
+            action='store',
+            required=True,
+            type=int,
+            help='Zoom level to use.')
+        return parser
+
+    @functools.cached_property
+    def zoom_opt(self) -> argparse.ArgumentParser:
+        """Optional --zoom flag."""
+        parser = self._parser()
+        parser.add_argument(
+            '--zoom', action='store', type=int, help='Zoom level to use.')
         return parser
 
 
@@ -210,6 +268,27 @@ def mundane_commands(ctx: app.ArgparseApp):
         subparser=place_cmds,
         parents=[flags.uuid_req])
 
+    map_cmds = ctx.new_subparser(
+        ctx.register_command(
+            map_, name='map', usage_only=True, subparser=bookmark_cmds))
+
+    ctx.register_command(map_list, name='list', subparser=map_cmds)
+    ctx.register_command(
+        map_add,
+        name='add',
+        subparser=map_cmds,
+        parents=[flags.folder_id_req, flags.place_id_req, flags.zoom_req])
+    ctx.register_command(
+        map_set,
+        name='set',
+        subparser=map_cmds,
+        parents=[
+            flags.uuid_req, flags.folder_id_opt, flags.place_id_opt,
+            flags.zoom_opt
+        ])
+    ctx.register_command(
+        map_del, name='del', subparser=map_cmds, parents=[flags.uuid_req])
+
 
 def place_holder(args: argparse.Namespace) -> int:
     """(V) A family of commands for working with places."""
@@ -223,6 +302,14 @@ def bookmark(args: argparse.Namespace) -> int:
 
 def folder_(args: argparse.Namespace) -> int:
     """(V) A family of commands for working with bookmark folders."""
+    raise Error('This function should never be called.')
+
+
+def map_(args: argparse.Namespace) -> int:
+    """(V) A family of commands for working with bookmarked map entries.
+
+    A map consists of a (folder, place. zoom) combination.
+    """
     raise Error('This function should never be called.')
 
 
@@ -521,6 +608,91 @@ def place_delete(args: argparse.Namespace) -> int:
     ret = 0
     if place:
         dbc.session.delete(place)
+        dbc.session.commit()
+    else:
+        print(f'Unknown uuid: "{args.uuid}"')
+        ret = 1
+
+    return ret
+
+
+def map_list(args: argparse.Namespace) -> int:
+    """(V) List existing bookmark maps in the database.
+
+    This report is really wide.  Sorry.
+    """
+    dbc = args.dbc
+
+    stmt = sqla.select(database.MapBookmark)
+
+    uuid_col_header = 'UUID'
+    folder_col_header = 'Folder'
+    place_col_header = 'Place'
+    uuid_col_width = 32
+    # consisent with place_list
+    label_width = 14
+    wide_col_width = uuid_col_width + label_width + 3
+    print(
+        f'{uuid_col_header:^{uuid_col_width}}'
+        f' | {folder_col_header:^{wide_col_width}}'
+        f' | {place_col_header:^{wide_col_width}}'
+        ' | Zoom')
+    for row in dbc.session.execute(stmt):
+        this_folder = dbc.session.get(
+            database.BookmarkFolder, row.MapBookmark.folder_id)
+        this_place = dbc.session.get(database.Place, row.MapBookmark.place_id)
+        print(
+            f'{row.MapBookmark.uuid:{uuid_col_width}}'
+            f' | {this_folder.label:{label_width}}'
+            f' - {this_folder.uuid:{uuid_col_width}}'
+            f' | {this_place.label:{label_width}}'
+            f' - {this_place.uuid:{uuid_col_width}}'
+            f' | {row.MapBookmark.zoom}')
+
+    return 0
+
+
+def map_add(args: argparse.Namespace) -> int:
+    """(V) Add a new bookmark map to the database."""
+    dbc = args.dbc
+    this_map = database.MapBookmark(
+        folder_id=args.folder_id, place_id=args.place_id, zoom=args.zoom)
+    dbc.session.add(this_map)
+    dbc.session.commit()
+
+    return 0
+
+
+def map_set(args: argparse.Namespace) -> int:
+    """(V) Update settings on a bookmark map in the database."""
+    dbc = args.dbc
+
+    this_map = dbc.session.get(database.MapBookmark, args.uuid)
+    ret = 0
+    if this_map:
+        if args.folder_id:
+            this_map.folder_id = args.folder_id
+        if args.place_id:
+            this_map.place_id = args.place_id
+        if args.zoom:
+            this_map.zoom = args.zoom
+        dbc.session.add(this_map)
+        dbc.session.commit()
+    else:
+        print(f'Unknown uuid: "{args.uuid}"')
+        ret = 1
+
+    return ret
+
+
+def map_del(args: argparse.Namespace) -> int:
+    """(V) Delete a bookmark map from the database."""
+    dbc = args.dbc
+
+    this_map = dbc.session.get(database.MapBookmark, args.uuid)
+    ret = 0
+    if this_map:
+        dbc.session.delete(this_map)
         dbc.session.commit()
     else:
         print(f'Unknown uuid: "{args.uuid}"')
