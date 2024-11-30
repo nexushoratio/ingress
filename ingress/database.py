@@ -368,7 +368,7 @@ class UuidMixin:
         sqlalchemy.String, nullable=False, primary_key=True)
 
 
-class Place(UuidMixin, Base):  # pylint: disable=missing-docstring
+class Place(ReprMixin, UuidMixin, Base):  # pylint: disable=missing-docstring
     __tablename__ = 'places'
 
     label = sqlalchemy.Column(sqlalchemy.Unicode)
@@ -395,7 +395,7 @@ class BookmarkFolder(ReprMixin, UuidMixin, Base):  # pylint: disable=missing-doc
     label = sqlalchemy.Column(sqlalchemy.Unicode, nullable=False, unique=True)
 
 
-class MapBookmark(UuidMixin, Base):  # pylint: disable=missing-docstring
+class MapBookmark(ReprMixin, UuidMixin, Base):  # pylint: disable=missing-docstring
     __tablename__ = 'map_bookmarks'
 
     folder_id = sqlalchemy.Column(
@@ -411,7 +411,7 @@ class MapBookmark(UuidMixin, Base):  # pylint: disable=missing-docstring
     )  # yapf: disable
 
 
-class PortalBookmark(UuidMixin, Base):  # pylint: disable=missing-docstring
+class PortalBookmark(ReprMixin, UuidMixin, Base):  # pylint: disable=missing-docstring
     __tablename__ = 'portal_bookmarks'
 
     folder_id = sqlalchemy.Column(
