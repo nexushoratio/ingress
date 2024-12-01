@@ -1,5 +1,7 @@
 """Functions to work with IITC bookmarks files."""
 
+# pylint: disable=too-many-lines
+
 from __future__ import annotations
 
 import functools
@@ -89,6 +91,18 @@ class _CommonFlags:
         parser = self._parser()
         parser.add_argument(
             '--folder-id', action='store', help='Folder UUID to use.')
+        return parser
+
+    @functools.cached_property
+    def folder_id_req_list(self) -> argparse.ArgumentParser:
+        """Required repeatable --folder-id flag."""
+        parser = self._parser()
+        parser.add_argument(
+            '-f',
+            '--folder-id',
+            action='append',
+            required=True,
+            help='Folder UUID to use.  May be specified multiple times.')
         return parser
 
     @functools.cached_property
@@ -249,6 +263,11 @@ def mundane_commands(ctx: app.ArgparseApp):
 
     ctx.register_command(
         read_, name='read', subparser=bookmark_cmds, parents=[bm_flags])
+    ctx.register_command(
+        write_,
+        name='write',
+        subparser=bookmark_cmds,
+        parents=[bm_flags, flags.folder_id_req_list])
 
     folder_cmds = ctx.new_subparser(
         ctx.register_command(
@@ -916,6 +935,70 @@ def _process_portals(
                 this_portal = database.PortalBookmark(
                     uuid=bm_id, folder_id=folder_id, portal_id=guid)
                 dbc.session.merge(this_portal)
+
+
+def write_(args: argparse.Namespace) -> int:
+    """(V) Write an IITC style bookmark file.
+
+    This will create a file populated with the maps and portals listed in the
+    requested folders.
+
+    Hint: See the other "bookmark" family of commands for creating and tuning
+    the contents of such bookmarks.
+    """
+    dbc = args.dbc
+    bookmarks = new()
+
+    ret = 0
+    for folder_id in args.folder_id:
+        folder = dbc.session.get(database.BookmarkFolder, folder_id)
+        if folder:
+            maps = dict()
+            portals = dict()
+
+            stmt = sqla.select(database.MapBookmark, database.Place).join(
+                database.Place,
+                database.MapBookmark.place_id == database.Place.uuid).where(
+                    database.MapBookmark.folder_id == folder_id)
+
+            for row in dbc.session.execute(stmt).mappings():
+                bkmrk = row['MapBookmark']
+                place = row['Place']
+                maps[bkmrk.uuid] = {
+                    'label': place.label,
+                    'latlng': place.latlng,
+                    'z': bkmrk.zoom,
+                }
+            if maps:
+                bookmarks['maps'][folder_id] = {
+                    'bkmrk': maps,
+                    'label': folder.label,
+                }
+
+            stmt = sqla.select(
+                database.PortalBookmark, database.PortalV2).join(
+                    database.PortalV2, database.PortalBookmark.portal_id ==
+                    database.PortalV2.guid).where(
+                        database.PortalBookmark.folder_id == folder_id)
+
+            for row in dbc.session.execute(stmt).mappings():
+                bkmrk = row['PortalBookmark']
+                portal = row['PortalV2']
+                portals[bkmrk.uuid] = portal.to_iitc()
+            if portals:
+                bookmarks['portals'][folder_id] = {
+                    'bkmrk': portals,
+                    'label': folder.label,
+                }
+        else:
+            print(f'Unknown folder id: "{folder_id}"')
+            ret = 1
+            break
+
+    if not ret:
+        json.save(args.bookmarks, bookmarks)
+
+    return ret
 
 
 def new():
