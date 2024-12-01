@@ -7,6 +7,7 @@ import glob
 import itertools
 import logging
 import os
+import pathlib
 import typing
 
 from ingress import database
@@ -25,6 +26,8 @@ class Error(Exception):
 Portals: typing.TypeAlias = dict[str, database.PortalDict]
 
 sqla = database.sqlalchemy
+
+OTHERS = 'idOthers'
 
 
 def mundane_shared_flags(ctx: app.ArgparseApp):
@@ -243,6 +246,9 @@ def mundane_commands(ctx: app.ArgparseApp):
 
     bookmark_cmds = ctx.new_subparser(
         ctx.register_command(bookmark, usage_only=True))
+
+    ctx.register_command(
+        read_, name='read', subparser=bookmark_cmds, parents=[bm_flags])
 
     folder_cmds = ctx.new_subparser(
         ctx.register_command(
@@ -836,6 +842,80 @@ def portal_del(args: argparse.Namespace) -> int:
         ret = 1
 
     return ret
+
+
+def read_(args: argparse.Namespace) -> int:
+    """(V) Read an IITC style bookmark file.
+
+    This will import the bookmark file to populate the internal bookmark
+    tables.
+
+    Folders and places will be populated automatically.
+
+    Any portals not already ingested will be skipped with a notification.
+
+    Hint: See the other "bookmark" family of commands for additional
+    processing.
+    """
+    dbc = args.dbc
+    filename = pathlib.PurePath(args.bookmarks).stem
+    bookmarks = json.load(args.bookmarks)
+
+    for section, value in bookmarks.items():
+        if section == 'maps':
+            _process_maps(dbc, filename, value)
+        elif section == 'portals':
+            _process_portals(dbc, filename, value)
+        else:
+            print(f'Unknown section: {section}')
+
+    dbc.session.commit()
+
+    return 0
+
+
+def _process_maps(
+        dbc: database.Database, other: str, value: dict[str, typing.Any]):
+    """Process the map bookmarks."""
+    for folder_id, folder_value in value.items():
+        folder_label = folder_value['label']
+        maps = folder_value['bkmrk']
+        if folder_id == OTHERS:
+            folder_id = other
+            folder_label = other
+        folder = database.BookmarkFolder(uuid=folder_id, label=folder_label)
+        dbc.session.merge(folder)
+        for map_id, map_value in maps.items():
+            label = map_value['label']
+            latlng = map_value['latlng']
+            zoom = map_value['z']
+            place = database.Place(uuid=map_id, label=label, latlng=latlng)
+            dbc.session.merge(place)
+            this_map = database.MapBookmark(
+                uuid=map_id, folder_id=folder_id, place_id=map_id, zoom=zoom)
+            dbc.session.merge(this_map)
+
+
+def _process_portals(
+        dbc: database.Database, other: str, value: dict[str, typing.Any]):
+    """Process the portal bookmarks."""
+    for folder_id, folder_value in value.items():
+        folder_label = folder_value['label']
+        portals = folder_value['bkmrk']
+        if folder_id == OTHERS:
+            folder_id = other
+            folder_label = other
+        folder = database.BookmarkFolder(uuid=folder_id, label=folder_label)
+        dbc.session.merge(folder)
+        for bm_id, portal_value in portals.items():
+            guid = portal_value['guid']
+            portal = dbc.session.get(database.PortalV2, guid)
+            if portal is None:
+                print('Skipping', portal_value)
+            else:
+                this_portal = database.PortalBookmark(
+                    uuid=bm_id, folder_id=folder_id, portal_id=guid)
+                dbc.session.merge(this_portal)
 
 
 def new():
