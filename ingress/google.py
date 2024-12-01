@@ -66,7 +66,7 @@ class AddressDetails:
 
 
 @attr.s
-class Directions:  # pylint: disable=missing-docstring,too-few-public-methods
+class Directions:  # pylint: disable=missing-class-docstring,too-few-public-methods
     begin_latlng = attr.ib()
     end_latlng = attr.ib()
     duration = attr.ib()

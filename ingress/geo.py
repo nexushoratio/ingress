@@ -305,7 +305,7 @@ def cluster(args: argparse.Namespace) -> int:  # pylint: disable=too-many-locals
     dbc = args.dbc
     rtree_index = rtree.rtree_index(dbc)
     graph = pygraph.graph()  # type: ignore[name-defined] # pylint: disable=undefined-variable
-    graph.add_nodes(iter(list(rtree_index.node_map.keys())))  # pylint: disable=no-member
+    graph.add_nodes(iter(list(rtree_index.node_map.keys())))
     clusters = set()
     leaders = frozenset(
         row.guid for row in dbc.session.query(database.ClusterLeader)
@@ -370,7 +370,7 @@ def _finalize(clusters, leaders, rtree_index):
     return clustered
 
 
-def _cluster_entry(  # pylint: disable=too-many-locals,too-many-arguments
+def _cluster_entry(  # pylint: disable=too-many-locals
         distance, nodes, node_map_by_projected_coords, leaders,
         rtree_index):
     """Placeholder docstring for private function."""

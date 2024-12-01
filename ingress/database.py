@@ -93,7 +93,7 @@ convention = {
 
 metadata = sqlalchemy.schema.MetaData(naming_convention=convention)
 
-Base = orm.declarative_base(metadata=metadata)  # pylint: disable=invalid-name
+Base = orm.declarative_base(metadata=metadata)
 
 
 def latlng_dict_to_point(
@@ -130,7 +130,7 @@ class ReprMixin:
         return f'{self.__class__.__name__}({params})'
 
 
-class _Portal(Base):  # pylint: disable=missing-docstring
+class _Portal(Base):  # pylint: disable=missing-class-docstring
     __tablename__ = 'portals'
 
     guid = sqlalchemy.Column(
@@ -169,7 +169,7 @@ class PortalDict(typing.TypedDict, total=False):
     latlng: str
 
 
-class PortalV2(Base):  # pylint: disable=missing-docstring
+class PortalV2(Base):  # pylint: disable=missing-class-docstring
     __tablename__ = 'v2_portals'
 
     guid = sqlalchemy.Column(
@@ -224,7 +224,7 @@ class PortalV2(Base):  # pylint: disable=missing-docstring
         )
 
 
-class ClusterLeader(Base):  # pylint: disable=missing-docstring
+class ClusterLeader(Base):  # pylint: disable=missing-class-docstring
     __tablename__ = 'cluster_leaders'
 
     guid = sqlalchemy.Column(
@@ -233,10 +233,10 @@ class ClusterLeader(Base):  # pylint: disable=missing-docstring
     )
 
 
-class Leg(Base):  # pylint: disable=missing-docstring
+class Leg(Base):  # pylint: disable=missing-class-docstring
     __tablename__ = 'legs'
 
-    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)  # pylint: disable=invalid-name
+    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
     begin_latlng = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     end_latlng = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     mode = sqlalchemy.Column(
@@ -251,10 +251,10 @@ class Leg(Base):  # pylint: disable=missing-docstring
     )  # yapf: disable
 
 
-class Path(Base):  # pylint: disable=missing-docstring
+class Path(Base):  # pylint: disable=missing-class-docstring
     __tablename__ = 'paths'
 
-    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)  # pylint: disable=invalid-name
+    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
     begin_latlng = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     end_latlng = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     mode = sqlalchemy.Column(
@@ -267,10 +267,10 @@ class Path(Base):  # pylint: disable=missing-docstring
     )  # yapf: disable
 
 
-class PathLeg(Base):  # pylint: disable=missing-docstring
+class PathLeg(Base):  # pylint: disable=missing-class-docstring
     __tablename__ = 'path_legs'
 
-    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)  # pylint: disable=invalid-name
+    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
     leg_id = sqlalchemy.Column(
         sqlalchemy.ForeignKey('legs.id', ondelete='CASCADE')
     )
@@ -281,8 +281,7 @@ class PathLeg(Base):  # pylint: disable=missing-docstring
 
 # If any path_leg is deleted, remove all associated ones
 sqlalchemy.event.listen(
-    PathLeg.__table__,  # pylint: disable=no-member
-    'after_create',
+    PathLeg.__table__, 'after_create',
     sqlalchemy.DDL(
         'CREATE TRIGGER delete_legs'
         ' AFTER DELETE ON path_legs'
@@ -295,7 +294,7 @@ sqlalchemy.event.listen(
 )
 
 
-class Address(Base):  # pylint: disable=missing-docstring
+class Address(Base):  # pylint: disable=missing-class-docstring
     __tablename__ = 'addresses'
 
     latlng = sqlalchemy.Column(
@@ -322,7 +321,7 @@ class Address(Base):  # pylint: disable=missing-docstring
         )
 
 
-class AddressType(Base):  # pylint: disable=missing-docstring
+class AddressType(Base):  # pylint: disable=missing-class-docstring
     __tablename__ = 'address_types'
 
     type = sqlalchemy.Column(
@@ -341,7 +340,7 @@ class AddressType(Base):  # pylint: disable=missing-docstring
         return f'AddressType(type={self.type!r})'
 
 
-class AddressTypeValue(Base):  # pylint: disable=missing-docstring
+class AddressTypeValue(Base):  # pylint: disable=missing-class-docstring
     __tablename__ = 'address_type_values'
 
     type = sqlalchemy.Column(
@@ -365,7 +364,7 @@ class AddressTypeValue(Base):  # pylint: disable=missing-docstring
     note = sqlalchemy.Column(sqlalchemy.String)
 
 
-class AddressTypeValueAssociation(Base):  # pylint: disable=missing-docstring
+class AddressTypeValueAssociation(Base):  # pylint: disable=missing-class-docstring
     __tablename__ = 'address_type_value_associations'
 
     latlng = sqlalchemy.Column(
@@ -409,7 +408,7 @@ class UuidMixin:
     )
 
 
-class Place(ReprMixin, UuidMixin, Base):  # pylint: disable=missing-docstring
+class Place(ReprMixin, UuidMixin, Base):  # pylint: disable=missing-class-docstring
     __tablename__ = 'places'
 
     label = sqlalchemy.Column(sqlalchemy.Unicode)
@@ -436,13 +435,13 @@ class Place(ReprMixin, UuidMixin, Base):  # pylint: disable=missing-docstring
     note = sqlalchemy.Column(sqlalchemy.Unicode)
 
 
-class BookmarkFolder(ReprMixin, UuidMixin, Base):  # pylint: disable=missing-docstring
+class BookmarkFolder(ReprMixin, UuidMixin, Base):  # pylint: disable=missing-class-docstring
     __tablename__ = 'bookmark_folders'
 
     label = sqlalchemy.Column(sqlalchemy.Unicode, nullable=False, unique=True)
 
 
-class MapBookmark(ReprMixin, UuidMixin, Base):  # pylint: disable=missing-docstring
+class MapBookmark(ReprMixin, UuidMixin, Base):  # pylint: disable=missing-class-docstring
     __tablename__ = 'map_bookmarks'
 
     folder_id = sqlalchemy.Column(
@@ -460,7 +459,7 @@ class MapBookmark(ReprMixin, UuidMixin, Base):  # pylint: disable=missing-docstr
     )  # yapf: disable
 
 
-class PortalBookmark(ReprMixin, UuidMixin, Base):  # pylint: disable=missing-docstring
+class PortalBookmark(ReprMixin, UuidMixin, Base):  # pylint: disable=missing-class-docstring
     __tablename__ = 'portal_bookmarks'
 
     folder_id = sqlalchemy.Column(
@@ -593,7 +592,7 @@ _AUTO_DROPS = (
 )
 
 
-class Database:  # pylint: disable=missing-docstring
+class Database:  # pylint: disable=missing-class-docstring
 
     def __init__(self, directory: str, filename: str):
         pathlib.Path(directory).mkdir(exist_ok=True)
@@ -688,6 +687,7 @@ class Database:  # pylint: disable=missing-docstring
         return existing_tables
 
     def _clean_ddl(self, ddl: str) -> set[tuple[int, str]]:
+        """Generate normalized DDL for easier comparison."""
         tuples = set(
             (number, line.strip())
             for number, line in enumerate(ddl.strip().splitlines())
@@ -695,7 +695,7 @@ class Database:  # pylint: disable=missing-docstring
         return tuples
 
     def _post_create_migrations(self):
-        # portals to v2_portals
+        """Migrate portals to v2_portals."""
         count = self.session.query(_Portal).count()
         if count:
             print('Performing a database migration.')

@@ -47,6 +47,9 @@ split_before_dot = true
 split_before_first_argument = true
 split_complex_comprehension = true
 
+[tool.pylint.main]
+fail-on = ['I']
+
 [tool.pylint.basic]
 docstring-min-length = 2
 good-names = ["setUpModule"]
@@ -62,6 +65,9 @@ exclude-protected = [
 disable = [
   'use-dict-literal',
   'use-list-literal',
+]
+enable = [
+  'useless-suppression'
 ]
 
 [tool.pylint.miscellaneous]
