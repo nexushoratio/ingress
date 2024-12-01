@@ -28,7 +28,8 @@ def mundane_shared_flags(ctx: app.ArgparseApp):
             '--filename',
             action='store',
             required=True,
-            help='Any arbitrary file argument.')
+            help='Any arbitrary file argument.'
+        )
 
 
 def mundane_commands(ctx: app.ArgparseApp):

@@ -34,7 +34,8 @@ def mundane_commands(ctx: app.ArgparseApp):
         '--type',
         action='store',
         required=True,
-        help='Address type to modify.')
+        help='Address type to modify.'
+    )
 
     value_flag = ctx.argparse_api.ArgumentParser(add_help=False)
     value_flag.add_argument(
@@ -42,17 +43,20 @@ def mundane_commands(ctx: app.ArgparseApp):
         '--value',
         action='store',
         required=True,
-        help='Value portion of (address, value) to modify.')
+        help='Value portion of (address, value) to modify.'
+    )
 
     note_flag = ctx.argparse_api.ArgumentParser(add_help=False)
     note_flag.add_argument(
-        '-N', '--note', action='store', help='Optional note to add')
+        '-N', '--note', action='store', help='Optional note to add'
+    )
 
     parser = ctx.register_command(address, usage_only=True)
     address_cmds = ctx.new_subparser(parser)
 
     parser = ctx.register_command(
-        update, subparser=address_cmds, parents=[bm_flags])
+        update, subparser=address_cmds, parents=[bm_flags]
+    )
     parser.add_argument(
         '-l',
         '--limit',
@@ -70,17 +74,21 @@ def mundane_commands(ctx: app.ArgparseApp):
         default=5.0,
         help=(
             'Average random delay, in seconds, between each fetch.'
-            '  (Default: %(default)s)'))
+            '  (Default: %(default)s)'
+        )
+    )
 
     parser = ctx.register_command(prune, subparser=address_cmds)
     parser.add_argument(
         '--commit',
         default=False,
         action=ctx.argparse_api.BooleanOptionalAction,
-        help='Commit the pruning operation. (Default: %(default)s)')
+        help='Commit the pruning operation. (Default: %(default)s)'
+    )
 
     parser = ctx.register_command(
-        type_, name='type', usage_only=True, subparser=address_cmds)
+        type_, name='type', usage_only=True, subparser=address_cmds
+    )
     type_cmds = ctx.new_subparser(parser)
 
     ctx.register_command(type_list, name='list', subparser=type_cmds)
@@ -89,16 +97,19 @@ def mundane_commands(ctx: app.ArgparseApp):
         type_set,
         name='set',
         subparser=type_cmds,
-        parents=[type_flag, note_flag])
+        parents=[type_flag, note_flag]
+    )
     parser.add_argument(
         '-v',
         '--visibility',
         action='store',
         choices=('show', 'hide'),
-        help='The visibility of given address type.')
+        help='The visibility of given address type.'
+    )
 
     ctx.register_command(
-        type_del, name='del', subparser=type_cmds, parents=[type_flag])
+        type_del, name='del', subparser=type_cmds, parents=[type_flag]
+    )
 
     parser = ctx.register_command(value, usage_only=True, subparser=type_cmds)
     value_cmds = ctx.new_subparser(parser)
@@ -109,7 +120,8 @@ def mundane_commands(ctx: app.ArgparseApp):
         value_set,
         name='set',
         subparser=value_cmds,
-        parents=[type_flag, value_flag, note_flag])
+        parents=[type_flag, value_flag, note_flag]
+    )
     parser.add_argument(
         '-p',
         '--pruning',
@@ -117,13 +129,16 @@ def mundane_commands(ctx: app.ArgparseApp):
         choices=('remove', 'ignore'),
         help=(
             'Determines how the pruning operation should treat portals'
-            ' with this address (type, value).'))
+            ' with this address (type, value).'
+        )
+    )
 
     ctx.register_command(
         value_del,
         name='del',
         subparser=value_cmds,
-        parents=[type_flag, value_flag])
+        parents=[type_flag, value_flag]
+    )
 
 
 def address(args: argparse.Namespace) -> int:
@@ -177,11 +192,13 @@ def update(args: argparse.Namespace) -> int:
                 delay = _random_delay(delay_base)
             print(
                 f'Fetching for {portal["label"]}'
-                f' (delayed by {delay:.2f} seconds)')
+                f' (delayed by {delay:.2f} seconds)'
+            )
             time.sleep(delay)
             address_detail = google.latlng_to_address(latlng)
             db_address = database.Address(
-                latlng=latlng, address=address_detail.address, date=now)
+                latlng=latlng, address=address_detail.address, date=now
+            )
             dbc.session.add(db_address)
             _handle_address_type_values(dbc, latlng, address_detail)
             dbc.session.commit()
@@ -213,7 +230,8 @@ def type_list(args: argparse.Namespace) -> int:
         print(
             f'{row.type:{type_col_width}}'
             f' | {row.visibility:^{vis_col_width}}'
-            f' | {row.note if row.note else "~~"}')
+            f' | {row.note if row.note else "~~"}'
+        )
 
     return 0
 
@@ -276,10 +294,11 @@ def value_list(args: argparse.Namespace) -> int:
     """
     dbc = args.dbc
     query = dbc.session.query(database.AddressTypeValue).join(
-        database.AddressType).filter(
-            database.AddressType.visibility != 'hide')
+        database.AddressType
+    ).filter(database.AddressType.visibility != 'hide')
     query = query.order_by(
-        database.AddressTypeValue.type, database.AddressTypeValue.value)
+        database.AddressTypeValue.type, database.AddressTypeValue.value
+    )
     type_col_header = 'Type'
     type_col_width = len('administrative_area_level_N')
     val_col_header = 'Value'
@@ -290,13 +309,15 @@ def value_list(args: argparse.Namespace) -> int:
     print(
         f'{type_col_header:^{type_col_width}}'
         f' | {val_col_header:^{val_col_width}}'
-        f' | {prune_col_header} | Note')
+        f' | {prune_col_header} | Note'
+    )
     for row in query:
         print(
             f'{row.type:{type_col_width}}'
             f' | {row.value:{val_col_width}}'
             f' | {row.pruning:^{prune_col_width}}'
-            f' | {row.note if row.note else "~~"}')
+            f' | {row.note if row.note else "~~"}'
+        )
 
     return 0
 
@@ -310,7 +331,8 @@ def value_set(args: argparse.Namespace) -> int:
     """
     dbc = args.dbc
     address_type_value = dbc.session.get(
-        database.AddressTypeValue, (args.type, args.value))
+        database.AddressTypeValue, (args.type, args.value)
+    )
     ret = 0
     if address_type_value is not None:
         if args.pruning is not None:
@@ -334,7 +356,8 @@ def value_del(args: argparse.Namespace) -> int:
     """
     dbc = args.dbc
     address_type_value = dbc.session.get(
-        database.AddressTypeValue, (args.type, args.value))
+        database.AddressTypeValue, (args.type, args.value)
+    )
     ret = 0
     if address_type_value is not None:
         dbc.session.delete(address_type_value)
@@ -359,7 +382,8 @@ def prune(args: argparse.Namespace) -> int:
     query = dbc.session.query(database.PortalV2)
     query = query.join(
         database.AddressTypeValueAssociation, database.PortalV2.latlng ==
-        database.AddressTypeValueAssociation.latlng)
+        database.AddressTypeValueAssociation.latlng
+    )
     query = query.join(database.AddressTypeValue)
     query = query.filter(database.AddressTypeValue.pruning == 'remove')
     query = query.join(database.AddressType)
@@ -382,8 +406,8 @@ def _clean(dbc: database.Database):
     now = time.time()
     header_printed = False
     oldest_allowed = now - MAX_AGE
-    rows = dbc.session.query(
-        database.Address).filter(database.Address.date < oldest_allowed)
+    rows = dbc.session.query(database.Address
+                             ).filter(database.Address.date < oldest_allowed)
     for row in rows:
         if not header_printed:
             print('Deleting stale entries')
@@ -399,7 +423,8 @@ def _format_date(timestamp: float):
 
 
 def _handle_address_type_values(
-        dbc: database.Database, latlng: str, detail: google.AddressDetails):
+    dbc: database.Database, latlng: str, detail: google.AddressDetails
+):
     """Process the type_values field, updating the database as appropriate.
 
     The caller is responsible for issuing the COMMIT.
@@ -408,10 +433,12 @@ def _handle_address_type_values(
         address_type = database.AddressType(type=type_value.typ)
         dbc.session.merge(address_type)
         address_type_value = database.AddressTypeValue(
-            type=type_value.typ, value=type_value.val)
+            type=type_value.typ, value=type_value.val
+        )
         dbc.session.merge(address_type_value)
         association = database.AddressTypeValueAssociation(
-            latlng=latlng, type=type_value.typ, value=type_value.val)
+            latlng=latlng, type=type_value.typ, value=type_value.val
+        )
         dbc.session.merge(association)
 
 
@@ -419,7 +446,8 @@ def _random_delay(base: float) -> float:
     """Get a random number to sleep."""
     return abs(
         random.weibullvariate(base, 1.5)
-        - random.weibullvariate(base / 2, 1.25))
+        - random.weibullvariate(base / 2, 1.25)
+    )
 
 
 def _tune_delay_base(target: float) -> float:

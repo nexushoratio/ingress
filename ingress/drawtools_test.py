@@ -110,7 +110,8 @@ class LoadPointsTest(unittest.TestCase):
 
     def test_unknown_type(self):
         filename = save_to_temp_json(
-            [CUPIDS_SPAN, GOOGLE_VOLLEYBALL_SAND_COURT])
+            [CUPIDS_SPAN, GOOGLE_VOLLEYBALL_SAND_COURT]
+        )
         with self.assertRaisesRegex(TypeError,
                                     '"broken" is a type not yet handled'):
             drawtools.load_points(filename)

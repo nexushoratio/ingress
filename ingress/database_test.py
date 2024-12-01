@@ -12,7 +12,8 @@ class ConversionsTest(unittest.TestCase):
         tetrahelix = '37.423521,-122.089649'
 
         result = database._point_to_latlng(
-            database._latlng_to_point(tetrahelix))
+            database._latlng_to_point(tetrahelix)
+        )
 
         self.assertEqual(tetrahelix, result)
 
@@ -25,7 +26,8 @@ class ConversionsTest(unittest.TestCase):
         }
 
         result = database._point_to_latlng(
-            database.latlng_dict_to_point(latlng))
+            database.latlng_dict_to_point(latlng)
+        )
 
         self.assertEqual(tetrahelix, result)
 

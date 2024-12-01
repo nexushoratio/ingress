@@ -37,7 +37,8 @@ def mundane_commands(ctx: app.ArgparseApp):
         action='store',
         type=int,
         help='Longest walk time to automatically accept.',
-        default=300)
+        default=300
+    )
 
 
 def route(args: argparse.Namespace) -> int:
@@ -48,8 +49,9 @@ def route(args: argparse.Namespace) -> int:
     portal_keys = list(portals.keys())
     portal_keys.append(portal_keys[0])
     optimized_info = tsp.optimize(
-        portal_keys, lambda start, end: _cost(
-            dbc, mode_cost_map, args.walk_auto, start, end))
+        portal_keys, lambda start, end:
+        _cost(dbc, mode_cost_map, args.walk_auto, start, end)
+    )
 
     basename = os.path.splitext(args.bookmarks)[0]
 
@@ -73,7 +75,8 @@ def _cost(dbc, mode_cost_map, max_walking_time_allowed, begin, end):  # pylint: 
     end_portal = dbc.session.query(database.PortalV2).get(end)
     paths = dbc.session.query(database.Path).filter(
         database.Path.begin_latlng == begin_portal.latlng,
-        database.Path.end_latlng == end_portal.latlng)
+        database.Path.end_latlng == end_portal.latlng
+    )
     for path in paths:
         costs[path.mode] = _path_cost(dbc, path)
 
@@ -108,25 +111,29 @@ def _path_info(dbc, opt_path, mode_cost_map):
         mode, _ = mode_cost_map[(begin, end)]
         db_begin = dbc.session.query(database.PortalV2).get(begin)
         db_end = dbc.session.query(database.PortalV2).get(end)
-        db_address = dbc.session.query(database.Address).filter(
-            database.Address.latlng == db_begin.latlng).one()
+        db_address = dbc.session.query(
+            database.Address
+        ).filter(database.Address.latlng == db_begin.latlng).one()
         items.append(('portal', db_begin, db_address))
         db_path = dbc.session.query(database.Path).filter(
             database.Path.mode == mode,
             database.Path.begin_latlng == db_begin.latlng,
-            database.Path.end_latlng == db_end.latlng).one()
+            database.Path.end_latlng == db_end.latlng
+        ).one()
         legs_set = collections.defaultdict(set)
         legs_dict = dict()
         for db_leg in dbc.session.query(database.Leg).join(
-                database.PathLeg).filter(
-                    database.PathLeg.path_id == db_path.id):
+                database.PathLeg
+        ).filter(database.PathLeg.path_id == db_path.id):
             legs_set[db_leg.begin_latlng].add(db_leg.end_latlng)
             legs_dict[db_leg.begin_latlng] = db_leg
         sorted_legs = list(reversed(toposort.toposort_flatten(legs_set)))
         items.append(
             (
                 'legs', [legs_dict[latlng]
-                         for latlng in sorted_legs[:-1]], db_path, db_end))
+                         for latlng in sorted_legs[:-1]], db_path, db_end
+            )
+        )
 
     return items
 
@@ -191,7 +198,8 @@ def _build_kml_legs(factory, legs):
                 else:
                     label = 'waypoint'
                 _finalize_kml_leg_placemark(
-                    placemark, current_mode, duration, label)
+                    placemark, current_mode, duration, label
+                )
                 yield placemark
             current_mode = db_leg.mode
             placemark = factory.CreatePlacemark()
@@ -206,7 +214,8 @@ def _build_kml_legs(factory, legs):
 
     if placemark:
         _finalize_kml_leg_placemark(
-            placemark, current_mode, duration, db_portal.label)
+            placemark, current_mode, duration, db_portal.label
+        )
         yield placemark
 
 

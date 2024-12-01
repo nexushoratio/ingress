@@ -17,10 +17,12 @@ import attr
 API_KEY = os.getenv('GOOGLE_API_KEY', default='TBD')
 DIRECTIONS_BASE_URL = os.getenv(
     'GMAPS_DIRECTIONS_URL',
-    default='https://maps.googleapis.com/maps/api/directions/json')
+    default='https://maps.googleapis.com/maps/api/directions/json'
+)
 GEOCODE_BASE_URL = os.getenv(
     'GMAPS_GEOCODE_URL',
-    default='https://maps.googleapis.com/maps/api/geocode/json')
+    default='https://maps.googleapis.com/maps/api/geocode/json'
+)
 
 LOCATION_TYPE_SCORES = {
     'ROOFTOP': 0,
@@ -113,7 +115,8 @@ def latlng_to_address(latlng: str) -> AddressDetails:
     answers: list[tuple[int, int, str, set[AddressTypeValue]]] = [
         (
             LOCATION_TYPE_SCORES['UNKNOWN'], 0, 'No known street address',
-            set())
+            set()
+        )
     ]
 
     # Google really likes their plus codes.  We use them as a fallback.
@@ -133,7 +136,9 @@ def latlng_to_address(latlng: str) -> AddressDetails:
         answers.append(
             (
                 score, -len(type_values), entry['formatted_address'],
-                type_values))
+                type_values
+            )
+        )
 
     answers.sort()
     score, _, address, type_values = answers[0]

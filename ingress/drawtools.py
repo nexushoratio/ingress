@@ -24,7 +24,8 @@ def mundane_shared_flags(ctx: app.ArgparseApp):
             '--drawtools',
             action='store',
             required=True,
-            help='IITC drawtools json file to use')
+            help='IITC drawtools json file to use'
+        )
 
 
 def save_bounds(filename, collections):
@@ -45,7 +46,8 @@ def save_bounds(filename, collections):
                 'type': 'polygon',
                 'color': f'#{color:06x}',
                 'latLngs': hull
-            })
+            }
+        )
     json.save(filename, hulls)
 
 
@@ -91,13 +93,15 @@ def load_point(filename: str) -> database.geoalchemy2.elements.WKTElement:
     if num_points != 1:
         raise RuntimeError(
             f'{filename} should have one element;'
-            f' has {num_points} elements instead')
+            f' has {num_points} elements instead'
+        )
 
     return list(points)[0]
 
 
 def load_points(
-        filename: str) -> frozenset[database.geoalchemy2.elements.WKTElement]:
+    filename: str
+) -> frozenset[database.geoalchemy2.elements.WKTElement]:
     """Find a collection of points from a drawtools file.
 
     Args:

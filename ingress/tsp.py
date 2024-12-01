@@ -33,7 +33,8 @@ def optimize(nodes, cost):
     node_count = len(nodes)
     print(
         f'optimizing {node_count} nodes with initial'
-        f' path cost of {_path_cost(nodes, cost):.1f}')
+        f' path cost of {_path_cost(nodes, cost):.1f}'
+    )
     if node_count < 12:
         return _brute_force(nodes, cost)
 

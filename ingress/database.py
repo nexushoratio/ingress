@@ -38,13 +38,15 @@ def mundane_global_flags(ctx: app.ArgparseApp):
         '--db-dir',
         help='Database directory (Default: %(default)s)',
         action='store',
-        default=ctx.dirs.user_data_dir)
+        default=ctx.dirs.user_data_dir
+    )
 
     ctx.global_flags.add_argument(
         '--db-name',
         help='Database file name (Default: %(default)s)',
         action='store',
-        default=f'{ctx.appname}.db')
+        default=f'{ctx.appname}.db'
+    )
 
     ctx.register_after_parse_hook(init_db)
 
@@ -95,10 +97,12 @@ Base = orm.declarative_base(metadata=metadata)  # pylint: disable=invalid-name
 
 
 def latlng_dict_to_point(
-        latlng: dict[str, str]) -> geoalchemy2.elements.WKTElement:
+    latlng: dict[str, str]
+) -> geoalchemy2.elements.WKTElement:
     """Convert lat,lng to a geoalchemy wrapped POINT."""
     point = geoalchemy2.elements.WKTElement(
-        f'POINT({latlng["lng"]} {latlng["lat"]})', srid=4326)
+        f'POINT({latlng["lng"]} {latlng["lat"]})', srid=4326
+    )
     return point
 
 
@@ -121,7 +125,8 @@ class ReprMixin:
     def __repr__(self):
         params = ', '.join(
             f'{key}={getattr(self, key)!r}'
-            for key in self.__mapper__.c.keys())
+            for key in self.__mapper__.c.keys()
+        )
         return f'{self.__class__.__name__}({params})'
 
 
@@ -129,12 +134,15 @@ class _Portal(Base):  # pylint: disable=missing-docstring
     __tablename__ = 'portals'
 
     guid = sqlalchemy.Column(
-        sqlalchemy.String, primary_key=True, nullable=False)
+        sqlalchemy.String, primary_key=True, nullable=False
+    )
     label = sqlalchemy.Column(sqlalchemy.Unicode, nullable=False)
     first_seen = sqlalchemy.Column(
-        sqlalchemy.Integer, nullable=False, index=True)
+        sqlalchemy.Integer, nullable=False, index=True
+    )
     last_seen = sqlalchemy.Column(
-        sqlalchemy.Integer, nullable=False, index=True)
+        sqlalchemy.Integer, nullable=False, index=True
+    )
     latlng = sqlalchemy.Column(geoalchemy2.Geometry('POINT', srid=4326))
 
     def to_iitc(self):
@@ -165,26 +173,35 @@ class PortalV2(Base):  # pylint: disable=missing-docstring
     __tablename__ = 'v2_portals'
 
     guid = sqlalchemy.Column(
-        sqlalchemy.String, primary_key=True, nullable=False)
+        sqlalchemy.String, primary_key=True, nullable=False
+    )
     label = sqlalchemy.Column(sqlalchemy.Unicode, nullable=False)
     first_seen = sqlalchemy.Column(
-        sqlalchemy.Integer, nullable=False, index=True)
+        sqlalchemy.Integer, nullable=False, index=True
+    )
     last_seen = sqlalchemy.Column(
-        sqlalchemy.Integer, nullable=False, index=True)
+        sqlalchemy.Integer, nullable=False, index=True
+    )
     latlng = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     lat = sqlalchemy.Column(
         sqlalchemy.String,
         sqlalchemy.Computed(
-            'SUBSTR(latlng, 1, INSTR(latlng, ",") - 1)', persisted=False))
+            'SUBSTR(latlng, 1, INSTR(latlng, ",") - 1)', persisted=False
+        )
+    )
     lng = sqlalchemy.Column(
         sqlalchemy.String,
         sqlalchemy.Computed(
-            'SUBSTR(latlng, INSTR(latlng, ",") + 1)', persisted=False))
+            'SUBSTR(latlng, INSTR(latlng, ",") + 1)', persisted=False
+        )
+    )
     point = sqlalchemy.Column(
         geoalchemy2.Geometry('POINT', srid=4326),
         sqlalchemy.Computed(
             'ST_POINT(CAST(lng AS FLOAT), CAST(lat AS FLOAT))',
-            persisted=True))
+            persisted=True
+        )
+    )
 
     def to_iitc(self) -> PortalDict:
         """Generate an IITC bookmark style dict."""
@@ -192,8 +209,8 @@ class PortalV2(Base):  # pylint: disable=missing-docstring
 
         for key in self.__mapper__.c.keys():
             if key in PortalDict.__optional_keys__:  # pylint: disable=no-member
-                portal[key] = getattr(  # type: ignore[literal-required]
-                    self, key)
+                portal[key  # type: ignore[literal-required]
+                       ] = getattr(self, key)
 
         return portal
 
@@ -203,7 +220,8 @@ class PortalV2(Base):  # pylint: disable=missing-docstring
             f'label={self.label},'
             f' first_seen={self.first_seen},'
             f' last_seen={self.last_seen}'
-            ')')
+            ')'
+        )
 
 
 class ClusterLeader(Base):  # pylint: disable=missing-docstring
@@ -211,7 +229,8 @@ class ClusterLeader(Base):  # pylint: disable=missing-docstring
 
     guid = sqlalchemy.Column(
         sqlalchemy.ForeignKey('portals.guid', ondelete='CASCADE'),
-        primary_key=True)
+        primary_key=True
+    )
 
 
 class Leg(Base):  # pylint: disable=missing-docstring
@@ -221,7 +240,8 @@ class Leg(Base):  # pylint: disable=missing-docstring
     begin_latlng = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     end_latlng = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     mode = sqlalchemy.Column(
-        sqlalchemy.Enum('walking', 'driving'), nullable=False)
+        sqlalchemy.Enum('walking', 'driving'), nullable=False
+    )
     date = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
     duration = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
     polyline = sqlalchemy.Column(sqlalchemy.Unicode, nullable=False)
@@ -238,7 +258,8 @@ class Path(Base):  # pylint: disable=missing-docstring
     begin_latlng = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     end_latlng = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     mode = sqlalchemy.Column(
-        sqlalchemy.Enum('walking', 'driving'), nullable=False)
+        sqlalchemy.Enum('walking', 'driving'), nullable=False
+    )
     date = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
 
     __table_args__ = (
@@ -251,9 +272,11 @@ class PathLeg(Base):  # pylint: disable=missing-docstring
 
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)  # pylint: disable=invalid-name
     leg_id = sqlalchemy.Column(
-        sqlalchemy.ForeignKey('legs.id', ondelete='CASCADE'))
+        sqlalchemy.ForeignKey('legs.id', ondelete='CASCADE')
+    )
     path_id = sqlalchemy.Column(
-        sqlalchemy.ForeignKey('paths.id', ondelete='CASCADE'))
+        sqlalchemy.ForeignKey('paths.id', ondelete='CASCADE')
+    )
 
 
 # If any path_leg is deleted, remove all associated ones
@@ -267,20 +290,25 @@ sqlalchemy.event.listen(
         ' BEGIN'
         '  DELETE FROM path_legs'
         '  WHERE path_id == OLD.path_id;'
-        ' END;'))
+        ' END;'
+    )
+)
 
 
 class Address(Base):  # pylint: disable=missing-docstring
     __tablename__ = 'addresses'
 
     latlng = sqlalchemy.Column(
-        sqlalchemy.String, nullable=False, primary_key=True)
+        sqlalchemy.String, nullable=False, primary_key=True
+    )
     lat = sqlalchemy.Column(
         sqlalchemy.String,
-        sqlalchemy.Computed('SUBSTR(latlng, 1, INSTR(latlng, ",") - 1)'))
+        sqlalchemy.Computed('SUBSTR(latlng, 1, INSTR(latlng, ",") - 1)')
+    )
     lng = sqlalchemy.Column(
         sqlalchemy.String,
-        sqlalchemy.Computed('SUBSTR(latlng, INSTR(latlng, ",") + 1)'))
+        sqlalchemy.Computed('SUBSTR(latlng, INSTR(latlng, ",") + 1)')
+    )
     address = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     date = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
 
@@ -290,19 +318,23 @@ class Address(Base):  # pylint: disable=missing-docstring
             f'latlng={self.latlng!r},'
             f' address={self.address!r},'
             f' date={self.date!r}'
-            ')')
+            ')'
+        )
 
 
 class AddressType(Base):  # pylint: disable=missing-docstring
     __tablename__ = 'address_types'
 
     type = sqlalchemy.Column(
-        sqlalchemy.String, nullable=False, primary_key=True)
+        sqlalchemy.String, nullable=False, primary_key=True
+    )
     visibility = sqlalchemy.Column(
         sqlalchemy.Enum(
-            'new', 'hide', 'show', create_constraint=True, name='visibility'),
+            'new', 'hide', 'show', create_constraint=True, name='visibility'
+        ),
         server_default='new',
-        nullable=False)
+        nullable=False
+    )
     note = sqlalchemy.Column(sqlalchemy.String)
 
     def __repr__(self):
@@ -314,18 +346,22 @@ class AddressTypeValue(Base):  # pylint: disable=missing-docstring
 
     type = sqlalchemy.Column(
         sqlalchemy.ForeignKey('address_types.type', ondelete='CASCADE'),
-        primary_key=True)
+        primary_key=True
+    )
     value = sqlalchemy.Column(
-        sqlalchemy.String, nullable=False, primary_key=True)
+        sqlalchemy.String, nullable=False, primary_key=True
+    )
     pruning = sqlalchemy.Column(
         sqlalchemy.Enum(
             'unset',
             'remove',
             'ignore',
             create_constraint=True,
-            name='pruning'),
+            name='pruning'
+        ),
         server_default='unset',
-        nullable=False)
+        nullable=False
+    )
     note = sqlalchemy.Column(sqlalchemy.String)
 
 
@@ -334,11 +370,14 @@ class AddressTypeValueAssociation(Base):  # pylint: disable=missing-docstring
 
     latlng = sqlalchemy.Column(
         sqlalchemy.ForeignKey('addresses.latlng', ondelete='CASCADE'),
-        primary_key=True)
+        primary_key=True
+    )
     type = sqlalchemy.Column(
-        sqlalchemy.String, nullable=False, primary_key=True)
+        sqlalchemy.String, nullable=False, primary_key=True
+    )
     value = sqlalchemy.Column(
-        sqlalchemy.String, nullable=False, primary_key=True)
+        sqlalchemy.String, nullable=False, primary_key=True
+    )
 
     def __repr__(self):
         return (
@@ -346,7 +385,8 @@ class AddressTypeValueAssociation(Base):  # pylint: disable=missing-docstring
             f'latlng={self.latlng!r},'
             f' type={self.type!r},'
             f' value={self.value!r}'
-            ')')
+            ')'
+        )
 
     __table_args__ = (
         sqlalchemy.ForeignKeyConstraint(
@@ -365,7 +405,8 @@ class UuidMixin:
         super().__init__(**kwargs)
 
     uuid = sqlalchemy.Column(
-        sqlalchemy.String, nullable=False, primary_key=True)
+        sqlalchemy.String, nullable=False, primary_key=True
+    )
 
 
 class Place(ReprMixin, UuidMixin, Base):  # pylint: disable=missing-docstring
@@ -376,16 +417,22 @@ class Place(ReprMixin, UuidMixin, Base):  # pylint: disable=missing-docstring
     lat = sqlalchemy.Column(
         sqlalchemy.String,
         sqlalchemy.Computed(
-            'SUBSTR(latlng, 1, INSTR(latlng, ",") - 1)', persisted=False))
+            'SUBSTR(latlng, 1, INSTR(latlng, ",") - 1)', persisted=False
+        )
+    )
     lng = sqlalchemy.Column(
         sqlalchemy.String,
         sqlalchemy.Computed(
-            'SUBSTR(latlng, INSTR(latlng, ",") + 1)', persisted=False))
+            'SUBSTR(latlng, INSTR(latlng, ",") + 1)', persisted=False
+        )
+    )
     point = sqlalchemy.Column(
         geoalchemy2.Geometry('POINT', srid=4326),
         sqlalchemy.Computed(
             'ST_POINT(CAST(lng AS FLOAT), CAST(lat AS FLOAT))',
-            persisted=True))
+            persisted=True
+        )
+    )
     note = sqlalchemy.Column(sqlalchemy.Unicode)
 
 
@@ -400,10 +447,12 @@ class MapBookmark(ReprMixin, UuidMixin, Base):  # pylint: disable=missing-docstr
 
     folder_id = sqlalchemy.Column(
         sqlalchemy.ForeignKey('bookmark_folders.uuid', ondelete='CASCADE'),
-        nullable=False)
+        nullable=False
+    )
     place_id = sqlalchemy.Column(
         sqlalchemy.ForeignKey('places.uuid', ondelete='CASCADE'),
-        nullable=False)
+        nullable=False
+    )
     zoom = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
 
     __table_args__ = (
@@ -416,10 +465,12 @@ class PortalBookmark(ReprMixin, UuidMixin, Base):  # pylint: disable=missing-doc
 
     folder_id = sqlalchemy.Column(
         sqlalchemy.ForeignKey('bookmark_folders.uuid', ondelete='CASCADE'),
-        nullable=False)
+        nullable=False
+    )
     portal_id = sqlalchemy.Column(
         sqlalchemy.ForeignKey('v2_portals.guid', ondelete='CASCADE'),
-        nullable=False)
+        nullable=False
+    )
 
     __table_args__ = (
         sqlalchemy.UniqueConstraint('folder_id', 'portal_id'),
@@ -451,20 +502,25 @@ _ACCEPTABLE_PORTALS_V2 = set(
         (6, 'lat VARCHAR GENERATED ALWAYS AS () VIRTUAL,'),
         (
             6, 'lat VARCHAR GENERATED ALWAYS AS'
-            ' (SUBSTR(latlng, 1, INSTR(latlng, ",") - 1)) VIRTUAL,'),
+            ' (SUBSTR(latlng, 1, INSTR(latlng, ",") - 1)) VIRTUAL,'
+        ),
         (7, 'lng VARCHAR GENERATED ALWAYS AS () VIRTUAL,'),
         (
             7, 'lng VARCHAR GENERATED ALWAYS AS'
-            ' (SUBSTR(latlng, INSTR(latlng, ",") + 1)) VIRTUAL,'),
+            ' (SUBSTR(latlng, INSTR(latlng, ",") + 1)) VIRTUAL,'
+        ),
         (
             8, 'point GEOMETRY GENERATED ALWAYS AS'
-            ' (ST_POINT(CAST(lng AS FLOAT), CAST(lat AS FLOAT))) STORED,'),
+            ' (ST_POINT(CAST(lng AS FLOAT), CAST(lat AS FLOAT))) STORED,'
+        ),
         (
             8, 'point geometry(POINT,4326) GENERATED ALWAYS AS'
-            ' (ST_POINT(CAST(lng AS FLOAT) STORED,'),
+            ' (ST_POINT(CAST(lng AS FLOAT) STORED,'
+        ),
         (9, 'CONSTRAINT pk_v2_portals PRIMARY KEY (guid)'),
         (10, ')'),
-    ))
+    )
+)
 
 _KNOWN_PLACES = """
 CREATE TABLE places (
@@ -489,22 +545,27 @@ _ACCEPTABLE_PLACES = set(
         (4, 'lat VARCHAR GENERATED ALWAYS AS () VIRTUAL,'),
         (
             4, 'lat VARCHAR GENERATED ALWAYS AS'
-            ' (SUBSTR(latlng, 1, INSTR(latlng, ",") - 1)) VIRTUAL,'),
+            ' (SUBSTR(latlng, 1, INSTR(latlng, ",") - 1)) VIRTUAL,'
+        ),
         (5, 'lng VARCHAR GENERATED ALWAYS AS () VIRTUAL,'),
         (
             5, 'lng VARCHAR GENERATED ALWAYS AS'
-            ' (SUBSTR(latlng, INSTR(latlng, ",") + 1)) VIRTUAL,'),
+            ' (SUBSTR(latlng, INSTR(latlng, ",") + 1)) VIRTUAL,'
+        ),
         (
             6, 'point geometry(POINT,4326) GENERATED ALWAYS AS'
-            ' (ST_POINT(CAST(lng AS FLOAT) STORED,'),
+            ' (ST_POINT(CAST(lng AS FLOAT) STORED,'
+        ),
         (
             6, 'point GEOMETRY GENERATED ALWAYS AS'
-            ' (ST_POINT(CAST(lng AS FLOAT), CAST(lat AS FLOAT))) STORED,'),
+            ' (ST_POINT(CAST(lng AS FLOAT), CAST(lat AS FLOAT))) STORED,'
+        ),
         (7, 'note VARCHAR,'),
         (8, 'CONSTRAINT pk_places PRIMARY KEY (uuid),'),
         (9, 'CONSTRAINT uq_places_latlng UNIQUE (latlng)'),
         (10, ')'),
-    ))
+    )
+)
 
 # Work around bugs in sqlite reflection
 # https://github.com/sqlalchemy/sqlalchemy/issues/11582
@@ -540,7 +601,8 @@ class Database:  # pylint: disable=missing-docstring
         root_logger = logging.getLogger()
         sql_logger.setLevel(root_logger.getEffectiveLevel())
         self._engine = sqlalchemy.create_engine(
-            f'sqlite:///{directory}/{filename}', future=True)
+            f'sqlite:///{directory}/{filename}', future=True
+        )
         self._sanity_check()
         self.session = orm.sessionmaker(bind=self._engine, future=True)()
         Base.metadata.create_all(self._engine)
@@ -557,10 +619,12 @@ class Database:  # pylint: disable=missing-docstring
             if table:
                 raw_ddl = str(
                     sqlalchemy.schema.CreateTable(defined_table).compile(
-                        bind=self._engine)).strip()
+                        bind=self._engine
+                    )
+                ).strip()
                 dt_ddl = self._clean_ddl(raw_ddl)
-                fallback_ddl = _FALLBACK_DDL.get(tablename, dict()).get(
-                    raw_ddl, _DUMMY_DDL)
+                fallback_ddl = _FALLBACK_DDL.get(tablename, dict()
+                                                 ).get(raw_ddl, _DUMMY_DDL)
                 if not (dt_ddl.issubset(table.ddls)
                         or fallback_ddl.issubset(table.ddls)):
                     dt_sql = [f'{x}\n' for x in sorted(dt_ddl)]
@@ -572,7 +636,10 @@ class Database:  # pylint: disable=missing-docstring
                                 dt_sql,
                                 fromfile='existing',
                                 tofile='defined',
-                                n=2)))
+                                n=2
+                            )
+                        )
+                    )
                     if tablename in _AUTO_DROPS:
                         to_drop.append((tablename, diffs))
                     else:
@@ -602,8 +669,10 @@ class Database:  # pylint: disable=missing-docstring
             for table in existing.tables.values():
                 existing_tables[table.name] = ExistingTable(
                     ddls=self._clean_ddl(
-                        str(sqlalchemy.schema.CreateTable(table))),
-                    table=table)
+                        str(sqlalchemy.schema.CreateTable(table))
+                    ),
+                    table=table
+                )
 
             # https://github.com/sqlalchemy/sqlalchemy/discussions/11580
             if conn.dialect.driver == 'pysqlite':
@@ -621,7 +690,8 @@ class Database:  # pylint: disable=missing-docstring
     def _clean_ddl(self, ddl: str) -> set[tuple[int, str]]:
         tuples = set(
             (number, line.strip())
-            for number, line in enumerate(ddl.strip().splitlines()))
+            for number, line in enumerate(ddl.strip().splitlines())
+        )
         return tuples
 
     def _post_create_migrations(self):
@@ -632,7 +702,8 @@ class Database:  # pylint: disable=missing-docstring
             print(
                 f'Migrating {count} portals'
                 f' from table "{_Portal.__tablename__}"'
-                f' to table "{PortalV2.__tablename__}".')
+                f' to table "{PortalV2.__tablename__}".'
+            )
             logging.info('migrating count: %d', count)
             portals = [
                 portal.to_iitc() for portal in self.session.query(_Portal)

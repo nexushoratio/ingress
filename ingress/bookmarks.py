@@ -57,7 +57,9 @@ def mundane_shared_flags(ctx: app.ArgparseApp):
             type=glob.iglob,  # type: ignore[arg-type]  # old version of mypy
             help=(
                 'A filename glob that will be matched by the program'
-                ' instead of the shell.  May be specified multiple times.'))
+                ' instead of the shell.  May be specified multiple times.'
+            )
+        )
 
 
 class _CommonFlags:
@@ -82,7 +84,8 @@ class _CommonFlags:
             '--folder-id',
             action='store',
             required=True,
-            help='Folder UUID to use.')
+            help='Folder UUID to use.'
+        )
         return parser
 
     @functools.cached_property
@@ -90,7 +93,8 @@ class _CommonFlags:
         """Optional --folder-id flag."""
         parser = self._parser()
         parser.add_argument(
-            '--folder-id', action='store', help='Folder UUID to use.')
+            '--folder-id', action='store', help='Folder UUID to use.'
+        )
         return parser
 
     @functools.cached_property
@@ -102,7 +106,8 @@ class _CommonFlags:
             '--folder-id',
             action='append',
             required=True,
-            help='Folder UUID to use.  May be specified multiple times.')
+            help='Folder UUID to use.  May be specified multiple times.'
+        )
         return parser
 
     @functools.cached_property
@@ -110,7 +115,8 @@ class _CommonFlags:
         """Required --label flag."""
         parser = self._parser()
         parser.add_argument(
-            '--label', action='store', required=True, help='Label to use.')
+            '--label', action='store', required=True, help='Label to use.'
+        )
         return parser
 
     @functools.cached_property
@@ -128,7 +134,8 @@ class _CommonFlags:
             '--latlng',
             action='store',
             required=True,
-            help='Latitude/longitude value to use.')
+            help='Latitude/longitude value to use.'
+        )
         return parser
 
     @functools.cached_property
@@ -138,7 +145,8 @@ class _CommonFlags:
         parser.add_argument(
             '--latlng',
             action='store',
-            help='Latitude/longitude value to use.')
+            help='Latitude/longitude value to use.'
+        )
         return parser
 
     @functools.cached_property
@@ -146,7 +154,8 @@ class _CommonFlags:
         """Optional --note flag."""
         parser = self._parser()
         parser.add_argument(
-            '--note', action='store', help='Optional note to use.')
+            '--note', action='store', help='Optional note to use.'
+        )
         return parser
 
     @functools.cached_property
@@ -157,7 +166,8 @@ class _CommonFlags:
             '--place-id',
             action='store',
             required=True,
-            help='Place UUID to use.')
+            help='Place UUID to use.'
+        )
         return parser
 
     @functools.cached_property
@@ -165,7 +175,8 @@ class _CommonFlags:
         """Optional --place-id flag."""
         parser = self._parser()
         parser.add_argument(
-            '--place-id', action='store', help='Place UUID to use.')
+            '--place-id', action='store', help='Place UUID to use.'
+        )
         return parser
 
     @functools.cached_property
@@ -176,7 +187,8 @@ class _CommonFlags:
             '--portal-id',
             action='store',
             required=True,
-            help='Portal GUID to use.')
+            help='Portal GUID to use.'
+        )
         return parser
 
     @functools.cached_property
@@ -184,7 +196,8 @@ class _CommonFlags:
         """Optional --portal-id flag."""
         parser = self._parser()
         parser.add_argument(
-            '--portal-id', action='store', help='Portal GUID to use.')
+            '--portal-id', action='store', help='Portal GUID to use.'
+        )
         return parser
 
     @functools.cached_property
@@ -192,7 +205,8 @@ class _CommonFlags:
         """Required --uuid flag."""
         parser = self._parser()
         parser.add_argument(
-            '--uuid', action='store', required=True, help='UUID to use.')
+            '--uuid', action='store', required=True, help='UUID to use.'
+        )
         return parser
 
     @functools.cached_property
@@ -204,7 +218,8 @@ class _CommonFlags:
             action='store',
             required=True,
             type=int,
-            help='Zoom level to use.')
+            help='Zoom level to use.'
+        )
         return parser
 
     @functools.cached_property
@@ -212,7 +227,8 @@ class _CommonFlags:
         """Optional --zoom flag."""
         parser = self._parser()
         parser.add_argument(
-            '--zoom', action='store', type=int, help='Zoom level to use.')
+            '--zoom', action='store', type=int, help='Zoom level to use.'
+        )
         return parser
 
 
@@ -225,13 +241,15 @@ def mundane_commands(ctx: app.ArgparseApp):
     ctx.register_command(expunge, parents=[bm_flags])
 
     ctx.register_command(
-        export, parents=[bm_flags]).add_argument(
-            '-s',
-            '--samples',
-            action='store',
-            default=None,
-            type=int,
-            help='Roughly how many portals should be in the output.')
+        export, parents=[bm_flags]
+    ).add_argument(
+        '-s',
+        '--samples',
+        action='store',
+        default=None,
+        type=int,
+        help='Roughly how many portals should be in the output.'
+    )
 
     parser = ctx.register_command(flatten, parents=[bm_flags])
     parser.add_argument(
@@ -242,7 +260,9 @@ def mundane_commands(ctx: app.ArgparseApp):
         type=int,
         help=(
             'Rough upper limit on the size (in bytes) of each flattened'
-            ' output file.  (Default: %(default)s)'))
+            ' output file.  (Default: %(default)s)'
+        )
+    )
     parser.add_argument(
         '-p',
         '--pattern',
@@ -251,7 +271,9 @@ def mundane_commands(ctx: app.ArgparseApp):
         help=(
             'Pattern used to name the output files.  Uses PEP 3101'
             ' formatting strings with the following fields:  size,'
-            ' width, count.  (Default: %(default)s)'))
+            ' width, count.  (Default: %(default)s)'
+        )
+    )
 
     ctx.register_command(find_missing_labels, parents=[bm_flags, glob_flags])
     ctx.register_command(merge, parents=[bm_flags, glob_flags])
@@ -259,69 +281,84 @@ def mundane_commands(ctx: app.ArgparseApp):
     flags = _CommonFlags(ctx)
 
     bookmark_cmds = ctx.new_subparser(
-        ctx.register_command(bookmark, usage_only=True))
+        ctx.register_command(bookmark, usage_only=True)
+    )
 
     ctx.register_command(
-        read_, name='read', subparser=bookmark_cmds, parents=[bm_flags])
+        read_, name='read', subparser=bookmark_cmds, parents=[bm_flags]
+    )
     ctx.register_command(
         write_,
         name='write',
         subparser=bookmark_cmds,
-        parents=[bm_flags, flags.folder_id_req_list])
+        parents=[bm_flags, flags.folder_id_req_list]
+    )
 
     folder_cmds = ctx.new_subparser(
         ctx.register_command(
-            folder_, name='folder', usage_only=True, subparser=bookmark_cmds))
+            folder_, name='folder', usage_only=True, subparser=bookmark_cmds
+        )
+    )
 
     ctx.register_command(folder_list, name='list', subparser=folder_cmds)
     ctx.register_command(
         folder_add,
         name='add',
         subparser=folder_cmds,
-        parents=[flags.label_req])
+        parents=[flags.label_req]
+    )
     ctx.register_command(
         folder_set,
         name='set',
         subparser=folder_cmds,
-        parents=[flags.uuid_req, flags.label_opt])
+        parents=[flags.uuid_req, flags.label_opt]
+    )
     ctx.register_command(
         folder_del,
         name='del',
         subparser=folder_cmds,
-        parents=[flags.uuid_req])
+        parents=[flags.uuid_req]
+    )
 
     place_cmds = ctx.new_subparser(
-        ctx.register_command(place_holder, name='place', usage_only=True))
+        ctx.register_command(place_holder, name='place', usage_only=True)
+    )
 
     ctx.register_command(place_list, name='list', subparser=place_cmds)
     ctx.register_command(
         place_add,
         name='add',
         subparser=place_cmds,
-        parents=[flags.label_req, flags.latlng_req, flags.note_opt])
+        parents=[flags.label_req, flags.latlng_req, flags.note_opt]
+    )
     ctx.register_command(
         place_set,
         name='set',
         subparser=place_cmds,
         parents=[
             flags.uuid_req, flags.label_opt, flags.latlng_opt, flags.note_opt
-        ])
+        ]
+    )
     ctx.register_command(
         place_delete,
         name='del',
         subparser=place_cmds,
-        parents=[flags.uuid_req])
+        parents=[flags.uuid_req]
+    )
 
     map_cmds = ctx.new_subparser(
         ctx.register_command(
-            map_, name='map', usage_only=True, subparser=bookmark_cmds))
+            map_, name='map', usage_only=True, subparser=bookmark_cmds
+        )
+    )
 
     ctx.register_command(map_list, name='list', subparser=map_cmds)
     ctx.register_command(
         map_add,
         name='add',
         subparser=map_cmds,
-        parents=[flags.folder_id_req, flags.place_id_req, flags.zoom_req])
+        parents=[flags.folder_id_req, flags.place_id_req, flags.zoom_req]
+    )
     ctx.register_command(
         map_set,
         name='set',
@@ -329,30 +366,37 @@ def mundane_commands(ctx: app.ArgparseApp):
         parents=[
             flags.uuid_req, flags.folder_id_opt, flags.place_id_opt,
             flags.zoom_opt
-        ])
+        ]
+    )
     ctx.register_command(
-        map_del, name='del', subparser=map_cmds, parents=[flags.uuid_req])
+        map_del, name='del', subparser=map_cmds, parents=[flags.uuid_req]
+    )
 
     portal_cmds = ctx.new_subparser(
         ctx.register_command(
-            portal_, name='portal', usage_only=True, subparser=bookmark_cmds))
+            portal_, name='portal', usage_only=True, subparser=bookmark_cmds
+        )
+    )
 
     ctx.register_command(portal_list, name='list', subparser=portal_cmds)
     ctx.register_command(
         portal_add,
         name='add',
         subparser=portal_cmds,
-        parents=[flags.folder_id_req, flags.portal_id_req])
+        parents=[flags.folder_id_req, flags.portal_id_req]
+    )
     ctx.register_command(
         portal_set,
         name='set',
         subparser=portal_cmds,
-        parents=[flags.uuid_req, flags.folder_id_opt, flags.portal_id_opt])
+        parents=[flags.uuid_req, flags.folder_id_opt, flags.portal_id_opt]
+    )
     ctx.register_command(
         portal_del,
         name='del',
         subparser=portal_cmds,
-        parents=[flags.uuid_req])
+        parents=[flags.uuid_req]
+    )
 
 
 def place_holder(args: argparse.Namespace) -> int:
@@ -404,8 +448,8 @@ def ingest(args: argparse.Namespace) -> int:
         portal['last_seen'] = timestamp
 
     # Look for existing portals first
-    rows = dbc.session.query(database.PortalV2).filter(
-        database.PortalV2.guid.in_(portals))
+    rows = dbc.session.query(database.PortalV2
+                             ).filter(database.PortalV2.guid.in_(portals))
     for row in rows:
         guid = row.guid
         portal = portals[guid]
@@ -444,22 +488,28 @@ def export(args: argparse.Namespace) -> int:
     dbc = args.dbc
     if args.samples is None:
         guids = set(
-            result[0] for result in dbc.session.query(database.PortalV2.guid))
+            result[0] for result in dbc.session.query(database.PortalV2.guid)
+        )
         save_from_guids(guids, args.bookmarks, dbc)
     else:
         hull = dbc.session.query(
             database.geoalchemy2.functions.ST_ConvexHull(
                 database.geoalchemy2.functions.ST_Union(
-                    database.PortalV2.point))).scalar_subquery()
+                    database.PortalV2.point
+                )
+            )
+        ).scalar_subquery()
         result = dbc.session.query(database.PortalV2.guid).filter(
             database.geoalchemy2.functions.ST_Touches(
-                hull, database.PortalV2.point))
+                hull, database.PortalV2.point
+            )
+        )
         guids = set(row._mapping['guid'] for row in result)
         limit = max(len(guids), args.samples)
         count = limit - len(guids)
         result = dbc.session.query(database.PortalV2.guid).filter(
-            database.PortalV2.guid.not_in(guids)).order_by(
-                database.PortalV2.guid).limit(count)
+            database.PortalV2.guid.not_in(guids)
+        ).order_by(database.PortalV2.guid).limit(count)
         guids.update(row._mapping['guid'] for row in result)
         save_from_guids(guids, args.bookmarks, dbc)
     return 0
@@ -561,7 +611,8 @@ def folder_list(args: argparse.Namespace) -> int:
     for row in dbc.session.execute(stmt):
         print(
             f'{row.BookmarkFolder.uuid:{uuid_col_width}}'
-            f' | {row.BookmarkFolder.label}')
+            f' | {row.BookmarkFolder.label}'
+        )
 
     return 0
 
@@ -628,14 +679,16 @@ def place_list(args: argparse.Namespace) -> int:
     print(
         f'{uuid_col_header:^{uuid_col_width}}'
         f' | {label_col_header:^{label_col_width}}'
-        f' | {latlng_col_header:^{latlng_col_width}} | Note')
+        f' | {latlng_col_header:^{latlng_col_width}} | Note'
+    )
     for row in dbc.session.execute(stmt):
         print(
             f'{row.Place.uuid:{uuid_col_width}}'
             f' | {row.Place.label:{label_col_width}}'
             f' |{row.Place.lat:>{lng_col_width}}'
             f',{row.Place.lng:<{lng_col_width}}'
-            f' | {row.Place.note if row.Place.note else "~~"}')
+            f' | {row.Place.note if row.Place.note else "~~"}'
+        )
 
     return 0
 
@@ -644,7 +697,8 @@ def place_add(args: argparse.Namespace) -> int:
     """(V) Add a specific place to the database."""
     dbc = args.dbc
     place = database.Place(
-        label=args.label, latlng=args.latlng, note=args.note)
+        label=args.label, latlng=args.latlng, note=args.note
+    )
     dbc.session.add(place)
     dbc.session.commit()
 
@@ -709,10 +763,12 @@ def map_list(args: argparse.Namespace) -> int:
         f'{uuid_col_header:^{uuid_col_width}}'
         f' | {folder_col_header:^{wide_col_width}}'
         f' | {place_col_header:^{wide_col_width}}'
-        ' | Zoom')
+        ' | Zoom'
+    )
     for row in dbc.session.execute(stmt):
         this_folder = dbc.session.get(
-            database.BookmarkFolder, row.MapBookmark.folder_id)
+            database.BookmarkFolder, row.MapBookmark.folder_id
+        )
         this_place = dbc.session.get(database.Place, row.MapBookmark.place_id)
         print(
             f'{row.MapBookmark.uuid:{uuid_col_width}}'
@@ -720,7 +776,8 @@ def map_list(args: argparse.Namespace) -> int:
             f' - {this_folder.uuid:{uuid_col_width}}'
             f' | {this_place.label:{label_width}}'
             f' - {this_place.uuid:{uuid_col_width}}'
-            f' | {row.MapBookmark.zoom}')
+            f' | {row.MapBookmark.zoom}'
+        )
 
     return 0
 
@@ -729,7 +786,8 @@ def map_add(args: argparse.Namespace) -> int:
     """(V) Add a new map bookmark to the database."""
     dbc = args.dbc
     this_map = database.MapBookmark(
-        folder_id=args.folder_id, place_id=args.place_id, zoom=args.zoom)
+        folder_id=args.folder_id, place_id=args.place_id, zoom=args.zoom
+    )
     dbc.session.add(this_map)
     dbc.session.commit()
 
@@ -797,19 +855,23 @@ def portal_list(args: argparse.Namespace) -> int:
     print(
         f'{uuid_col_header:^{uuid_col_width}}'
         f' | {folder_col_header:^{folder_col_width}}'
-        f' | {portal_col_header:^{portal_col_width}}')
+        f' | {portal_col_header:^{portal_col_width}}'
+    )
 
     for row in dbc.session.execute(stmt):
         this_folder = dbc.session.get(
-            database.BookmarkFolder, row.PortalBookmark.folder_id)
+            database.BookmarkFolder, row.PortalBookmark.folder_id
+        )
         this_portal = dbc.session.get(
-            database.PortalV2, row.PortalBookmark.portal_id)
+            database.PortalV2, row.PortalBookmark.portal_id
+        )
         print(
             f'{row.PortalBookmark.uuid:{uuid_col_width}}'
             f' | {this_folder.label:{label_width}}'
             f' - {this_folder.uuid:{uuid_col_width}}'
             f' | {this_portal.label:{portal_label_width}}'
-            f' - {this_portal.guid:{guid_col_width}}')
+            f' - {this_portal.guid:{guid_col_width}}'
+        )
 
     return 0
 
@@ -818,7 +880,8 @@ def portal_add(args: argparse.Namespace) -> int:
     """(V) Add a new portal bookmark to the database."""
     dbc = args.dbc
     this_portal = database.PortalBookmark(
-        folder_id=args.folder_id, portal_id=args.portal_id)
+        folder_id=args.folder_id, portal_id=args.portal_id
+    )
     dbc.session.add(this_portal)
     dbc.session.commit()
 
@@ -894,7 +957,8 @@ def read_(args: argparse.Namespace) -> int:
 
 
 def _process_maps(
-        dbc: database.Database, other: str, value: dict[str, typing.Any]):
+    dbc: database.Database, other: str, value: dict[str, typing.Any]
+):
     """Process the map bookmarks."""
     for folder_id, folder_value in value.items():
         folder_label = folder_value['label']
@@ -911,12 +975,14 @@ def _process_maps(
             place = database.Place(uuid=map_id, label=label, latlng=latlng)
             dbc.session.merge(place)
             this_map = database.MapBookmark(
-                uuid=map_id, folder_id=folder_id, place_id=map_id, zoom=zoom)
+                uuid=map_id, folder_id=folder_id, place_id=map_id, zoom=zoom
+            )
             dbc.session.merge(this_map)
 
 
 def _process_portals(
-        dbc: database.Database, other: str, value: dict[str, typing.Any]):
+    dbc: database.Database, other: str, value: dict[str, typing.Any]
+):
     """Process the portal bookmarks."""
     for folder_id, folder_value in value.items():
         folder_label = folder_value['label']
@@ -933,7 +999,8 @@ def _process_portals(
                 print('Skipping', portal_value)
             else:
                 this_portal = database.PortalBookmark(
-                    uuid=bm_id, folder_id=folder_id, portal_id=guid)
+                    uuid=bm_id, folder_id=folder_id, portal_id=guid
+                )
                 dbc.session.merge(this_portal)
 
 
@@ -958,8 +1025,8 @@ def write_(args: argparse.Namespace) -> int:
 
             stmt = sqla.select(database.MapBookmark, database.Place).join(
                 database.Place,
-                database.MapBookmark.place_id == database.Place.uuid).where(
-                    database.MapBookmark.folder_id == folder_id)
+                database.MapBookmark.place_id == database.Place.uuid
+            ).where(database.MapBookmark.folder_id == folder_id)
 
             for row in dbc.session.execute(stmt).mappings():
                 bkmrk = row['MapBookmark']
@@ -976,10 +1043,11 @@ def write_(args: argparse.Namespace) -> int:
                 }
 
             stmt = sqla.select(
-                database.PortalBookmark, database.PortalV2).join(
-                    database.PortalV2, database.PortalBookmark.portal_id ==
-                    database.PortalV2.guid).where(
-                        database.PortalBookmark.folder_id == folder_id)
+                database.PortalBookmark, database.PortalV2
+            ).join(
+                database.PortalV2,
+                database.PortalBookmark.portal_id == database.PortalV2.guid
+            ).where(database.PortalBookmark.folder_id == folder_id)
 
             for row in dbc.session.execute(stmt).mappings():
                 bkmrk = row['PortalBookmark']

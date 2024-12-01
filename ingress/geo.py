@@ -75,14 +75,16 @@ def mundane_commands(ctx: app.ArgparseApp):
         action='store',
         type=int,
         required=True,
-        help='Upper limit of portals per bite.')
+        help='Upper limit of portals per bite.'
+    )
     parser.add_argument(
         '-b',
         '--bites',
         action='store',
         type=int,
         default=sys.maxsize,
-        help='Rough limit on the number of bites. (Default: %(default)s)')
+        help='Rough limit on the number of bites. (Default: %(default)s)'
+    )
     parser.add_argument(
         '-p',
         '--pattern',
@@ -91,7 +93,9 @@ def mundane_commands(ctx: app.ArgparseApp):
         help=(
             'Pattern used to name the output files.  Uses PEP 3101 formatting'
             ' strings with the following fields:  count, width, bite'
-            ' (Default: %(default)s)'))
+            ' (Default: %(default)s)'
+        )
+    )
 
     parser = ctx.register_command(ellipse, parents=[dt_flags])
     parser.add_argument(
@@ -100,14 +104,16 @@ def mundane_commands(ctx: app.ArgparseApp):
         action='store',
         type=int,
         required=True,
-        help='The count of portals per ellipse.')
+        help='The count of portals per ellipse.'
+    )
     parser.add_argument(
         '-n',
         '--number',
         action='store',
         type=int,
         default=sys.maxsize,
-        help='Number of ellipse to compute. (Default: %(default)s)')
+        help='Number of ellipse to compute. (Default: %(default)s)'
+    )
     parser.add_argument(
         '-p',
         '--pattern',
@@ -116,7 +122,9 @@ def mundane_commands(ctx: app.ArgparseApp):
         help=(
             'Pattern used to name the output files.  Uses PEP 3101 formatting'
             ' strings with the following fields:  count, width, number'
-            ' (Default: %(default)s)'))
+            ' (Default: %(default)s)'
+        )
+    )
 
 
 def update(args: argparse.Namespace) -> int:
@@ -208,9 +216,9 @@ def donuts(args: argparse.Namespace) -> int:
     guids = frozenset(x.guid for x in all_donuts[0])
     result = dbc.session.query(
         database.geoalchemy2.functions.ST_ConvexHull(
-            database.geoalchemy2.functions.ST_Union(
-                database.PortalV2.point))).filter(
-                    database.PortalV2.guid.in_(guids)).one()[0]
+            database.geoalchemy2.functions.ST_Union(database.PortalV2.point)
+        )
+    ).filter(database.PortalV2.guid.in_(guids)).one()[0]
 
     max_area = dbc.session.scalar(result.ST_Area(1)) * FUDGE_FACTOR
     max_length = delta * 2
@@ -218,12 +226,14 @@ def donuts(args: argparse.Namespace) -> int:
     print(f'{max_area=}')
 
     bites = _bites(
-        dbc, all_donuts, args.count, args.bites, max_length, max_area)
+        dbc, all_donuts, args.count, args.bites, max_length, max_area
+    )
     print(f'There are {len(bites)} donut bites.')
     width = len(str(len(bites)))
     for bite_num, bite in enumerate(bites):
         filename = args.pattern.format(
-            count=args.count, width=width, bite=bite_num)
+            count=args.count, width=width, bite=bite_num
+        )
         guids = frozenset(sprinkle.guid for sprinkle in bite)
         bookmarks.save_from_guids(guids, filename, dbc)
 
@@ -253,7 +263,8 @@ def ellipse(args: argparse.Namespace) -> int:
         if group_num == args.number:
             break
         filename = args.pattern.format(
-            count=args.count, width=width, number=group_num)
+            count=args.count, width=width, number=group_num
+        )
         print(f'min={group[0].distance} max={group[-1].distance}')
         guids = frozenset(portal.guid for portal in group)
         bookmarks.save_from_guids(guids, filename, dbc)
@@ -262,15 +273,17 @@ def ellipse(args: argparse.Namespace) -> int:
 
 
 def _load_portal_distances(
-        points: database.geoalchemy2.elements.WKBElement,
-        dbc: database.Database) -> Bite:
+    points: database.geoalchemy2.elements.WKBElement, dbc: database.Database
+) -> Bite:
     """Load all portal information needed for donuts."""
     distance = operator.add(0, 0)
     for point in points:
         distance = operator.add(
             distance,
             database.geoalchemy2.functions.ST_Distance(
-                point, database.PortalV2.point, 0))
+                point, database.PortalV2.point, 0
+            )
+        )
     rows = dbc.session.query(
         database.PortalV2,
         distance.label('distance'),
@@ -295,7 +308,8 @@ def cluster(args: argparse.Namespace) -> int:  # pylint: disable=too-many-locals
     graph.add_nodes(iter(list(rtree_index.node_map.keys())))  # pylint: disable=no-member
     clusters = set()
     leaders = frozenset(
-        row.guid for row in dbc.session.query(database.ClusterLeader))
+        row.guid for row in dbc.session.query(database.ClusterLeader)
+    )
     initial_leaders = leaders.copy()
 
     distance = START_DISTANCE
@@ -311,7 +325,8 @@ def cluster(args: argparse.Namespace) -> int:  # pylint: disable=too-many-locals
         print('Clusters extracted.')
 
         _clean_clustered_points(
-            graph, rtree_index.index, rtree_index.node_map, to_clean)
+            graph, rtree_index.index, rtree_index.node_map, to_clean
+        )
         distance *= 2
 
     clustered = _finalize(clusters, leaders, rtree_index)
@@ -322,8 +337,9 @@ def cluster(args: argparse.Namespace) -> int:  # pylint: disable=too-many-locals
     logging.info('old_leaders: %s', old_leaders)
     logging.info('new_leaders: %s', new_leaders)
     for guid in old_leaders:
-        dbc.session.query(database.ClusterLeader).filter(
-            database.ClusterLeader.guid == guid).delete()
+        dbc.session.query(database.ClusterLeader
+                          ).filter(database.ClusterLeader.guid == guid
+                                   ).delete()
 
     for guid in new_leaders:
         db_cluster_leader = database.ClusterLeader(guid=guid)
@@ -346,7 +362,9 @@ def _finalize(clusters, leaders, rtree_index):
         clustered.append(
             _cluster_entry(
                 distance, nodes, node_map_by_projected_coords, leaders,
-                rtree_index))
+                rtree_index
+            )
+        )
 
     logging.info('_finalize: done')
     return clustered
@@ -357,10 +375,12 @@ def _cluster_entry(  # pylint: disable=too-many-locals,too-many-arguments
         rtree_index):
     """Placeholder docstring for private function."""
     multi_point = shapely.geometry.MultiPoint(
-        [rtree_index.node_map[idx].projected_point for idx in nodes])
+        [rtree_index.node_map[idx].projected_point for idx in nodes]
+    )
 
     latlng_centroid = shapely.ops.transform(
-        rtree_index.reverse_transform, multi_point.centroid)
+        rtree_index.reverse_transform, multi_point.centroid
+    )
 
     guids = set()
     guid_map = dict()
@@ -374,14 +394,18 @@ def _cluster_entry(  # pylint: disable=too-many-locals,too-many-arguments
         logging.info('finding new leader')
         local_rtree = rtree.rtree.index.Index(
             (idx, rtree_index.node_map[idx].projected_coords, None)
-            for idx in nodes)
+            for idx in nodes
+        )
 
         leader_idx = list(
             local_rtree.nearest(
                 (
                     multi_point.centroid.x, multi_point.centroid.y,
-                    multi_point.centroid.x, multi_point.centroid.y),
-                num_results=len(nodes) / 2))[-1]
+                    multi_point.centroid.x, multi_point.centroid.y
+                ),
+                num_results=len(nodes) / 2
+            )
+        )[-1]
 
         leader_guid = list(rtree_index.node_map[leader_idx].guids)[0]
     elif len(possible_leaders) == 1:
@@ -392,15 +416,19 @@ def _cluster_entry(  # pylint: disable=too-many-locals,too-many-arguments
         local_rtree = rtree.rtree.index.Index(
             (
                 guid_map[guid],
-                rtree_index.node_map[guid_map[guid]].projected_coords, None)
-            for guid in possible_leaders)
+                rtree_index.node_map[guid_map[guid]].projected_coords, None
+            ) for guid in possible_leaders
+        )
 
         leader_idx = list(
             local_rtree.nearest(
                 (
                     multi_point.centroid.x, multi_point.centroid.y,
-                    multi_point.centroid.x, multi_point.centroid.y),
-                num_results=len(nodes) / 2))[-1]
+                    multi_point.centroid.x, multi_point.centroid.y
+                ),
+                num_results=len(nodes) / 2
+            )
+        )[-1]
 
         leader_guid = list(rtree_index.node_map[leader_idx].guids)[0]
 
@@ -409,7 +437,8 @@ def _cluster_entry(  # pylint: disable=too-many-locals,too-many-arguments
     projected_hull = multi_point.convex_hull
     latlng_hull = (
         node_map_by_projected_coords[coord]
-        for coord in projected_hull.exterior.coords)
+        for coord in projected_hull.exterior.coords
+    )
     return {
         'area':
         projected_hull.area / 1000000,
@@ -447,7 +476,8 @@ def _clean_clustered_points(graph, index, node_map, new_cluster):
         graph.del_node(node_index)
     logging.info(
         '_clean_clustered_points: points left in graph: %d',
-        len(graph.nodes()))
+        len(graph.nodes())
+    )
 
 
 def _extract_clusters(graph):
@@ -480,7 +510,9 @@ def _add_edges(graph, index, node_map_by_index, max_distance):  # pylint: disabl
         while not done:
             other_nodes = list(
                 index.nearest(
-                    node.projected_coords, num_results=result_limit))
+                    node.projected_coords, num_results=result_limit
+                )
+            )
             furthest = node_map_by_index[other_nodes[-1]]
             distance = node.projected_point.distance(furthest.projected_point)
             done = distance > max_distance
@@ -491,7 +523,8 @@ def _add_edges(graph, index, node_map_by_index, max_distance):  # pylint: disabl
             if node_index != other_node_index:
                 other_node = node_map_by_index[other_node_index]
                 distance = node.projected_point.distance(
-                    other_node.projected_point)
+                    other_node.projected_point
+                )
                 if distance < max_distance:
                     edge = (node_index, other_node_index)
                     graph.add_edge(edge)
@@ -531,8 +564,9 @@ def _get_wkb_to_point_map(dbc, ring):
 
 
 def _get_distances(
-        dbc: database.Database, ring: database.geoalchemy2.types.Geometry,
-        cache: DistanceCache) -> list[float]:
+    dbc: database.Database, ring: database.geoalchemy2.types.Geometry,
+    cache: DistanceCache
+) -> list[float]:
     """Calculate the distances between every sprinkle."""
     dss = dbc.session.scalar
     num_points = dss(ring.ST_NPoints()) - 1
@@ -553,15 +587,15 @@ def _get_distances(
 
 
 def _bite(
-        dbc: database.Database, donut: Bite, max_length: float,
-        max_area: float, cache: DistanceCache) -> Bite:
+    dbc: database.Database, donut: Bite, max_length: float, max_area: float,
+    cache: DistanceCache
+) -> Bite:
     """Given a donut, return a bite that is not a choking hazard."""
     dss = dbc.session.scalar
     guids = frozenset(x.guid for x in donut)
     db_points = dbc.session.query(
-        database.geoalchemy2.functions.ST_Collect(
-            database.PortalV2.point)).filter(
-                database.PortalV2.guid.in_(guids)).one()[0]
+        database.geoalchemy2.functions.ST_Collect(database.PortalV2.point)
+    ).filter(database.PortalV2.guid.in_(guids)).one()[0]
 
     hull = db_points.ST_ConvexHull()
     ring = hull.ST_ExteriorRing()
@@ -624,15 +658,18 @@ def _donuts(all_sprinkles: Bite, count: int) -> tuple[list[Bite], float]:
 
 
 def _load_sprinkles(
-        center_point: database.geoalchemy2.elements.WKBElement,
-        dbc: database.Database) -> Bite:
+    center_point: database.geoalchemy2.elements.WKBElement,
+    dbc: database.Database
+) -> Bite:
     """Load all portal information needed for donuts."""
     rows = dbc.session.query(
         database.PortalV2,
         database.geoalchemy2.functions.ST_Distance(
-            center_point, database.PortalV2.point, 0).label('distance'),
+            center_point, database.PortalV2.point, 0
+        ).label('distance'),
         database.geoalchemy2.functions.ST_Azimuth(
-            center_point, database.PortalV2.point).label('azimuth'),
+            center_point, database.PortalV2.point
+        ).label('azimuth'),
     )
     return [
         Sprinkle(
@@ -690,7 +727,9 @@ def _update_paths(dbc: database.Database, portals: bookmarks.Portals):  # pylint
                     begin_latlng=begin_latlng,
                     end_latlng=end_latlng,
                     mode=mode,
-                    date=now))
+                    date=now
+                )
+            )
     dbc.session.commit()
 
 
@@ -701,7 +740,8 @@ def _update_path_legs(dbc: database.Database, portals: bookmarks.Portals):
         rows = dbc.session.query(database.Path).filter(
             database.Path.begin_latlng == begin_portal['latlng'],
             database.Path.end_latlng == end_portal['latlng'],
-            database.Path.mode == mode)
+            database.Path.mode == mode
+        )
         for row in rows:
             path_ids.add(row.id)
     _ensure_path_legs(dbc, path_ids)
@@ -722,7 +762,8 @@ def _ensure_path_legs_by_path_id(dbc, count, path_id):
 
     print(
         f'{count:4} path_id: {path_id:4}|{db_path.begin_latlng:23}'
-        f'|{db_path.end_latlng:23}')
+        f'|{db_path.end_latlng:23}'
+    )
 
     path_complete = False
     attempts = 1
@@ -736,8 +777,9 @@ def _ensure_path_legs_by_path_id(dbc, count, path_id):
             sorted_legs = list(toposort.toposort(legs))
             if len(sorted_legs[0]) > 1:
                 print(f'There is a hole for path {path_id}.  Clearing.')
-                dbc.session.query(database.PathLeg).filter(
-                    database.PathLeg.path_id == path_id).delete()
+                dbc.session.query(
+                    database.PathLeg
+                ).filter(database.PathLeg.path_id == path_id).delete()
                 dbc.session.commit()
             else:
                 first = sorted_legs[-1].pop()
@@ -764,7 +806,8 @@ def _ensure_leg(dbc, path_id, leg_of_interest, mode):
     begin, end = leg_of_interest
     db_leg = dbc.session.query(database.Leg).filter(
         database.Leg.begin_latlng == begin, database.Leg.end_latlng == end,
-        database.Leg.mode == mode).one_or_none()
+        database.Leg.mode == mode
+    ).one_or_none()
     if db_leg is None:
         google_leg = _get_reasonable_google_leg(begin, end, mode)
 
@@ -772,7 +815,8 @@ def _ensure_leg(dbc, path_id, leg_of_interest, mode):
         db_leg = dbc.session.query(database.Leg).filter(
             database.Leg.begin_latlng == google_leg.begin_latlng,
             database.Leg.end_latlng == google_leg.end_latlng,
-            database.Leg.mode == google_leg.mode).one_or_none()
+            database.Leg.mode == google_leg.mode
+        ).one_or_none()
         if db_leg is None:
             # finally add it
             db_leg = database.Leg(
@@ -781,7 +825,8 @@ def _ensure_leg(dbc, path_id, leg_of_interest, mode):
                 mode=google_leg.mode,
                 date=time.time(),
                 duration=google_leg.duration,
-                polyline=google_leg.polyline)
+                polyline=google_leg.polyline
+            )
 
             dbc.session.add(db_leg)
             dbc.session.flush()
@@ -812,7 +857,9 @@ def _get_reasonable_google_leg(begin, end, mode):
         google_leg.duration = crow_flies  # seems like a good guess
         google_leg.polyline = str(
             google.encode_polyline(
-                (_latlng_str_to_floats(begin), _latlng_str_to_floats(end))))
+                (_latlng_str_to_floats(begin), _latlng_str_to_floats(end))
+            )
+        )
 
     fmt = '{state:7}: {begin:23} {end:23} {mode:7} {distance:5}'
     print(
@@ -821,7 +868,9 @@ def _get_reasonable_google_leg(begin, end, mode):
             begin=begin,
             end=end,
             mode=mode,
-            distance=crow_flies))
+            distance=crow_flies
+        )
+    )
     print(
         fmt.format(
             state='got',
@@ -829,7 +878,10 @@ def _get_reasonable_google_leg(begin, end, mode):
             end=google_leg.end_latlng,
             mode=google_leg.mode,
             distance=_distance(
-                google_leg.begin_latlng, google_leg.end_latlng)))
+                google_leg.begin_latlng, google_leg.end_latlng
+            )
+        )
+    )
 
     return google_leg
 
@@ -838,12 +890,12 @@ def _clean(dbc: database.Database):
     """Clean out old cached data."""
     now = time.time()
     oldest_allowed = now - MAX_AGE
-    rows = dbc.session.query(
-        database.Leg).filter(database.Leg.date < oldest_allowed)
+    rows = dbc.session.query(database.Leg
+                             ).filter(database.Leg.date < oldest_allowed)
     for row in rows:
         print('Delete ', row)
-    rows = dbc.session.query(
-        database.Path).filter(database.Path.date < oldest_allowed)
+    rows = dbc.session.query(database.Path
+                             ).filter(database.Path.date < oldest_allowed)
     for row in rows:
         print('Delete ', row)
     dbc.session.commit()

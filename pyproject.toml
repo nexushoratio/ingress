@@ -39,6 +39,7 @@ build-backend = 'setuptools.build_meta'
 
 [tool.yapf]
 column_limit = 78
+dedent_closing_brackets = true
 join_multiple_lines = false
 space_between_ending_comma_and_closing_bracket = false
 split_before_arithmetic_operator = true

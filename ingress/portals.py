@@ -94,11 +94,12 @@ def mundane_commands(ctx: app.ArgparseApp):
             super().__init__(*args, **kwargs)
 
         def __call__(
-                self,
-                parser: argparse.ArgumentParser,
-                namespace: argparse.Namespace,
-                values: str,
-                option_string: str | None = None):
+            self,
+            parser: argparse.ArgumentParser,
+            namespace: argparse.Namespace,
+            values: str,
+            option_string: str | None = None
+        ):
 
             # Add the --flag=values to the appropriate dest type/group.
             vars(namespace)[self.dest].append((self.old_dest, values))
@@ -109,13 +110,15 @@ def mundane_commands(ctx: app.ArgparseApp):
     f_mv = 'FIELD'
     fv_mv = 'FIELD:VALUE'
     parser.add_argument(
-        '-q', '--query', action='count', default=0, help='Show SQL query.')
+        '-q', '--query', action='count', default=0, help='Show SQL query.'
+    )
     parser.add_argument(
         '-L',
         '--list-fields',
         action='count',
         default=0,
-        help='List supported fields.')
+        help='List supported fields.'
+    )
 
     # Numerical based flags
     parser.add_argument(
@@ -123,29 +126,34 @@ def mundane_commands(ctx: app.ArgparseApp):
         '--limit',
         action=QueryBuilder,
         metavar='LIMIT',
-        help='Limit the number of results.')
+        help='Limit the number of results.'
+    )
 
     # Filters
     parser.add_argument(
         '--lt',
         action=QueryBuilder,
         metavar=fv_mv,
-        help='Filter portals where FIELD is less than VALUE.')
+        help='Filter portals where FIELD is less than VALUE.'
+    )
     parser.add_argument(
         '--le',
         action=QueryBuilder,
         metavar=fv_mv,
-        help='Filter portals where FIELD is less than or equal to VALUE.')
+        help='Filter portals where FIELD is less than or equal to VALUE.'
+    )
     parser.add_argument(
         '--gt',
         action=QueryBuilder,
         metavar=fv_mv,
-        help='Filter portals where FIELD is greater than VALUE.')
+        help='Filter portals where FIELD is greater than VALUE.'
+    )
     parser.add_argument(
         '--ge',
         action=QueryBuilder,
         metavar=fv_mv,
-        help='Filter portals where FIELD is greater than or equal to VALUE.')
+        help='Filter portals where FIELD is greater than or equal to VALUE.'
+    )
     parser.add_argument(
         '--like',
         action=QueryBuilder,
@@ -153,7 +161,9 @@ def mundane_commands(ctx: app.ArgparseApp):
         help=(
             'Filter portals where FIELD matches VALUE using the SQL LIKE'
             ' operator.  In SQL, the "%%" character will match zero or more'
-            ' characters, and "_" will match any single character.'))
+            ' characters, and "_" will match any single character.'
+        )
+    )
     parser.add_argument(
         '--not-like',
         action=QueryBuilder,
@@ -161,7 +171,9 @@ def mundane_commands(ctx: app.ArgparseApp):
         help=(
             'Filter portals where FIELD matches VALUE using the SQL NOT LIKE'
             ' operator.  In SQL, the "%%" character will match zero or more'
-            ' characters, and "_" will match any single character.'))
+            ' characters, and "_" will match any single character.'
+        )
+    )
     parser.add_argument(
         '--in',
         action=QueryBuilder,
@@ -169,7 +181,8 @@ def mundane_commands(ctx: app.ArgparseApp):
         help=(
             'Filter portals where FIELD is equal to VALUE.  If specified'
             ' multiple times for the same FIELD, all matches will be passed.'
-        ))
+        )
+    )
     parser.add_argument(
         '--not-in',
         action=QueryBuilder,
@@ -177,19 +190,22 @@ def mundane_commands(ctx: app.ArgparseApp):
         help=(
             'Filter portals where FIELD is equal to VALUE.  If specified'
             ' multiple times for the same FIELD, all matches will be removed.'
-        ))
+        )
+    )
 
     # Ordering
     parser.add_argument(
         '--asc',
         action=QueryBuilder,
         metavar=f_mv,
-        help='Sort portals by FIELD in ascending order.')
+        help='Sort portals by FIELD in ascending order.'
+    )
     parser.add_argument(
         '--desc',
         action=QueryBuilder,
         metavar=f_mv,
-        help='Sort portals by FIELD in descending order.')
+        help='Sort portals by FIELD in descending order.'
+    )
 
     parser.add_argument(
         '--group-by',
@@ -197,7 +213,9 @@ def mundane_commands(ctx: app.ArgparseApp):
         metavar=f_mv,
         help=(
             'Group portals by the specified fields.  Grouping does NOT'
-            ' imply ordering.'))
+            ' imply ordering.'
+        )
+    )
 
     parser.add_argument(
         '-f',
@@ -209,7 +227,9 @@ def mundane_commands(ctx: app.ArgparseApp):
             ' portal.  The same set of fields are available.  A number of'
             ' predefined formats are available.  The special value'
             f' "{LIST_FORMAT}"'
-            ' will show them.  (Default: %(default)s)'))
+            ' will show them.  (Default: %(default)s)'
+        )
+    )
 
 
 def show(args: argparse.Namespace) -> int:
@@ -255,8 +275,10 @@ def _show_impl(args: argparse.Namespace) -> int:
         (key, value)
         for key, value in stmt.exported_columns.items()
         if not isinstance(
-            getattr(value, 'table', None), database.sqlalchemy.sql.schema
-            .Table) and not value.name.startswith('EXCLUDE_'))
+            getattr(value, 'table', None),
+            database.sqlalchemy.sql.schema.Table
+        ) and not value.name.startswith('EXCLUDE_')
+    )
 
     if args.list_fields:
         print('\n'.join(field_map.keys()))
@@ -272,7 +294,9 @@ def _show_impl(args: argparse.Namespace) -> int:
         print(
             stmt.compile(
                 dbc.session.get_bind(),
-                compile_kwargs={'literal_binds': True}))
+                compile_kwargs={'literal_binds': True}
+            )
+        )
         return 0
 
     portals: bookmarks.Portals = dict()
@@ -287,13 +311,15 @@ def _show_impl(args: argparse.Namespace) -> int:
     text_output = list()
     text_output.append(
         f'Matching portals: {len(portals)}\n'
-        f'  {", ".join(constraints)}')
+        f'  {", ".join(constraints)}'
+    )
     for group in groups:
         section = ''
         if group:
             section += f'Group: {group}\n\n'
         entries = (
-            portal_format.format_map(portal) for portal in groups[group])
+            portal_format.format_map(portal) for portal in groups[group]
+        )
         section += '\n\n'.join(entries)
         text_output.append(section)
 
@@ -339,12 +365,14 @@ def _init_select(dbc: database.Database) -> Statement:
         database.PortalV2.first_seen,
         'unixepoch',
         'localtime',
-        type_=sqla.Unicode).label('first-seen')
+        type_=sqla.Unicode
+    ).label('first-seen')
     last_seen = sqla.sql.func.date(
         database.PortalV2.last_seen,
         'unixepoch',
         'localtime',
-        type_=sqla.Unicode).label('last-seen')
+        type_=sqla.Unicode
+    ).label('last-seen')
 
     cols = tuple(
         sqla.func.max(
@@ -352,18 +380,20 @@ def _init_select(dbc: database.Database) -> Statement:
                 (
                     database.AddressTypeValueAssociation.type == typ,
                     database.AddressTypeValueAssociation.value
-                ))).label(typ.replace('_', '-'))
-        for typ in _visible_address_types(dbc))
+                )
+            )
+        ).label(typ.replace('_', '-')) for typ in _visible_address_types(dbc)
+    )
 
     atva = sqla.select(
         database.AddressTypeValueAssociation.latlng.label('EXCLUDE_latlng'),
-        *cols).group_by(database.AddressTypeValueAssociation.latlng).subquery(
-            name='atva')
+        *cols
+    ).group_by(database.AddressTypeValueAssociation.latlng
+               ).subquery(name='atva')
 
     return sqla.select(
-        guid, label, latlng, first_seen, last_seen, atva,
-        database.PortalV2).outerjoin(
-            atva, database.PortalV2.latlng == atva.c.EXCLUDE_latlng)
+        guid, label, latlng, first_seen, last_seen, atva, database.PortalV2
+    ).outerjoin(atva, database.PortalV2.latlng == atva.c.EXCLUDE_latlng)
 
 
 # XXX: The following dictionaries are cascading rather than nested because the
@@ -395,8 +425,9 @@ LIST_OP_MAP = {
 
 
 def _apply_filters(
-        stmt: Statement, args: argparse.Namespace, constraints: list[str],
-        field_map) -> Statement:
+    stmt: Statement, args: argparse.Namespace, constraints: list[str],
+    field_map
+) -> Statement:
     """Apply filter clauses to the statement, update "constraints"."""
     sqla = database.sqlalchemy
 
@@ -407,7 +438,8 @@ def _apply_filters(
         if opr in SCALAR_OPR_TO_STR_MAP:
             op_str = SCALAR_OPR_TO_STR_MAP[opr]
             stmt = stmt.where(
-                SCALAR_STR_TO_FUNC_MAP[op_str](column, value))  # type: ignore
+                SCALAR_STR_TO_FUNC_MAP[op_str](column, value)  # type: ignore
+            )
             constraints.append(f'{_make_title(field)} {op_str} {value}')
         elif opr in LIST_OP_MAP:
             op_str = LIST_OP_MAP[opr]
@@ -417,7 +449,9 @@ def _apply_filters(
                 this_op = getattr(column, op_str)
                 stmt = stmt.where(
                     this_op(
-                        sqla.sql.expression.bindparam(key, expanding=True)))
+                        sqla.sql.expression.bindparam(key, expanding=True)
+                    )
+                )
                 constraints.append(f'{_make_title(field)} {opr} ({{{key}}})')
         else:
             raise NotImplementedError(f'Unsupported operator: {opr}')
@@ -427,19 +461,21 @@ def _apply_filters(
 
 
 def _update_constraints_placeholders(
-        constraints: list[str], params: dict[str, list[str]]):
+    constraints: list[str], params: dict[str, list[str]]
+):
     """Some clauses (e.g., IN), have placeholders, update them in place."""
 
     # At this point, assuming that all params are lists of strings.
     processed_params = dict(
-        (key, ', '.join(values)) for key, values in params.items())
+        (key, ', '.join(values)) for key, values in params.items()
+    )
     for pos, item in enumerate(constraints):
         constraints[pos] = item.format_map(processed_params)
 
 
 def _apply_numerics(
-        stmt: Statement, constraints: list[str],
-        args: argparse.Namespace) -> Statement:
+    stmt: Statement, constraints: list[str], args: argparse.Namespace
+) -> Statement:
     """Apply numeric based clauses to the statement, update "constraints"."""
     for opr, value in args.numerics:
         this_op = getattr(stmt, opr, None)
@@ -453,7 +489,8 @@ def _apply_numerics(
 
 
 def _apply_orderings(
-        stmt: Statement, args: argparse.Namespace, field_map) -> Statement:
+    stmt: Statement, args: argparse.Namespace, field_map
+) -> Statement:
     """Apply ordering based clauses to the statement."""
     for opr, field in args.orderings:
         _validate_field(field, field_map.keys())
@@ -506,4 +543,5 @@ def _visible_address_types(dbc: database.Database) -> tuple[str, ...]:
                .order_by(database.AddressType.type)
 
     return tuple(
-        str(row.AddressType.type) for row in dbc.session.execute(stmt))
+        str(row.AddressType.type) for row in dbc.session.execute(stmt)
+    )
