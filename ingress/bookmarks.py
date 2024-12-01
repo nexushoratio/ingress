@@ -281,7 +281,7 @@ def mundane_commands(ctx: app.ArgparseApp):
     flags = _CommonFlags(ctx)
 
     bookmark_cmds = ctx.new_subparser(
-        ctx.register_command(bookmark, usage_only=True)
+        ctx.register_command(bookmark_, name='bookmark', usage_only=True)
     )
 
     ctx.register_command(
@@ -321,7 +321,7 @@ def mundane_commands(ctx: app.ArgparseApp):
     )
 
     place_cmds = ctx.new_subparser(
-        ctx.register_command(place_holder, name='place', usage_only=True)
+        ctx.register_command(place_, name='place', usage_only=True)
     )
 
     ctx.register_command(place_list, name='list', subparser=place_cmds)
@@ -399,12 +399,12 @@ def mundane_commands(ctx: app.ArgparseApp):
     )
 
 
-def place_holder(args: argparse.Namespace) -> int:
+def place_(args: argparse.Namespace) -> int:
     """(V) A family of commands for working with places."""
     raise Error('This function should never be called.')
 
 
-def bookmark(args: argparse.Namespace) -> int:
+def bookmark_(args: argparse.Namespace) -> int:
     """(V) A family of commands for working with bookmarks in the database."""
     raise Error('This function should never be called.')
 
