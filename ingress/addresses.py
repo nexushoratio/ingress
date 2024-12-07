@@ -407,7 +407,8 @@ def _clean(dbc: database.Database):
     header_printed = False
     oldest_allowed = now - MAX_AGE
     rows = dbc.session.query(database.Address
-                             ).filter(database.Address.date < oldest_allowed)
+                             ).filter(database.Address.date < oldest_allowed
+                                      ).limit(30)
     for row in rows:
         if not header_printed:
             print('Deleting stale entries')
@@ -415,7 +416,7 @@ def _clean(dbc: database.Database):
         print(f'{_format_date(float(row.date))} | {row.address}')
         dbc.session.delete(row)
 
-    dbc.session.rollback()
+    dbc.session.commit()
 
 
 def _format_date(timestamp: float):
