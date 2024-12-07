@@ -21,6 +21,8 @@ import toposort
 # from pygraph.classes import graph as pygraph
 # from pygraph.classes import exceptions as pyexceptions
 
+from mundane import constants
+
 from ingress import database
 from ingress import bookmarks
 from ingress import drawtools
@@ -33,7 +35,7 @@ if typing.TYPE_CHECKING:  # pragma: no cover
 
     from mundane import app
 
-MAX_AGE = 90 * 24 * 60 * 60
+MAX_AGE = 90 * constants.SECONDS_PER_DAY
 FUDGE_FACTOR = 1.1
 MINIMAL_CLUSTER_SIZE = 10
 START_DISTANCE = 75

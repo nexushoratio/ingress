@@ -8,6 +8,8 @@ import sys
 import time
 import typing
 
+from mundane import constants
+
 from ingress import bookmarks
 from ingress import database
 from ingress import google
@@ -17,7 +19,7 @@ if typing.TYPE_CHECKING:  # pragma: no cover
 
     from mundane import app
 
-MAX_AGE = 90 * 24 * 60 * 60
+MAX_AGE = 90 * constants.SECONDS_PER_DAY
 
 
 class Error(Exception):
