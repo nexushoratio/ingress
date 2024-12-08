@@ -184,14 +184,23 @@ def update(args: argparse.Namespace) -> int:
 
     fetched = 0
     delay = 0.0
+    if args.limit is None:
+        template = '({current})'
+    else:
+        template = '({current}/{limit})'
+    template += ' Fetching for {label} (delayed by {delay:.2f} seconds)'
     for portal in portals.values():
         latlng = portal['latlng']
         if dbc.session.get(database.Address, latlng) is None:
             if fetched:
                 delay = _random_delay(delay_base)
             print(
-                f'Fetching for {portal["label"]}'
-                f' (delayed by {delay:.2f} seconds)'
+                template.format(
+                    current=fetched + 1,
+                    limit=args.limit,
+                    label=portal['label'],
+                    delay=delay
+                )
             )
             time.sleep(delay)
             address_detail = google.latlng_to_address(latlng)
