@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import random
 import statistics
-import sys
 import time
 import typing
 
@@ -64,9 +63,7 @@ def mundane_commands(ctx: app.ArgparseApp):
         '--limit',
         action='store',
         type=int,
-        default=sys.maxsize,
-        help=
-        'Maximum number of updates to perform in a run (Default: %(default)s)'
+        help='Maximum number of updates to perform in a run.'
     )
     parser.add_argument(
         '-d',
@@ -205,7 +202,7 @@ def update(args: argparse.Namespace) -> int:
             _handle_address_type_values(dbc, latlng, address_detail)
             dbc.session.commit()
             fetched += 1
-            if fetched >= args.limit:
+            if args.limit is not None and fetched >= args.limit:
                 print(f'Hit fetch limit of {args.limit}')
                 break
 
