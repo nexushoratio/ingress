@@ -115,6 +115,9 @@ def on_connect(dbapi_connection, _connection_record):
 @sqlalchemy.event.listens_for(sqlalchemy.engine.Engine, 'close')
 def on_close(dbapi_connection, _connection_record):
     """Maintenance on close."""
+    changes = dbapi_connection.execute('SELECT total_changes();'
+                                       ).fetchone()[0]
+    logging.debug('total_changes: %d', changes)
     count = dbapi_connection.execute('PRAGMA freelist_count').fetchone()[0]
     logging.debug('freelist_count: %d', count)
     if count > globvars.vacuum_trigger_value:
