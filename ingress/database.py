@@ -5,6 +5,7 @@ from __future__ import annotations
 import dataclasses
 import difflib
 import logging
+import os
 import pathlib
 import typing
 import uuid
@@ -20,6 +21,20 @@ if typing.TYPE_CHECKING:  # pragma: no cover
 
 # pylint: disable=too-few-public-methods
 
+VACUUM_TRIGGER_ENVVAR: str = 'INGRESS_VACUUM_TRIGGER'
+
+
+@dataclasses.dataclass
+class _Globals:
+    """Module level globals.
+
+    I am sorry.
+    """
+    vacuum_trigger_value: str = '256'
+
+
+globvars = _Globals()
+
 
 @dataclasses.dataclass(kw_only=True)
 class ExistingTable:
@@ -34,6 +49,7 @@ class Error(Exception):
 
 def mundane_global_flags(ctx: app.ArgparseApp):
     """Register global flags."""
+
     ctx.global_flags.add_argument(
         '--db-dir',
         help='Database directory (Default: %(default)s)',
@@ -48,6 +64,26 @@ def mundane_global_flags(ctx: app.ArgparseApp):
         default=f'{ctx.appname}.db'
     )
 
+    ctx.global_flags.add_argument(
+        '--db-vacuum-trigger',
+        help=(
+            'The number of unused pages that will trigger a VACUUM operation'
+            ' on the database when the connection closes.  This is a type of'
+            ' optimization that can improve performance.  However, the action'
+            ' can take several seconds, so it should generally not be'
+            ' configured to happen often.  Typically this is needed after'
+            ' operations such as ingesting, expunging, or pruning a large'
+            ' number of portals or addresses.  A default value may be set via'
+            f' the environment variable "{VACUUM_TRIGGER_ENVVAR}".  (Default:'
+            '  %(default)s)'
+        ),
+        action='store',
+        default=os.getenv(
+            VACUUM_TRIGGER_ENVVAR, globvars.vacuum_trigger_value
+        ),
+        type=int
+    )
+
     ctx.register_after_parse_hook(init_db)
 
 
@@ -56,6 +92,9 @@ def init_db(args: argparse.Namespace):
 
     # Do not bother if no command was given.
     if args.name:
+        globvars.vacuum_trigger_value = args.db_vacuum_trigger
+        del args.db_vacuum_trigger
+
         args.dbc = Database(args.db_dir, args.db_name)
         del args.db_dir
         del args.db_name
@@ -77,8 +116,13 @@ def on_connect(dbapi_connection, _connection_record):
 def on_close(dbapi_connection, _connection_record):
     """Maintenance on close."""
     count = dbapi_connection.execute('PRAGMA freelist_count').fetchone()[0]
-    if count > 10:
-        print(f'Performing VACUUM as freelist {count=}')
+    logging.debug('freelist_count: %d', count)
+    if count > globvars.vacuum_trigger_value:
+        logging.debug('vacuuming')
+        print(
+            f'Performing VACUUM as (freelist {count=} '
+            f' > trigger={globvars.vacuum_trigger_value})'
+        )
         for row in dbapi_connection.execute('VACUUM'):
             print(row)
 
