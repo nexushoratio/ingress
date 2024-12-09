@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+import os
 import random
 import statistics
 import time
@@ -18,7 +20,9 @@ if typing.TYPE_CHECKING:  # pragma: no cover
 
     from mundane import app
 
-MAX_AGE = 90 * constants.SECONDS_PER_DAY
+sqla = database.sqlalchemy
+
+_DAILY_FETCHES_ENVVAR: str = 'INGRESS_DAILY_FETCHES'
 
 
 class Error(Exception):
@@ -74,6 +78,22 @@ def mundane_commands(ctx: app.ArgparseApp):
         help=(
             'Average random delay, in seconds, between each fetch.'
             '  (Default: %(default)s)'
+        )
+    )
+    parser.add_argument(
+        '--daily-updates',
+        action='store',
+        type=int,
+        default=os.getenv(_DAILY_FETCHES_ENVVAR, '100'),
+        help=(
+            'The typical number of updates expected in a day.  In order to'
+            ' maintain data freshness, older entries are removed.  How old'
+            ' values are allowed to get is computed by dividing the number of'
+            ' portals by DAILY_UPDATES.  It is expected that the number of'
+            ' updates performed in a day will be low in order to keep under'
+            ' API quotas.  A default value for this flag may be set via the'
+            f' environment variable "{_DAILY_FETCHES_ENVVAR}".  (Default:'
+            ' %(default)s)'
         )
     )
 
@@ -176,11 +196,12 @@ def update(args: argparse.Namespace) -> int:
     Hint: The 'export' command can be used to generate an initial BOOKMARKS
     file if needed.
     """
+    _clean(args)
+
     dbc = args.dbc
     delay_base = _tune_delay_base(args.delay)
     now = time.time()
     portals = bookmarks.load(args.bookmarks)
-    _clean(args.dbc)
 
     fetched = 0
     delay = 0.0
@@ -409,14 +430,24 @@ def prune(args: argparse.Namespace) -> int:
     return 0
 
 
-def _clean(dbc: database.Database):
+def _clean(args: argparse.Namespace):
     """Clean out old cached data."""
+    dbc = args.dbc
+    stmt = sqla.select(sqla.func.count()).select_from(database.PortalV2)
+    count = dbc.session.execute(stmt).one()[0]
+    max_days = count // args.daily_updates
+    max_age = max_days * constants.SECONDS_PER_DAY
+    logging.info(
+        'At the expected fetch rate of %d, it would take %d days to refresh',
+        args.daily_updates, max_days
+    )
+
     now = time.time()
     header_printed = False
-    oldest_allowed = now - MAX_AGE
+    oldest_allowed = now - max_age
     rows = dbc.session.query(database.Address
                              ).filter(database.Address.date < oldest_allowed
-                                      ).limit(30)
+                                      ).limit(3)
     for row in rows:
         if not header_printed:
             print('Deleting stale entries')
