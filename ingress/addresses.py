@@ -442,12 +442,16 @@ def _clean(args: argparse.Namespace):
         args.daily_updates, max_days
     )
 
+    limit = 25
+    if args.limit is not None:
+        limit = args.limit // 2
+
     now = time.time()
     header_printed = False
     oldest_allowed = now - max_age
     rows = dbc.session.query(database.Address
                              ).filter(database.Address.date < oldest_allowed
-                                      ).limit(3)
+                                      ).limit(limit)
     for row in rows:
         if not header_printed:
             print('Deleting stale entries')
