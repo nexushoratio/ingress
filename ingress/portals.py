@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import collections
 import operator
+import os
 import typing
 import urllib.parse
 
@@ -103,13 +104,33 @@ def mundane_commands(ctx: app.ArgparseApp):
             # Add the --flag=values to the appropriate dest type/group.
             vars(namespace)[self.dest].append((self.old_dest, values))
 
-    bm_flags = ctx.get_shared_parser('bookmarks_optional')
+    bm_opt_flags = ctx.get_shared_parser('bookmarks_optional')
+    bm_req_flags = ctx.get_shared_parser('bookmarks')
+
     portal_cmds = ctx.new_subparser(
         ctx.register_command(_portal, name='portal', usage_only=True)
     )
 
+    ctx.register_command(
+        ingest, parents=[bm_req_flags], subparser=portal_cmds
+    )
+    ctx.register_command(
+        expunge, parents=[bm_req_flags], subparser=portal_cmds
+    )
+
+    ctx.register_command(
+        export, parents=[bm_req_flags], subparser=portal_cmds
+    ).add_argument(
+        '-s',
+        '--samples',
+        action='store',
+        default=None,
+        type=int,
+        help='Roughly how many portals should be in the output.'
+    )
+
     parser = ctx.register_command(
-        show, parents=[bm_flags], subparser=portal_cmds
+        show, parents=[bm_opt_flags], subparser=portal_cmds
     )
     f_mv = 'FIELD'
     fv_mv = 'FIELD:VALUE'
@@ -239,6 +260,91 @@ def mundane_commands(ctx: app.ArgparseApp):
 def _portal(args: argparse.Namespace) -> int:
     """(V) A family of commands for working with portals."""
     raise Error('This function should never be called.')
+
+
+def ingest(args: argparse.Namespace) -> int:
+    """(V) Update the database with portals listed in a bookmarks file.
+
+    Hint: Use the 'address-update' command after this to populate address
+    related information.
+    """
+    dbc = args.dbc
+    portals = bookmarks.load(args.bookmarks)
+    timestamp = int(os.stat(args.bookmarks).st_mtime)
+
+    # Of all of the variations I tried for doing these updates, this algorithm
+    # is the fastest.  At some point, the data may be too large for the `in_`
+    # query, but by that point, it is likely that the bookmarks could not be
+    # loaded into memory either.
+    for portal in portals.values():
+        portal['last_seen'] = timestamp
+
+    # Look for existing portals first
+    rows = dbc.session.query(database.PortalV2
+                             ).filter(database.PortalV2.guid.in_(portals))
+    for row in rows:
+        guid = row.guid
+        portal = portals[guid]
+        # only update if newer
+        if portal['last_seen'] > row.last_seen:
+            dbc.session.merge(database.PortalV2(**portal))
+
+        del portals[guid]
+
+    # Whatever is left is a new portal
+    for portal in portals.values():
+        portal['first_seen'] = timestamp
+        dbc.session.add(database.PortalV2(**portal))
+
+    dbc.session.commit()
+
+    return 0
+
+
+def expunge(args: argparse.Namespace) -> int:
+    """(V) Remove portals listed in a bookmarks file from the database."""
+    dbc = args.dbc
+    portals = bookmarks.load(args.bookmarks)
+    for db_portal in dbc.session.query(database.PortalV2).filter(
+            database.PortalV2.guid.in_(portals)):
+        print('Deleting', db_portal.label, db_portal.last_seen)
+        dbc.session.delete(db_portal)
+
+    dbc.session.commit()
+
+    return 0
+
+
+def export(args: argparse.Namespace) -> int:
+    """(V) Export all portals as a bookmarks file."""
+    dbc = args.dbc
+    if args.samples is None:
+        guids = set(
+            result[0] for result in dbc.session.query(database.PortalV2.guid)
+        )
+        bookmarks.save_from_guids(guids, args.bookmarks, dbc)
+    else:
+        hull = dbc.session.query(
+            database.geoalchemy2.functions.ST_ConvexHull(
+                database.geoalchemy2.functions.ST_Union(
+                    database.PortalV2.point
+                )
+            )
+        ).scalar_subquery()
+        result = dbc.session.query(database.PortalV2.guid).filter(
+            database.geoalchemy2.functions.ST_Touches(
+                hull, database.PortalV2.point
+            )
+        )
+        guids = set(row._mapping['guid'] for row in result)
+        limit = max(len(guids), args.samples)
+        count = limit - len(guids)
+        result = dbc.session.query(database.PortalV2.guid).filter(
+            database.PortalV2.guid.not_in(guids)
+        ).order_by(database.PortalV2.guid).limit(count)
+        guids.update(row._mapping['guid'] for row in result)
+        bookmarks.save_from_guids(guids, args.bookmarks, dbc)
+    return 0
 
 
 def show(args: argparse.Namespace) -> int:
