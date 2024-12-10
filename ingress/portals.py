@@ -100,7 +100,6 @@ def mundane_commands(ctx: app.ArgparseApp):
             values: str,
             option_string: str | None = None
         ):
-
             # Add the --flag=values to the appropriate dest type/group.
             vars(namespace)[self.dest].append((self.old_dest, values))
 
