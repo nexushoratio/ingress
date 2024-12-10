@@ -104,8 +104,13 @@ def mundane_commands(ctx: app.ArgparseApp):
             vars(namespace)[self.dest].append((self.old_dest, values))
 
     bm_flags = ctx.get_shared_parser('bookmarks_optional')
+    portal_cmds = ctx.new_subparser(
+        ctx.register_command(_portal, name='portal', usage_only=True)
+    )
 
-    parser = ctx.register_command(show, parents=[bm_flags])
+    parser = ctx.register_command(
+        show, parents=[bm_flags], subparser=portal_cmds
+    )
     f_mv = 'FIELD'
     fv_mv = 'FIELD:VALUE'
     parser.add_argument(
@@ -229,6 +234,11 @@ def mundane_commands(ctx: app.ArgparseApp):
             ' will show them.  (Default: %(default)s)'
         )
     )
+
+
+def _portal(args: argparse.Namespace) -> int:
+    """(V) A family of commands for working with portals."""
+    raise Error('This function should never be called.')
 
 
 def show(args: argparse.Namespace) -> int:
