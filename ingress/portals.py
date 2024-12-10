@@ -104,7 +104,6 @@ def mundane_commands(ctx: app.ArgparseApp):
             # Add the --flag=values to the appropriate dest type/group.
             vars(namespace)[self.dest].append((self.old_dest, values))
 
-    bm_opt_flags = ctx.get_shared_parser('bookmarks_optional')
     bm_req_flags = ctx.get_shared_parser('bookmarks')
 
     portal_cmds = ctx.new_subparser(
@@ -129,9 +128,17 @@ def mundane_commands(ctx: app.ArgparseApp):
         help='Roughly how many portals should be in the output.'
     )
 
-    parser = ctx.register_command(
-        show, parents=[bm_opt_flags], subparser=portal_cmds
+    parser = ctx.register_command(show, subparser=portal_cmds)
+    parser.add_argument(
+        '--bookmark',
+        default=False,
+        action=ctx.argparse_api.BooleanOptionalAction,
+        help=(
+            'Create bookmark folders and entries in the'
+            ' database. (Default: %(default)s)'
+        )
     )
+
     f_mv = 'FIELD'
     fv_mv = 'FIELD:VALUE'
     parser.add_argument(
@@ -363,10 +370,9 @@ def show(args: argparse.Namespace) -> int:
     precedence, in others, they will be additive.  If you need fancier
     reports, a separate SQL reporting engine may be necessary.
 
-    They can also be exported to a BOOKMARKS file.
-
-    Hint: Multiple BOOKMARKS could be generated then the 'merge' command could
-    be used to combine them.
+    Hint: The portals mentioned in the output may also be saved to an internal
+    bookmark folder for use in subsequent commands.  See the "bookmark" family
+    of commands for details.
     """
     try:
         return _show_impl(args)
@@ -414,24 +420,24 @@ def _show_impl(args: argparse.Namespace) -> int:
         )
         return 0
 
-    portals: bookmarks.Portals = dict()
     groups = collections.defaultdict(list)
+    count = 0
 
     for row in dbc.session.execute(stmt).mappings():
         group = ', '.join(fmt.format_map(row) for fmt in group_by)
-        portal = row.PortalV2.to_iitc()
         groups[group].append(row)
-        portals[portal['guid']] = portal
+        count += 1
 
     text_output = list()
     text_output.append(
-        f'Matching portals: {len(portals)}\n'
+        f'Matching portals: {count}\n'
         f'  {", ".join(constraints)}'
     )
     for group in groups:
         section = ''
         if group:
             section += f'Group: {group}\n\n'
+
         entries = (
             portal_format.format_map(portal) for portal in groups[group]
         )
@@ -439,10 +445,27 @@ def _show_impl(args: argparse.Namespace) -> int:
         text_output.append(section)
 
     print('\n\n=======\n\n'.join(text_output))
-    if args.bookmarks:
-        bookmarks.save(portals, args.bookmarks)
+
+    if args.bookmark:
+        _add_bookmark_folders(dbc, groups)
 
     return 0
+
+
+def _add_bookmark_folders(dbc, groups):
+    """Add the group of portals to database managed bookmarks."""
+    for group in groups:
+        folder = database.BookmarkFolder(label=group or 'show')
+        dbc.session.add(folder)
+        for portal in groups[group]:
+            guid = portal['guid']
+            dbc.session.add(
+                database.PortalBookmark(
+                    folder_id=folder.uuid, portal_id=guid
+                )
+            )
+        print(f'folder: {folder.uuid} | {folder.label}')
+    dbc.session.commit()
 
 
 def _process_format_flag(args: argparse.Namespace) -> str:
