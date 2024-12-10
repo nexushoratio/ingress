@@ -324,10 +324,7 @@ def mundane_commands(ctx: app.ArgparseApp):
         ]
     )
     ctx.register_command(
-        place_delete,
-        name='del',
-        subparser=place_cmds,
-        parents=[flags.uuid_req]
+        place_del, name='del', subparser=place_cmds, parents=[flags.uuid_req]
     )
 
     map_cmds = ctx.new_subparser(
@@ -627,7 +624,7 @@ def place_set(args: argparse.Namespace) -> int:
     return ret
 
 
-def place_delete(args: argparse.Namespace) -> int:
+def place_del(args: argparse.Namespace) -> int:
     """(V) Delete a specific place from the database."""
     dbc = args.dbc
     place = dbc.session.get(database.Place, args.uuid)
