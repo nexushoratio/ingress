@@ -200,7 +200,7 @@ def update(args: argparse.Namespace) -> int:
 
     dbc = args.dbc
     delay_base = _tune_delay_base(args.delay)
-    now = time.time()
+    now = int(time.time())
     portals = bookmarks.load(args.bookmarks)
 
     fetched = 0

@@ -707,7 +707,7 @@ def _update_directions(dbc: database.Database, portals: bookmarks.Portals):
 
 def _update_paths(dbc: database.Database, portals: bookmarks.Portals):  # pylint: disable=too-many-locals
     """Placeholder docstring for private function."""
-    now = time.time()
+    now = int(time.time())
     combo_groups = _grouper(_portal_combos(portals), 64)
     for combo_group in combo_groups:
         filtered_combo_group = [x for x in combo_group if x is not None]
