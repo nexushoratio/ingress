@@ -208,6 +208,19 @@ class _CommonFlags:
         return parser
 
     @functools.cached_property
+    def uuid_req_list(self) -> argparse.ArgumentParser:
+        """Required repeatable --uuid flag."""
+        parser = self._parser()
+        parser.add_argument(
+            '-u',
+            '--uuid',
+            action='append',
+            required=True,
+            help='UUID to use.  May be specified multiple times.'
+        )
+        return parser
+
+    @functools.cached_property
     def zoom_req(self) -> argparse.ArgumentParser:
         """Required --zoom flag."""
         parser = self._parser()
@@ -301,7 +314,7 @@ def mundane_commands(ctx: app.ArgparseApp):
         folder_del,
         name='del',
         subparser=folder_cmds,
-        parents=[flags.uuid_req]
+        parents=[flags.uuid_req_list]
     )
 
     place_cmds = ctx.new_subparser(
@@ -324,7 +337,10 @@ def mundane_commands(ctx: app.ArgparseApp):
         ]
     )
     ctx.register_command(
-        place_del, name='del', subparser=place_cmds, parents=[flags.uuid_req]
+        place_del,
+        name='del',
+        subparser=place_cmds,
+        parents=[flags.uuid_req_list]
     )
 
     map_cmds = ctx.new_subparser(
@@ -350,7 +366,10 @@ def mundane_commands(ctx: app.ArgparseApp):
         ]
     )
     ctx.register_command(
-        map_del, name='del', subparser=map_cmds, parents=[flags.uuid_req]
+        map_del,
+        name='del',
+        subparser=map_cmds,
+        parents=[flags.uuid_req_list]
     )
 
     portal_cmds = ctx.new_subparser(
@@ -376,7 +395,7 @@ def mundane_commands(ctx: app.ArgparseApp):
         portal_del,
         name='del',
         subparser=portal_cmds,
-        parents=[flags.uuid_req]
+        parents=[flags.uuid_req_list]
     )
 
 
@@ -542,19 +561,9 @@ def folder_set(args: argparse.Namespace) -> int:
 
 
 def folder_del(args: argparse.Namespace) -> int:
-    """(V) Delete a bookmark folder from the database."""
-    dbc = args.dbc
+    """(V) Delete one or more bookmark folders from the database."""
 
-    folder = dbc.session.get(database.BookmarkFolder, args.uuid)
-    ret = 0
-    if folder:
-        dbc.session.delete(folder)
-        dbc.session.commit()
-    else:
-        print(f'Unknown uuid: "{args.uuid}"')
-        ret = 1
-
-    return ret
+    return _delete_by_uuids(args.dbc, database.BookmarkFolder, args.uuid)
 
 
 def place_list(args: argparse.Namespace) -> int:
@@ -625,18 +634,9 @@ def place_set(args: argparse.Namespace) -> int:
 
 
 def place_del(args: argparse.Namespace) -> int:
-    """(V) Delete a specific place from the database."""
-    dbc = args.dbc
-    place = dbc.session.get(database.Place, args.uuid)
-    ret = 0
-    if place:
-        dbc.session.delete(place)
-        dbc.session.commit()
-    else:
-        print(f'Unknown uuid: "{args.uuid}"')
-        ret = 1
+    """(V) Delete one or more specific places from the database."""
 
-    return ret
+    return _delete_by_uuids(args.dbc, database.Place, args.uuid)
 
 
 def map_list(args: argparse.Namespace) -> int:
@@ -713,19 +713,9 @@ def map_set(args: argparse.Namespace) -> int:
 
 
 def map_del(args: argparse.Namespace) -> int:
-    """(V) Delete a map bookmark from the database."""
-    dbc = args.dbc
+    """(V) Delete one or more map bookmarks from the database."""
 
-    this_map = dbc.session.get(database.MapBookmark, args.uuid)
-    ret = 0
-    if this_map:
-        dbc.session.delete(this_map)
-        dbc.session.commit()
-    else:
-        print(f'Unknown uuid: "{args.uuid}"')
-        ret = 1
-
-    return ret
+    return _delete_by_uuids(args.dbc, database.MapBookmark, args.uuid)
 
 
 def portal_list(args: argparse.Namespace) -> int:
@@ -807,19 +797,9 @@ def portal_set(args: argparse.Namespace) -> int:
 
 
 def portal_del(args: argparse.Namespace) -> int:
-    """(V) Delete a portal bookmark from the database."""
-    dbc = args.dbc
+    """(V) Delete one more more portal bookmarks from the database."""
 
-    this_portal = dbc.session.get(database.PortalBookmark, args.uuid)
-    ret = 0
-    if this_portal:
-        dbc.session.delete(this_portal)
-        dbc.session.commit()
-    else:
-        print(f'Unknown uuid: "{args.uuid}"')
-        ret = 1
-
-    return ret
+    return _delete_by_uuids(args.dbc, database.PortalBookmark, args.uuid)
 
 
 def read_(args: argparse.Namespace) -> int:
@@ -961,6 +941,26 @@ def write_(args: argparse.Namespace) -> int:
 
     if not ret:
         json.save(args.bookmarks, bookmarks)
+
+    return ret
+
+
+def _delete_by_uuids(dbc: database.Database, table, uuids: list[str]) -> int:
+    """Delete items from the specified table based upon UUIDs."""
+    ret = 0
+
+    for uuid in uuids:
+        item = dbc.session.get(table, uuid)
+        if item:
+            dbc.session.delete(item)
+        else:
+            print(f'Unknown uuid: "{uuid}"')
+            ret = 1
+
+    if ret:
+        dbc.session.rollback()
+    else:
+        dbc.session.commit()
 
     return ret
 
