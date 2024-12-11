@@ -79,7 +79,7 @@ def load_polygons(filename):
     return shapely.geometry.MultiPolygon(polygons)
 
 
-def load_point(filename: str) -> database.geoalchemy2.elements.WKTElement:
+def load_point(filename: str) -> database.geoalchemy2.WKTElement:
     """Find a singular point from a drawtools file.
 
     Args:
@@ -99,9 +99,7 @@ def load_point(filename: str) -> database.geoalchemy2.elements.WKTElement:
     return list(points)[0]
 
 
-def load_points(
-    filename: str
-) -> frozenset[database.geoalchemy2.elements.WKTElement]:
+def load_points(filename: str) -> frozenset[database.geoalchemy2.WKTElement]:
     """Find a collection of points from a drawtools file.
 
     Args:

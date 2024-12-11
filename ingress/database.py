@@ -143,24 +143,22 @@ metadata = sqlalchemy.schema.MetaData(naming_convention=convention)
 Base = orm.declarative_base(metadata=metadata)
 
 
-def latlng_dict_to_point(
-    latlng: dict[str, str]
-) -> geoalchemy2.elements.WKTElement:
+def latlng_dict_to_point(latlng: dict[str, str]) -> geoalchemy2.WKTElement:
     """Convert lat,lng to a geoalchemy wrapped POINT."""
-    point = geoalchemy2.elements.WKTElement(
+    point = geoalchemy2.WKTElement(
         f'POINT({latlng["lng"]} {latlng["lat"]})', srid=4326
     )
     return point
 
 
-def _latlng_to_point(latlng: str) -> geoalchemy2.elements.WKTElement:
+def _latlng_to_point(latlng: str) -> geoalchemy2.WKTElement:
     """Convert lat,lng to a geoalchemy wrapped POINT."""
     lat, lng = latlng.split(',')
-    point = geoalchemy2.elements.WKTElement(f'POINT({lng} {lat})', srid=4326)
+    point = geoalchemy2.WKTElement(f'POINT({lng} {lat})', srid=4326)
     return point
 
 
-def _point_to_latlng(point: geoalchemy2.elements.WKTElement) -> str:
+def _point_to_latlng(point: geoalchemy2.WKTElement) -> str:
     """Convert a geoalchemy wrapped POINT to a lat,lng string."""
     shape = geoalchemy2.shape.to_shape(point)
     return f'{shape.y},{shape.x}'
