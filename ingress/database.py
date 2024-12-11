@@ -190,7 +190,9 @@ class _Portal(Base):  # pylint: disable=missing-class-docstring
     last_seen = sqlalchemy.Column(
         sqlalchemy.Integer, nullable=False, index=True
     )
-    latlng = sqlalchemy.Column(geoalchemy2.Geometry('POINT', srid=4326))
+    latlng: geoalchemy2.WKBElement = sqlalchemy.Column(
+        geoalchemy2.Geometry('POINT', srid=4326)
+    )
 
     def to_iitc(self):
         """Generate an IITC bookmark style dict."""
@@ -242,7 +244,7 @@ class PortalV2(Base):  # pylint: disable=missing-class-docstring
             'SUBSTR(latlng, INSTR(latlng, ",") + 1)', persisted=False
         )
     )
-    point = sqlalchemy.Column(
+    point: geoalchemy2.WKBElement = sqlalchemy.Column(
         geoalchemy2.Geometry('POINT', srid=4326),
         sqlalchemy.Computed(
             'ST_POINT(CAST(lng AS FLOAT), CAST(lat AS FLOAT))',
@@ -274,7 +276,7 @@ class PortalV2(Base):  # pylint: disable=missing-class-docstring
 class ClusterLeader(Base):  # pylint: disable=missing-class-docstring
     __tablename__ = 'cluster_leaders'
 
-    guid = sqlalchemy.Column(
+    guid: str = sqlalchemy.Column(
         sqlalchemy.ForeignKey('portals.guid', ondelete='CASCADE'),
         primary_key=True
     )
@@ -318,10 +320,10 @@ class PathLeg(Base):  # pylint: disable=missing-class-docstring
     __tablename__ = 'path_legs'
 
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
-    leg_id = sqlalchemy.Column(
+    leg_id: str = sqlalchemy.Column(
         sqlalchemy.ForeignKey('legs.id', ondelete='CASCADE')
     )
-    path_id = sqlalchemy.Column(
+    path_id: str = sqlalchemy.Column(
         sqlalchemy.ForeignKey('paths.id', ondelete='CASCADE')
     )
 
@@ -390,7 +392,7 @@ class AddressType(Base):  # pylint: disable=missing-class-docstring
 class AddressTypeValue(Base):  # pylint: disable=missing-class-docstring
     __tablename__ = 'address_type_values'
 
-    type = sqlalchemy.Column(
+    type: str = sqlalchemy.Column(
         sqlalchemy.ForeignKey('address_types.type', ondelete='CASCADE'),
         primary_key=True
     )
@@ -414,7 +416,7 @@ class AddressTypeValue(Base):  # pylint: disable=missing-class-docstring
 class AddressTypeValueAssociation(Base):  # pylint: disable=missing-class-docstring
     __tablename__ = 'address_type_value_associations'
 
-    latlng = sqlalchemy.Column(
+    latlng: str = sqlalchemy.Column(
         sqlalchemy.ForeignKey('addresses.latlng', ondelete='CASCADE'),
         primary_key=True
     )
@@ -472,7 +474,7 @@ class Place(ReprMixin, UuidMixin, Base):  # pylint: disable=missing-class-docstr
             'SUBSTR(latlng, INSTR(latlng, ",") + 1)', persisted=False
         )
     )
-    point = sqlalchemy.Column(
+    point: geoalchemy2.WKBElement = sqlalchemy.Column(
         geoalchemy2.Geometry('POINT', srid=4326),
         sqlalchemy.Computed(
             'ST_POINT(CAST(lng AS FLOAT), CAST(lat AS FLOAT))',
@@ -491,11 +493,11 @@ class BookmarkFolder(ReprMixin, UuidMixin, Base):  # pylint: disable=missing-cla
 class MapBookmark(ReprMixin, UuidMixin, Base):  # pylint: disable=missing-class-docstring
     __tablename__ = 'map_bookmarks'
 
-    folder_id = sqlalchemy.Column(
+    folder_id: str = sqlalchemy.Column(
         sqlalchemy.ForeignKey('bookmark_folders.uuid', ondelete='CASCADE'),
         nullable=False
     )
-    place_id = sqlalchemy.Column(
+    place_id: str = sqlalchemy.Column(
         sqlalchemy.ForeignKey('places.uuid', ondelete='CASCADE'),
         nullable=False
     )
@@ -509,11 +511,11 @@ class MapBookmark(ReprMixin, UuidMixin, Base):  # pylint: disable=missing-class-
 class PortalBookmark(ReprMixin, UuidMixin, Base):  # pylint: disable=missing-class-docstring
     __tablename__ = 'portal_bookmarks'
 
-    folder_id = sqlalchemy.Column(
+    folder_id: str = sqlalchemy.Column(
         sqlalchemy.ForeignKey('bookmark_folders.uuid', ondelete='CASCADE'),
         nullable=False
     )
-    portal_id = sqlalchemy.Column(
+    portal_id: str = sqlalchemy.Column(
         sqlalchemy.ForeignKey('v2_portals.guid', ondelete='CASCADE'),
         nullable=False
     )
@@ -727,9 +729,9 @@ class Database:  # pylint: disable=missing-class-docstring
                         FROM sqlite_master
                         WHERE type = "table"
                         """)):
-                    table = existing_tables.get(row.name)
-                    if table:
-                        table.ddls.update(self._clean_ddl(row.sql))
+                    existing_table = existing_tables.get(row.name)
+                    if existing_table:
+                        existing_table.ddls.update(self._clean_ddl(row.sql))
 
         return existing_tables
 

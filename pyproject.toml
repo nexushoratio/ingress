@@ -86,16 +86,7 @@ ignored-modules = [
 
 [tool.mypy]
 files = 'ingress'
-
-[[tool.mypy.overrides]]
-# The sqlalchemy/mypy combo on Debian/bookworm are incompatible with the
-# declarative_base() approach used in database.py.  Using pip to upgrade would
-# probably work, but since I refuse to, just disable this error in this file.
-module = 'ingress.database'
-disable_error_code = [
-  'misc',
-  'valid-type',
-]
+plugins = 'sqlalchemy.ext.mypy.plugin'
 
 [tool.coverage.run]
 branch = true
