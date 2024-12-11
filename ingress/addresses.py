@@ -253,18 +253,22 @@ def type_list(args: argparse.Namespace) -> int:
     modify the settings.
     """
     dbc = args.dbc
-    query = dbc.session.query(database.AddressType)
-    query = query.order_by(database.AddressType.type)
+
+    stmt = sqla.select(database.AddressType
+                       ).order_by(database.AddressType.type)
+
     type_col_header = 'Type'
     type_col_width = len('administrative_area_level_N')
     vis_col_header = 'Visibility'
     vis_col_width = len(vis_col_header)
+
     print(f'{type_col_header:^{type_col_width}} | {vis_col_header} | Note')
-    for row in query:
+    for row in dbc.session.execute(stmt):
+        atype = row.AddressType
         print(
-            f'{row.type:{type_col_width}}'
-            f' | {row.visibility:^{vis_col_width}}'
-            f' | {row.note if row.note else "~~"}'
+            f'{atype.type:{type_col_width}}'
+            f' | {atype.visibility:^{vis_col_width}}'
+            f' | {atype.note or "~~"}'
         )
 
     return 0
@@ -327,12 +331,16 @@ def value_list(args: argparse.Namespace) -> int:
     commands to modify the settings.
     """
     dbc = args.dbc
-    query = dbc.session.query(database.AddressTypeValue).join(
-        database.AddressType
-    ).filter(database.AddressType.visibility != 'hide')
-    query = query.order_by(
-        database.AddressTypeValue.type, database.AddressTypeValue.value
+
+    stmt = (
+        sqla.select(database.AddressTypeValue, database.AddressType).join(
+            database.AddressTypeValue,
+            database.AddressTypeValue.type == database.AddressType.type
+        ).where(database.AddressType.visibility != 'hide').order_by(
+            database.AddressTypeValue.type, database.AddressTypeValue.value
+        )
     )
+
     type_col_header = 'Type'
     type_col_width = len('administrative_area_level_N')
     val_col_header = 'Value'
@@ -340,17 +348,19 @@ def value_list(args: argparse.Namespace) -> int:
     val_col_width = 24
     prune_col_header = 'Pruning'
     prune_col_width = len(prune_col_header)
+
     print(
         f'{type_col_header:^{type_col_width}}'
         f' | {val_col_header:^{val_col_width}}'
         f' | {prune_col_header} | Note'
     )
-    for row in query:
+    for row in dbc.session.execute(stmt):
+        atv = row.AddressTypeValue
         print(
-            f'{row.type:{type_col_width}}'
-            f' | {row.value:{val_col_width}}'
-            f' | {row.pruning:^{prune_col_width}}'
-            f' | {row.note if row.note else "~~"}'
+            f'{atv.type:{type_col_width}}'
+            f' | {atv.value:{val_col_width}}'
+            f' | {atv.pruning:^{prune_col_width}}'
+            f' | {atv.note or "~~"}'
         )
 
     return 0
