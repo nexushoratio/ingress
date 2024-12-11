@@ -712,12 +712,12 @@ class Database:  # pylint: disable=missing-class-docstring
         with self._engine.connect() as conn:
             existing = sqlalchemy.schema.MetaData()
             existing.reflect(bind=conn)
-            for table in existing.tables.values():
-                existing_tables[table.name] = ExistingTable(
+            for value in existing.tables.values():
+                existing_tables[value.name] = ExistingTable(
                     ddls=self._clean_ddl(
-                        str(sqlalchemy.schema.CreateTable(table))
+                        str(sqlalchemy.schema.CreateTable(value))
                     ),
-                    table=table
+                    table=value
                 )
 
             # https://github.com/sqlalchemy/sqlalchemy/discussions/11580
