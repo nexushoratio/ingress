@@ -278,7 +278,7 @@ def mundane_commands(ctx: app.ArgparseApp):
     flags = _CommonFlags(ctx)
 
     bookmark_cmds = ctx.new_subparser(
-        ctx.register_command(bookmark_, name='bookmark', usage_only=True)
+        ctx.register_command(_bookmark, name='bookmark', usage_only=True)
     )
 
     ctx.register_command(
@@ -293,7 +293,7 @@ def mundane_commands(ctx: app.ArgparseApp):
 
     folder_cmds = ctx.new_subparser(
         ctx.register_command(
-            folder_, name='folder', usage_only=True, subparser=bookmark_cmds
+            _folder, name='folder', usage_only=True, subparser=bookmark_cmds
         )
     )
 
@@ -318,7 +318,7 @@ def mundane_commands(ctx: app.ArgparseApp):
     )
 
     place_cmds = ctx.new_subparser(
-        ctx.register_command(place_, name='place', usage_only=True)
+        ctx.register_command(_place, name='place', usage_only=True)
     )
 
     ctx.register_command(place_list, name='list', subparser=place_cmds)
@@ -345,7 +345,7 @@ def mundane_commands(ctx: app.ArgparseApp):
 
     map_cmds = ctx.new_subparser(
         ctx.register_command(
-            map_, name='map', usage_only=True, subparser=bookmark_cmds
+            _map, name='map', usage_only=True, subparser=bookmark_cmds
         )
     )
 
@@ -374,7 +374,7 @@ def mundane_commands(ctx: app.ArgparseApp):
 
     portal_cmds = ctx.new_subparser(
         ctx.register_command(
-            portal_, name='portal', usage_only=True, subparser=bookmark_cmds
+            _portal, name='portal', usage_only=True, subparser=bookmark_cmds
         )
     )
 
@@ -399,22 +399,22 @@ def mundane_commands(ctx: app.ArgparseApp):
     )
 
 
-def place_(args: argparse.Namespace) -> int:
+def _place(args: argparse.Namespace) -> int:
     """(V) A family of commands for working with places."""
     raise Error('This function should never be called.')
 
 
-def bookmark_(args: argparse.Namespace) -> int:
+def _bookmark(args: argparse.Namespace) -> int:
     """(V) A family of commands for working with bookmarks in the database."""
     raise Error('This function should never be called.')
 
 
-def folder_(args: argparse.Namespace) -> int:
+def _folder(args: argparse.Namespace) -> int:
     """(V) A family of commands for working with bookmark folders."""
     raise Error('This function should never be called.')
 
 
-def map_(args: argparse.Namespace) -> int:
+def _map(args: argparse.Namespace) -> int:
     """(V) A family of commands for working with map bookmarks.
 
     A map bookmark consists of a (folder, place, zoom) combination.
@@ -422,7 +422,7 @@ def map_(args: argparse.Namespace) -> int:
     raise Error('This function should never be called.')
 
 
-def portal_(args: argparse.Namespace) -> int:
+def _portal(args: argparse.Namespace) -> int:
     """(V) A family of commands for working with portal bookmarks.
 
     A portal bookmark consists of a (folder, portal) combination.

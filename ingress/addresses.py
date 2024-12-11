@@ -56,8 +56,9 @@ def mundane_commands(ctx: app.ArgparseApp):
         '-N', '--note', action='store', help='Optional note to add'
     )
 
-    parser = ctx.register_command(address, usage_only=True)
-    address_cmds = ctx.new_subparser(parser)
+    address_cmds = ctx.new_subparser(
+        ctx.register_command(_address, name='address', usage_only=True)
+    )
 
     parser = ctx.register_command(
         update, subparser=address_cmds, parents=[bm_flags]
@@ -105,10 +106,11 @@ def mundane_commands(ctx: app.ArgparseApp):
         help='Commit the pruning operation. (Default: %(default)s)'
     )
 
-    parser = ctx.register_command(
-        type_, name='type', usage_only=True, subparser=address_cmds
+    type_cmds = ctx.new_subparser(
+        ctx.register_command(
+            _type, name='type', usage_only=True, subparser=address_cmds
+        )
     )
-    type_cmds = ctx.new_subparser(parser)
 
     ctx.register_command(type_list, name='list', subparser=type_cmds)
 
@@ -130,8 +132,11 @@ def mundane_commands(ctx: app.ArgparseApp):
         type_del, name='del', subparser=type_cmds, parents=[type_flag]
     )
 
-    parser = ctx.register_command(value, usage_only=True, subparser=type_cmds)
-    value_cmds = ctx.new_subparser(parser)
+    value_cmds = ctx.new_subparser(
+        ctx.register_command(
+            _value, name='value', usage_only=True, subparser=type_cmds
+        )
+    )
 
     ctx.register_command(value_list, name='list', subparser=value_cmds)
 
@@ -160,17 +165,17 @@ def mundane_commands(ctx: app.ArgparseApp):
     )
 
 
-def address(args: argparse.Namespace) -> int:
+def _address(args: argparse.Namespace) -> int:
     """(V) A family of address commands."""
     raise Error('This function should never be called.')
 
 
-def type_(args: argparse.Namespace) -> int:
+def _type(args: argparse.Namespace) -> int:
     """(V) A family of (address, type) commands."""
     raise Error('This function should never be called.')
 
 
-def value(args: argparse.Namespace) -> int:
+def _value(args: argparse.Namespace) -> int:
     """(V) A family of (address, type, value) commands."""
     raise Error('This function should never be called.')
 
