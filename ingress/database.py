@@ -368,7 +368,7 @@ class Address(Base):  # pylint: disable=missing-class-docstring
         )
 
 
-class AddressType(Base):  # pylint: disable=missing-class-docstring
+class AddressType(ReprMixin, Base):  # pylint: disable=missing-class-docstring
     __tablename__ = 'address_types'
 
     type = sqlalchemy.Column(
@@ -383,11 +383,8 @@ class AddressType(Base):  # pylint: disable=missing-class-docstring
     )
     note = sqlalchemy.Column(sqlalchemy.String)
 
-    def __repr__(self):
-        return f'AddressType(type={self.type!r})'
 
-
-class AddressTypeValue(Base):  # pylint: disable=missing-class-docstring
+class AddressTypeValue(ReprMixin, Base):  # pylint: disable=missing-class-docstring
     __tablename__ = 'address_type_values'
 
     type: str = sqlalchemy.Column(
