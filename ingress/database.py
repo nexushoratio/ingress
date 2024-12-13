@@ -22,18 +22,7 @@ if typing.TYPE_CHECKING:  # pragma: no cover
 # pylint: disable=too-few-public-methods
 
 VACUUM_TRIGGER_ENVVAR: str = 'INGRESS_VACUUM_TRIGGER'
-
-
-@dataclasses.dataclass
-class _Globals:
-    """Module level globals.
-
-    I am sorry.
-    """
-    vacuum_trigger_value: str = '256'
-
-
-globvars = _Globals()
+VACUUM_TRIGGER_DEFAULT = '256'
 
 
 @dataclasses.dataclass(kw_only=True)
@@ -78,9 +67,7 @@ def mundane_global_flags(ctx: app.ArgparseApp):
             '  %(default)s)'
         ),
         action='store',
-        default=os.getenv(
-            VACUUM_TRIGGER_ENVVAR, globvars.vacuum_trigger_value
-        ),
+        default=os.getenv(VACUUM_TRIGGER_ENVVAR, VACUUM_TRIGGER_DEFAULT),
         type=int
     )
 
@@ -92,12 +79,12 @@ def init_db(args: argparse.Namespace):
 
     # Do not bother if no command was given.
     if args.name:
-        globvars.vacuum_trigger_value = args.db_vacuum_trigger
-        del args.db_vacuum_trigger
-
-        args.dbc = Database(args.db_dir, args.db_name)
+        args.dbc = Database(
+            args.db_dir, args.db_name, vacuum_trigger=args.db_vacuum_trigger
+        )
         del args.db_dir
         del args.db_name
+        del args.db_vacuum_trigger
 
 
 convention = {
@@ -608,7 +595,13 @@ _AUTO_DROPS = (
 
 class Database:  # pylint: disable=missing-class-docstring
 
-    def __init__(self, directory: str, filename: str):
+    def __init__(
+        self,
+        directory: str,
+        filename: str,
+        vacuum_trigger: int = int(VACUUM_TRIGGER_DEFAULT)
+    ):
+        self._vacuum_trigger = vacuum_trigger
         self._spatialite_initialized = False
         pathlib.Path(directory).mkdir(exist_ok=True)
         sql_logger = logging.getLogger('sqlalchemy')
@@ -652,11 +645,11 @@ class Database:  # pylint: disable=missing-class-docstring
         logging.info('total_changes: %d', conn.total_changes)
         count = conn.execute('PRAGMA freelist_count').fetchone()[0]
         logging.info('freelist_count: %d', count)
-        if count > globvars.vacuum_trigger_value:
+        if count > self._vacuum_trigger:
             logging.info('vacuuming')
             print(
                 f'Performing VACUUM as (freelist {count=} '
-                f' > trigger={globvars.vacuum_trigger_value})'
+                f' > trigger={self._vacuum_trigger})'
             )
             for row in conn.execute('VACUUM'):
                 print(row)
