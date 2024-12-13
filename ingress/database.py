@@ -100,36 +100,6 @@ def init_db(args: argparse.Namespace):
         del args.db_name
 
 
-@sqlalchemy.event.listens_for(sqlalchemy.engine.Engine, 'connect')
-def on_connect(dbapi_connection, _connection_record):
-    """Defaults for our connection."""
-    dbapi_connection.execute('PRAGMA foreign_keys=ON')
-    dbapi_connection.enable_load_extension(True)
-    dbapi_connection.load_extension('mod_spatialite')
-    dbapi_connection.enable_load_extension(False)
-    cur = dbapi_connection.execute('SELECT CheckSpatialMetaData();')
-    if cur.fetchone()[0] < 1:
-        dbapi_connection.execute('SELECT InitSpatialMetaData(1);')
-
-
-@sqlalchemy.event.listens_for(sqlalchemy.engine.Engine, 'close')
-def on_close(dbapi_connection, _connection_record):
-    """Maintenance on close."""
-    changes = dbapi_connection.execute('SELECT total_changes();'
-                                       ).fetchone()[0]
-    logging.debug('total_changes: %d', changes)
-    count = dbapi_connection.execute('PRAGMA freelist_count').fetchone()[0]
-    logging.debug('freelist_count: %d', count)
-    if count > globvars.vacuum_trigger_value:
-        logging.debug('vacuuming')
-        print(
-            f'Performing VACUUM as (freelist {count=} '
-            f' > trigger={globvars.vacuum_trigger_value})'
-        )
-        for row in dbapi_connection.execute('VACUUM'):
-            print(row)
-
-
 convention = {
     'ix': 'ix_%(column_0_label)s',
     'uq': 'uq_%(table_name)s_%(column_0_name)s',
@@ -646,10 +616,41 @@ class Database:  # pylint: disable=missing-class-docstring
         self._engine = sqlalchemy.create_engine(
             f'sqlite:///{directory}/{filename}', future=True
         )
+        sqlalchemy.event.listen(
+            self._engine, 'connect', self._connect, named=True
+        )
+        sqlalchemy.event.listen(
+            self._engine, 'close', self._close, named=True
+        )
         self._sanity_check()
         self.session = orm.sessionmaker(bind=self._engine, future=True)()
         Base.metadata.create_all(self._engine)
         self._post_create_migrations()
+
+    def _connect(self, **kwargs):
+        """Set defaults for our connection."""
+        conn = kwargs['dbapi_connection']
+        conn.execute('PRAGMA foreign_keys=ON')
+        conn.enable_load_extension(True)
+        conn.load_extension('mod_spatialite')
+        conn.enable_load_extension(False)
+        if conn.execute('SELECT CheckSpatialMetaData()').fetchone()[0] < 1:
+            conn.execute('SELECT InitSpatialMetaData(1)')
+
+    def _close(self, **kwargs):
+        """Maintenance on close."""
+        conn = kwargs['dbapi_connection']
+        logging.info('total_changes: %d', conn.total_changes)
+        count = conn.execute('PRAGMA freelist_count').fetchone()[0]
+        logging.info('freelist_count: %d', count)
+        if count > globvars.vacuum_trigger_value:
+            logging.info('vacuuming')
+            print(
+                f'Performing VACUUM as (freelist {count=} '
+                f' > trigger={globvars.vacuum_trigger_value})'
+            )
+            for row in conn.execute('VACUUM'):
+                print(row)
 
     def _sanity_check(self):
         """This is a proxy for doing proper migrations."""
