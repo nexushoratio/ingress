@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import atexit
 import dataclasses
 import difflib
 import logging
@@ -85,6 +86,8 @@ def init_db(args: argparse.Namespace):
         del args.db_dir
         del args.db_name
         del args.db_vacuum_trigger
+
+        atexit.register(args.dbc.dispose)
 
 
 convention = {
@@ -627,6 +630,10 @@ class Database:  # pylint: disable=missing-class-docstring
             print('https://github.com/geoalchemy/geoalchemy2/issues/519')
         Base.metadata.create_all(self._engine)
         self._post_create_migrations()
+
+    def dispose(self):
+        """Orderly cleanup."""
+        self._engine.dispose()
 
     def _connect(self, **kwargs):
         """Set defaults for our connection."""
