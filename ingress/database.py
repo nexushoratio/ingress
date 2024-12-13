@@ -609,6 +609,7 @@ _AUTO_DROPS = (
 class Database:  # pylint: disable=missing-class-docstring
 
     def __init__(self, directory: str, filename: str):
+        self._spatialite_initialized = False
         pathlib.Path(directory).mkdir(exist_ok=True)
         sql_logger = logging.getLogger('sqlalchemy')
         root_logger = logging.getLogger()
@@ -624,6 +625,13 @@ class Database:  # pylint: disable=missing-class-docstring
         )
         self._sanity_check()
         self.session = orm.sessionmaker(bind=self._engine, future=True)()
+        if self._spatialite_initialized:
+            print(
+                'Ignore the following error messages about'
+                ' "updateTableTriggers()".'
+            )
+            print('For details see:')
+            print('https://github.com/geoalchemy/geoalchemy2/issues/519')
         Base.metadata.create_all(self._engine)
         self._post_create_migrations()
 
@@ -636,6 +644,7 @@ class Database:  # pylint: disable=missing-class-docstring
         conn.enable_load_extension(False)
         if conn.execute('SELECT CheckSpatialMetaData()').fetchone()[0] < 1:
             conn.execute('SELECT InitSpatialMetaData(1)')
+            self._spatialite_initialized = True
 
     def _close(self, **kwargs):
         """Maintenance on close."""
