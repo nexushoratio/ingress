@@ -611,7 +611,9 @@ class Database:  # pylint: disable=missing-class-docstring
         root_logger = logging.getLogger()
         sql_logger.setLevel(root_logger.getEffectiveLevel())
         self._engine = sqlalchemy.create_engine(
-            f'sqlite:///{directory}/{filename}', future=True
+            f'sqlite:///{directory}/{filename}',
+            future=True,
+            poolclass=sqlalchemy.pool.StaticPool
         )
         sqlalchemy.event.listen(
             self._engine, 'connect', self._connect, named=True
