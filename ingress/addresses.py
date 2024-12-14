@@ -204,6 +204,7 @@ def update(args: argparse.Namespace) -> int:
     _clean(args)
 
     dbc = args.dbc
+
     delay_base = _tune_delay_base(args.delay)
     now = int(time.time())
     portals = bookmarks.load(args.bookmarks)
@@ -284,6 +285,7 @@ def type_set(args: argparse.Namespace) -> int:
     These values are populated by the 'address update' command.
     """
     dbc = args.dbc
+
     address_type = dbc.session.get(database.AddressType, args.type)
     ret = 0
     if address_type is not None:
@@ -311,6 +313,7 @@ def type_del(args: argparse.Namespace) -> int:
     These values are populated by the 'address update' command.
     """
     dbc = args.dbc
+
     address_type = dbc.session.get(database.AddressType, args.type)
     ret = 0
     if address_type is not None:
@@ -374,6 +377,7 @@ def value_set(args: argparse.Namespace) -> int:
     These values are populated by the 'address update' command.
     """
     dbc = args.dbc
+
     address_type_value = dbc.session.get(
         database.AddressTypeValue, (args.type, args.value)
     )
@@ -399,6 +403,7 @@ def value_del(args: argparse.Namespace) -> int:
     These values are populated by the 'address update' command.
     """
     dbc = args.dbc
+
     address_type_value = dbc.session.get(
         database.AddressTypeValue, (args.type, args.value)
     )
@@ -448,6 +453,7 @@ def prune(args: argparse.Namespace) -> int:
 def _clean(args: argparse.Namespace):
     """Clean out old cached data."""
     dbc = args.dbc
+
     stmt = sqla.select(sqla.func.count()).select_from(database.PortalV2)
     count = dbc.session.execute(stmt).one()[0]
     max_days = count // args.daily_updates

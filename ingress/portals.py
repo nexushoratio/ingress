@@ -276,6 +276,7 @@ def ingest(args: argparse.Namespace) -> int:
     related information.
     """
     dbc = args.dbc
+
     portals = bookmarks.load(args.bookmarks)
     timestamp = int(os.stat(args.bookmarks).st_mtime)
 
@@ -311,6 +312,7 @@ def ingest(args: argparse.Namespace) -> int:
 def expunge(args: argparse.Namespace) -> int:
     """(V) Remove portals listed in a bookmarks file from the database."""
     dbc = args.dbc
+
     portals = bookmarks.load(args.bookmarks)
     for db_portal in dbc.session.query(database.PortalV2).filter(
             database.PortalV2.guid.in_(portals)):
@@ -325,6 +327,7 @@ def expunge(args: argparse.Namespace) -> int:
 def export(args: argparse.Namespace) -> int:
     """(V) Export all portals as a bookmarks file."""
     dbc = args.dbc
+
     if args.samples is None:
         guids = set(
             result[0] for result in dbc.session.query(database.PortalV2.guid)

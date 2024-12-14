@@ -535,6 +535,7 @@ def folder_list(args: argparse.Namespace) -> int:
 def folder_add(args: argparse.Namespace) -> int:
     """(V) Add a new bookmark folder to the database."""
     dbc = args.dbc
+
     folder = database.BookmarkFolder(label=args.label)
     dbc.session.add(folder)
     dbc.session.commit()
@@ -569,6 +570,7 @@ def folder_del(args: argparse.Namespace) -> int:
 def place_list(args: argparse.Namespace) -> int:
     """(V) List specific places in the database."""
     dbc = args.dbc
+
     stmt = sqla.select(database.Place)
 
     uuid_col_header = 'UUID'
@@ -601,6 +603,7 @@ def place_list(args: argparse.Namespace) -> int:
 def place_add(args: argparse.Namespace) -> int:
     """(V) Add a specific place to the database."""
     dbc = args.dbc
+
     place = database.Place(
         label=args.label, latlng=args.latlng, note=args.note
     )
@@ -681,6 +684,7 @@ def map_list(args: argparse.Namespace) -> int:
 def map_add(args: argparse.Namespace) -> int:
     """(V) Add a new map bookmark to the database."""
     dbc = args.dbc
+
     this_map = database.MapBookmark(
         folder_id=args.folder_id, place_id=args.place_id, zoom=args.zoom
     )
@@ -765,6 +769,7 @@ def portal_list(args: argparse.Namespace) -> int:
 def portal_add(args: argparse.Namespace) -> int:
     """(V) Add a new portal bookmark to the database."""
     dbc = args.dbc
+
     this_portal = database.PortalBookmark(
         folder_id=args.folder_id, portal_id=args.portal_id
     )
@@ -816,6 +821,7 @@ def read_(args: argparse.Namespace) -> int:
     processing.
     """
     dbc = args.dbc
+
     filename = pathlib.PurePath(args.bookmarks).stem
     bookmarks = json.load(args.bookmarks)
 
@@ -890,6 +896,7 @@ def write_(args: argparse.Namespace) -> int:
     the contents of such bookmarks.
     """
     dbc = args.dbc
+
     bookmarks = new()
 
     ret = 0

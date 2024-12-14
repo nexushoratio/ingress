@@ -44,6 +44,7 @@ def mundane_commands(ctx: app.ArgparseApp):
 def route(args: argparse.Namespace) -> int:
     """Calculate an optimal route between portals in a bookmarks file."""
     dbc = args.dbc
+
     mode_cost_map: dict[tuple[str, str], tuple[str, float]] = dict()
     portals = bookmarks.load(args.bookmarks)
     portal_keys = list(portals.keys())

@@ -210,6 +210,7 @@ def donuts(args: argparse.Namespace) -> int:
     to import into IITC.
     """
     dbc = args.dbc
+
     point = drawtools.load_point(args.drawtools)
     sprinkles = _load_sprinkles(point, dbc)
     sprinkles.sort(key=lambda x: x.distance)
@@ -258,6 +259,7 @@ def ellipse(args: argparse.Namespace) -> int:
     to import into IITC.
     """
     dbc = args.dbc
+
     points = drawtools.load_points(args.drawtools)
     portals = _load_portal_distances(points, dbc)
     width = len(str(args.number))
@@ -305,6 +307,7 @@ def cluster(args: argparse.Namespace) -> int:  # pylint: disable=too-many-locals
     The clustering results are saved into FILENAME.
     """
     dbc = args.dbc
+
     rtree_index = rtree.rtree_index(dbc)
     graph = pygraph.graph()  # type: ignore[name-defined] # pylint: disable=undefined-variable
     graph.add_nodes(iter(list(rtree_index.node_map.keys())))
