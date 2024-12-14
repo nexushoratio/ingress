@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import atexit
+import collections
 import dataclasses
 import difflib
 import logging
 import os
 import pathlib
+import time
 import typing
 import uuid
 
@@ -604,6 +606,7 @@ class Database:  # pylint: disable=missing-class-docstring
         filename: str,
         vacuum_trigger: int = int(VACUUM_TRIGGER_DEFAULT)
     ):
+        self._connect_time = 0.0
         self._vacuum_trigger = vacuum_trigger
         self._spatialite_initialized = False
         pathlib.Path(directory).mkdir(exist_ok=True)
@@ -640,6 +643,7 @@ class Database:  # pylint: disable=missing-class-docstring
     def _connect(self, **kwargs):
         """Set defaults for our connection."""
         conn = kwargs['dbapi_connection']
+        self._connect_time = time.time()
         conn.execute('PRAGMA foreign_keys=ON')
         conn.enable_load_extension(True)
         conn.load_extension('mod_spatialite')
@@ -651,9 +655,9 @@ class Database:  # pylint: disable=missing-class-docstring
     def _close(self, **kwargs):
         """Maintenance on close."""
         conn = kwargs['dbapi_connection']
-        logging.info('total_changes: %d', conn.total_changes)
         count = conn.execute('PRAGMA freelist_count').fetchone()[0]
         logging.info('freelist_count: %d', count)
+        self._frag_check(conn)
         if count > self._vacuum_trigger:
             logging.info('vacuuming')
             print(
@@ -662,6 +666,43 @@ class Database:  # pylint: disable=missing-class-docstring
             )
             for row in conn.execute('VACUUM'):
                 print(row)
+
+    def _frag_check(self, conn):
+        """Compute possible sqlite fragmentation."""
+        if conn.total_changes:
+            logging.info('total_changes: %d', conn.total_changes)
+            time_connected = time.time() - self._connect_time
+            logging.info('time connected: %f', time_connected)
+            # Using dbstat takes time (probably linear based upon number of
+            # pages), so only check when lots of work was done.
+            if time_connected > 1.0:
+                prev = 0
+                gaps = collections.Counter()
+                pages = collections.Counter()
+                for row in conn.execute('SELECT name, pageno'
+                                        ' FROM dbstat'
+                                        ' ORDER BY name, pageno'):
+                    name, pageno = row
+                    pages[name] += 1
+                    if (pageno - prev) > 1:
+                        gaps[name] += 1
+                    prev = pageno
+                sum_gaps = 0
+                sum_pages = 0
+                for name, cnt in gaps.most_common():
+                    # Only look at names with some number of gaps.
+                    if cnt > 10:
+                        sum_gaps += cnt
+                        sum_pages += pages[name]
+                if sum_pages:
+                    fragged = 1.0 * sum_gaps / sum_pages
+                    logging.info('fragmentation: %f', fragged)
+                else:
+                    logging.info('no measurable fragmentation')
+            else:
+                logging.info(
+                    'Time connected was too short, skipping frag check.'
+                )
 
     def _sanity_check(self):
         """This is a proxy for doing proper migrations."""
