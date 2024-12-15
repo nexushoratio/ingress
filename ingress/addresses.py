@@ -428,17 +428,18 @@ def prune(args: argparse.Namespace) -> int:
     """
     dbc = args.dbc
 
-    query = dbc.session.query(database.PortalV2)
-    query = query.join(
+    stmt = sqla.select(database.PortalV2)
+    stmt = stmt.join(
         database.AddressTypeValueAssociation, database.PortalV2.latlng ==
         database.AddressTypeValueAssociation.latlng
     )
-    query = query.join(database.AddressTypeValue)
-    query = query.filter(database.AddressTypeValue.pruning == 'remove')
-    query = query.join(database.AddressType)
-    query = query.filter(database.AddressType.visibility != 'hide')
+    stmt = stmt.join(database.AddressTypeValue)
+    stmt = stmt.where(database.AddressTypeValue.pruning == 'remove')
+    stmt = stmt.join(database.AddressType)
+    stmt = stmt.where(database.AddressType.visibility != 'hide')
 
-    for portal in query:
+    for row in dbc.session.execute(stmt):
+        portal = row.PortalV2
         print(f'Pruning {portal.guid} - {portal.label}')
         dbc.session.delete(portal)
 
