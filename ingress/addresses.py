@@ -471,15 +471,16 @@ def _clean(args: argparse.Namespace):
     now = time.time()
     header_printed = False
     oldest_allowed = now - max_age
-    rows = dbc.session.query(database.Address
-                             ).filter(database.Address.date < oldest_allowed
-                                      ).limit(limit)
-    for row in rows:
+    stmt = sqla.select(database.Address
+                       ).where(database.Address.date < oldest_allowed
+                               ).limit(limit)
+    for row in dbc.session.execute(stmt):
+        addr = row.Address
         if not header_printed:
             print('Deleting stale entries')
             header_printed = True
-        print(f'{_format_date(float(row.date))} | {row.address}')
-        dbc.session.delete(row)
+        print(f'{_format_date(float(addr.date))} | {addr.address}')
+        dbc.session.delete(addr)
 
     dbc.session.commit()
 
