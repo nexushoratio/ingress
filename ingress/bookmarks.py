@@ -463,9 +463,13 @@ def save(portals: Portals, filename: str):
 def save_from_guids(guids, filename, dbc):
     """Save portals specified by guids into a particular bookmarks file."""
     portals = dict()
-    for db_portal in dbc.session.query(database.PortalV2).filter(
-            database.PortalV2.guid.in_(guids)):
-        portals[db_portal.guid] = db_portal.to_iitc()
+
+    stmt = sqla.select(database.PortalV2
+                       ).where(database.PortalV2.guid.in_(guids))
+
+    for row in dbc.session.execute(stmt):
+        portal = row.PortalV2
+        portals[portal.guid] = portal.to_iitc()
     save(portals, filename)
 
 
