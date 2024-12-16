@@ -456,7 +456,7 @@ def _clean(args: argparse.Namespace):
     dbc = args.dbc
 
     stmt = sqla.select(sqla.func.count()).select_from(database.PortalV2)
-    count = dbc.session.execute(stmt).one()[0]
+    count = dbc.session.scalar(stmt)
     max_days = count // args.daily_updates
     max_age = max_days * constants.SECONDS_PER_DAY
     logging.info(
