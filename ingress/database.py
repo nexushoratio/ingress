@@ -690,10 +690,10 @@ class Database:  # pylint: disable=missing-class-docstring
                 sum_gaps = 0
                 sum_pages = 0
                 for name, cnt in gaps.most_common():
+                    sum_pages += pages[name]
                     # Only look at names with some number of gaps.
                     if cnt > 10:
                         sum_gaps += cnt
-                        sum_pages += pages[name]
                 if sum_pages:
                     fragged = 1.0 * sum_gaps / sum_pages
                     logging.info('fragmentation: %f', fragged)
