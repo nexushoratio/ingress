@@ -600,9 +600,11 @@ def _bite(
     """Given a donut, return a bite that is not a choking hazard."""
     dss = dbc.session.scalar
     guids = frozenset(x.guid for x in donut)
-    db_points = dbc.session.query(
+    stmt = sqla.select(
         database.geoalchemy2.functions.ST_Collect(database.PortalV2.point)
-    ).filter(database.PortalV2.guid.in_(guids)).one()[0]
+    ).where(database.PortalV2.guid.in_(guids))
+
+    db_points = dbc.session.scalar(stmt)
 
     hull = db_points.ST_ConvexHull()
     ring = hull.ST_ExteriorRing()
