@@ -35,6 +35,8 @@ if typing.TYPE_CHECKING:  # pragma: no cover
 
     from mundane import app
 
+sqla = database.sqlalchemy
+
 MAX_AGE = 90 * constants.SECONDS_PER_DAY
 FUDGE_FACTOR = 1.1
 MINIMAL_CLUSTER_SIZE = 10
@@ -666,21 +668,21 @@ def _load_sprinkles(
     center_point: database.geoalchemy2.WKBElement, dbc: database.Database
 ) -> Bite:
     """Load all portal information needed for donuts."""
-    rows = dbc.session.query(
+    stmt = sqla.select(
         database.PortalV2,
         database.geoalchemy2.functions.ST_Distance(
             center_point, database.PortalV2.point, 0
         ).label('distance'),
         database.geoalchemy2.functions.ST_Azimuth(
             center_point, database.PortalV2.point
-        ).label('azimuth'),
+        ).label('azimuth')
     )
     return [
         Sprinkle(
             distance=row.distance,
             azimuth=row.azimuth,
             guid=row.PortalV2.guid,
-        ) for row in rows
+        ) for row in dbc.session.execute(stmt)
     ]
 
 
