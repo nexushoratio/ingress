@@ -793,7 +793,8 @@ class Database:  # pylint: disable=missing-class-docstring
 
     def _post_create_migrations(self):
         """Migrate portals to v2_portals."""
-        count = self.session.query(_Portal).count()
+        stmt = sqlalchemy.select(sqlalchemy.func.count()).select_from(_Portal)
+        count = self.session.scalar(stmt)
         if count:
             print('Performing a database migration.')
             print(
@@ -802,13 +803,15 @@ class Database:  # pylint: disable=missing-class-docstring
                 f' to table "{PortalV2.__tablename__}".'
             )
             logging.info('migrating count: %d', count)
+            stmt = sqlalchemy.select(_Portal)
             portals = [
-                portal.to_iitc() for portal in self.session.query(_Portal)
+                row._Portal.to_iitc() for row in self.session.execute(stmt)  # pylint: disable=protected-access
             ]
             logging.info('portal dictionaries generated: %d', len(portals))
             self.session.bulk_insert_mappings(PortalV2, portals)
             logging.info('bulk inserts completed')
-            self.session.query(_Portal).delete()
+            stmt = sqlalchemy.delete(_Portal)
+            self.session.execute(stmt)
             logging.info('bulk delete completed')
             self.session.commit()
             logging.info('finished migration')
