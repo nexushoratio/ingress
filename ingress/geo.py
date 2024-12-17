@@ -290,7 +290,7 @@ def _load_portal_distances(
                 point, database.PortalV2.point, 0
             )
         )
-    rows = dbc.session.query(
+    stmt = sqla.select(
         database.PortalV2,
         distance.label('distance'),
     ).order_by('distance')
@@ -299,7 +299,7 @@ def _load_portal_distances(
             distance=row.distance,
             azimuth=0,
             guid=row.PortalV2.guid,
-        ) for row in rows
+        ) for row in dbc.session.execute(stmt)
     ]
 
 
