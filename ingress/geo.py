@@ -219,11 +219,13 @@ def donuts(args: argparse.Namespace) -> int:
     all_donuts, delta = _donuts(sprinkles, args.count)
 
     guids = frozenset(x.guid for x in all_donuts[0])
-    result = dbc.session.query(
+    stmt = sqla.select(
         database.geoalchemy2.functions.ST_ConvexHull(
             database.geoalchemy2.functions.ST_Union(database.PortalV2.point)
         )
-    ).filter(database.PortalV2.guid.in_(guids)).one()[0]
+    ).where(database.PortalV2.guid.in_(guids))
+
+    result = dbc.session.scalar(stmt)
 
     max_area = dbc.session.scalar(result.ST_Area(1)) * FUDGE_FACTOR
     max_length = delta * 2
