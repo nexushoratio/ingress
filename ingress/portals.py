@@ -16,6 +16,8 @@ if typing.TYPE_CHECKING:  # pragma: no cover
 
     from mundane import app
 
+sqla = database.sqlalchemy
+
 Statement: typing.TypeAlias = database.sqlalchemy.sql.selectable.Select
 ValidFields: typing.TypeAlias = tuple[str, ...]
 
@@ -495,8 +497,6 @@ def _process_format_flag(args: argparse.Namespace) -> str:
 
 def _init_select(dbc: database.Database) -> Statement:
     """Generate an initial SELECT statement."""
-    sqla = database.sqlalchemy
-
     # XXX: We explicitly set the type_ on certain columns.  This is so that
     # the "literal_binds" option knows how to render the output when showing a
     # query that has bindparams in it (e.g., IN clauses).
@@ -571,8 +571,6 @@ def _apply_filters(
     field_map
 ) -> Statement:
     """Apply filter clauses to the statement, update "constraints"."""
-    sqla = database.sqlalchemy
-
     params: dict[str, list[str]] = collections.defaultdict(list)
     for opr, field_value in args.filters:
         field, value = _parse_field_value(field_value, field_map.keys())
