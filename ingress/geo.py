@@ -192,7 +192,7 @@ def trim(args: argparse.Namespace) -> int:
     return 0
 
 
-def donuts(args: argparse.Namespace) -> int:
+def donuts(args: argparse.Namespace) -> int:  # pylint: disable=too-many-locals
     """(V) Automatically group portals into COUNT sized bookmarks files.
 
     The idea is to provide a series of bookmarks that would be suitably
