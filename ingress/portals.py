@@ -329,10 +329,11 @@ def export(args: argparse.Namespace) -> int:
     dbc = args.dbc
 
     if args.samples is None:
-        guids = set(
-            result[0] for result in dbc.session.query(database.PortalV2.guid)
+        portals = dict(
+            (portal.guid, portal.to_iitc())
+            for portal in dbc.session.query(database.PortalV2)
         )
-        bookmarks.save_from_guids(guids, args.bookmarks, dbc)
+        bookmarks.save(portals, args.bookmarks)
     else:
         hull = dbc.session.query(
             database.geoalchemy2.functions.ST_ConvexHull(
