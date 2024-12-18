@@ -272,7 +272,7 @@ def _portal(args: argparse.Namespace) -> int:
 def ingest(args: argparse.Namespace) -> int:
     """(V) Update the database with portals listed in a bookmarks file.
 
-    Hint: Use the 'address-update' command after this to populate address
+    Hint: Use the 'address update' command after this to populate address
     related information.
     """
     dbc = args.dbc
