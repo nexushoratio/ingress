@@ -29,13 +29,9 @@ LOCATION_TYPE_SCORES = {
     'RANGE_INTERPOLATED': 1,
     'GEOMETRIC_CENTER': 2,
     'APPROXIMATE': 3,
-    'PLUS': 90,
+    'PLUS_COMPOUND_CODE': 90,
+    'PLUS_GLOBAL_CODE': 91,
     'UNKNOWN': 99,
-}
-
-PLUS_CODE_SCORES = {
-    'compound_code': 0,
-    'global_code': 1,
 }
 
 
@@ -63,6 +59,23 @@ class AddressDetails:
     """Address details."""
     address: str
     type_values: set[AddressTypeValue]
+
+
+@dataclasses.dataclass(kw_only=True, order=True, frozen=True)
+class AddressResult:
+    """Address result from the Maps API."""
+    location_type: str = dataclasses.field(compare=False)
+    score: int = dataclasses.field(init=False)
+    pos: int = dataclasses.field(default=0, compare=False)
+    address: str
+    type_values: set[AddressTypeValue]
+
+    def __post_init__(self):
+        # Magic sauce
+        object.__setattr__(
+            self, 'score', LOCATION_TYPE_SCORES[self.location_type] + self.pos
+            - len(self.type_values)
+        )
 
 
 @attr.s
@@ -109,13 +122,13 @@ def latlng_to_address(latlng: str) -> AddressDetails:
     logging.info('latlng=%s:\nresult=\n%s', latlng, pprint.pformat(result))
 
     # The API result has a lot of information.  We want to score the results
-    # so we can select the "best" one.  So we use a simple tuple where the
-    # first item is the score and second the address.  We seed the answers
+    # using AddressResult, then select the "best" one.  We seed the answers
     # with our worst score.
-    answers: list[tuple[int, int, str, set[AddressTypeValue]]] = [
-        (
-            LOCATION_TYPE_SCORES['UNKNOWN'], 0, 'No known street address',
-            set()
+    answers = [
+        AddressResult(
+            address='No known street address',
+            type_values=set(),
+            location_type='UNKNOWN'
         )
     ]
 
@@ -123,31 +136,40 @@ def latlng_to_address(latlng: str) -> AddressDetails:
     type_: str
     address: str
     for type_, address in list(result['plus_code'].items()):
-        score: int = LOCATION_TYPE_SCORES['PLUS'] + PLUS_CODE_SCORES[type_]
-        answers.append((score, 0, address, set()))
+        location_type = '_'.join(('PLUS', type_.upper()))
+        answers.append(
+            AddressResult(
+                address=address,
+                type_values=set(),
+                location_type=location_type
+            )
+        )
 
     for pos, entry in enumerate(result['results']):
+        location_type = entry['geometry']['location_type']
         type_values: set[AddressTypeValue] = set()
         for component in entry['address_components']:
             name = component['long_name']
             for typ in component['types']:
                 type_values.add(AddressTypeValue(typ=typ, val=name))
-        score = LOCATION_TYPE_SCORES[entry['geometry']['location_type']] + pos
         answers.append(
-            (
-                score, -len(type_values), entry['formatted_address'],
-                type_values
+            AddressResult(
+                pos=pos,
+                address=entry['formatted_address'],
+                type_values=type_values,
+                location_type=location_type
             )
         )
 
     answers.sort()
-    score, _, address, type_values = answers[0]
-    logging.info(pprint.pformat(answers))
-    logging.info('%s: %s (score=%s)', latlng, address, score)
-    for type_value in sorted(type_values):
+    answer = answers[0]
+    logging.info('\n%s', pprint.pformat(answers))
+    for type_value in sorted(answer.type_values):
         logging.info('%s: %s', type_value.typ, type_value.val)
 
-    return AddressDetails(address=address, type_values=type_values)
+    return AddressDetails(
+        address=answer.address, type_values=answer.type_values
+    )
 
 
 def encode_polyline(coords):
