@@ -331,9 +331,10 @@ def export(args: argparse.Namespace) -> int:
     dbc = args.dbc
 
     if args.samples is None:
+        stmt = sqla.select(database.PortalV2)
         portals = dict(
-            (portal.guid, portal.to_iitc())
-            for portal in dbc.session.query(database.PortalV2)
+            (row.PortalV2.guid, row.PortalV2.to_iitc())
+            for row in dbc.session.execute(stmt)
         )
         bookmarks.save(portals, args.bookmarks)
     else:
