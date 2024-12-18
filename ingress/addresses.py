@@ -477,7 +477,7 @@ def _clean(args: argparse.Namespace):
     for row in dbc.session.execute(stmt):
         addr = row.Address
         if not header_printed:
-            print('Deleting stale entries')
+            print(f'Deleting up to {limit} stale entries:')
             header_printed = True
         print(f'{_format_date(float(addr.date))} | {addr.address}')
         dbc.session.delete(addr)
