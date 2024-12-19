@@ -290,13 +290,14 @@ def ingest(args: argparse.Namespace) -> int:
         portal['last_seen'] = timestamp
 
     # Look for existing portals first
-    rows = dbc.session.query(database.PortalV2
-                             ).filter(database.PortalV2.guid.in_(portals))
-    for row in rows:
-        guid = row.guid
+    stmt = sqla.select(database.PortalV2
+                       ).where(database.PortalV2.guid.in_(portals))
+    for row in dbc.session.execute(stmt):
+        db_portal = row.PortalV2
+        guid = db_portal.guid
         portal = portals[guid]
         # only update if newer
-        if portal['last_seen'] > row.last_seen:
+        if portal['last_seen'] > db_portal.last_seen:
             dbc.session.merge(database.PortalV2(**portal))
 
         del portals[guid]
