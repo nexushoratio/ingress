@@ -316,10 +316,13 @@ def expunge(args: argparse.Namespace) -> int:
     dbc = args.dbc
 
     portals = bookmarks.load(args.bookmarks)
-    for db_portal in dbc.session.query(database.PortalV2).filter(
-            database.PortalV2.guid.in_(portals)):
-        print('Deleting', db_portal.label, db_portal.last_seen)
-        dbc.session.delete(db_portal)
+
+    stmt = sqla.select(database.PortalV2
+                       ).where(database.PortalV2.guid.in_(portals))
+    for row in dbc.session.execute(stmt):
+        portal = row.PortalV2
+        print('Deleting', portal.label, portal.last_seen)
+        dbc.session.delete(portal)
 
     dbc.session.commit()
 
