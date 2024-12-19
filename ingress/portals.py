@@ -338,25 +338,29 @@ def export(args: argparse.Namespace) -> int:
         )
         bookmarks.save(portals, args.bookmarks)
     else:
-        hull = dbc.session.query(
+        hull = sqla.select(
             database.geoalchemy2.functions.ST_ConvexHull(
                 database.geoalchemy2.functions.ST_Union(
                     database.PortalV2.point
                 )
             )
         ).scalar_subquery()
-        result = dbc.session.query(database.PortalV2.guid).filter(
+        stmt = sqla.select(database.PortalV2.guid).where(
             database.geoalchemy2.functions.ST_Touches(
                 hull, database.PortalV2.point
             )
         )
-        guids = set(row._mapping['guid'] for row in result)
+        guids = set(
+            row['guid'] for row in dbc.session.execute(stmt).mappings()
+        )
         limit = max(len(guids), args.samples)
         count = limit - len(guids)
-        result = dbc.session.query(database.PortalV2.guid).filter(
+        stmt = sqla.select(database.PortalV2.guid).where(
             database.PortalV2.guid.not_in(guids)
         ).order_by(database.PortalV2.guid).limit(count)
-        guids.update(row._mapping['guid'] for row in result)
+        guids.update(
+            row['guid'] for row in dbc.session.execute(stmt).mappings()
+        )
         bookmarks.save_from_guids(guids, args.bookmarks, dbc)
     return 0
 
