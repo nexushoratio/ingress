@@ -52,9 +52,9 @@ class Sprinkle:
     guid: str
 
 
-DistanceCache: typing.TypeAlias = dict[tuple[database.geoalchemy2.WKBElement,
-                                             database.geoalchemy2.WKBElement],
-                                       float]
+WKB: typing.TypeAlias = database.geoalchemy2.WKBElement
+
+DistanceCache: typing.TypeAlias = dict[tuple[WKB, WKB], float]
 
 # A Donut is a really big Bite
 Bite: typing.TypeAlias = list[Sprinkle]
@@ -280,9 +280,7 @@ def ellipse(args: argparse.Namespace) -> int:
     return 0
 
 
-def _load_portal_distances(
-    points: database.geoalchemy2.WKBElement, dbc: database.Database
-) -> Bite:
+def _load_portal_distances(points: WKB, dbc: database.Database) -> Bite:
     """Load all portal information needed for donuts."""
     distance = operator.add(0, 0)
     for point in points:
@@ -668,9 +666,7 @@ def _donuts(all_sprinkles: Bite, count: int) -> tuple[list[Bite], float]:
     return list_of_donuts, delta
 
 
-def _load_sprinkles(
-    center_point: database.geoalchemy2.WKBElement, dbc: database.Database
-) -> Bite:
+def _load_sprinkles(center_point: WKB, dbc: database.Database) -> Bite:
     """Load all portal information needed for donuts."""
     stmt = sqla.select(
         database.PortalV2,
