@@ -18,7 +18,7 @@ if typing.TYPE_CHECKING:  # pragma: no cover
 
 sqla = database.sqlalchemy
 
-Statement: typing.TypeAlias = database.sqlalchemy.sql.selectable.Select
+Statement: typing.TypeAlias = sqla.sql.selectable.Select
 ValidFields: typing.TypeAlias = tuple[str, ...]
 
 
@@ -408,12 +408,9 @@ def _show_impl(args: argparse.Namespace) -> int:
 
     stmt = _init_select(dbc)
     field_map = dict(
-        (key, value)
-        for key, value in stmt.exported_columns.items()
-        if not isinstance(
-            getattr(value, 'table', None),
-            database.sqlalchemy.sql.schema.Table
-        ) and not value.name.startswith('EXCLUDE_')
+        (key, value) for key, value in stmt.exported_columns.items() if
+        not isinstance(getattr(value, 'table', None), sqla.sql.schema.Table)
+        and not value.name.startswith('EXCLUDE_')
     )
 
     if args.list_fields:
@@ -565,8 +562,8 @@ SCALAR_STR_TO_FUNC_MAP = {
     '>=': operator.ge,
     '<': operator.lt,
     '<=': operator.le,
-    'LIKE': database.sqlalchemy.sql.operators.like_op,
-    'NOT LIKE': database.sqlalchemy.sql.operators.not_like_op,
+    'LIKE': sqla.sql.operators.like_op,
+    'NOT LIKE': sqla.sql.operators.not_like_op,
 }
 
 LIST_OP_MAP = {
@@ -687,7 +684,7 @@ def _validate_field(field: str, valid_fields: ValidFields):
 
 def _visible_address_types(dbc: database.Database) -> tuple[str, ...]:
     """Fetch user acceptable address types."""
-    stmt = database.sqlalchemy.select(database.AddressType)\
+    stmt = sqla.select(database.AddressType)\
                .where(database.AddressType.visibility != 'hide')\
                .order_by(database.AddressType.type)
 
