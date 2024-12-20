@@ -180,7 +180,6 @@ def _value(args: argparse.Namespace) -> int:
     raise Error('This function should never be called.')
 
 
-# pylint: disable=duplicate-code
 def update(args: argparse.Namespace) -> int:
     """(V) Update address related data for portals in a BOOKMARKS file.
 
