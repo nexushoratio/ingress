@@ -47,21 +47,17 @@ split_before_dot = true
 split_before_first_argument = true
 split_complex_comprehension = true
 
-[tool.pylint.main]
+[tool.pylint]
 fail-on = ['I']
-
-[tool.pylint.basic]
 docstring-min-length = 2
 good-names = ["setUpModule"]
 max-line-length = 78
 no-docstring-rgx = "(^__|_?test.*|.*Test)"
 
-[tool.pylint.classes]
 exclude-protected = [
   '_mapping',
 ]
 
-[tool.pylint.messages_control]
 disable = [
   'use-dict-literal',
   'use-list-literal',
@@ -70,10 +66,8 @@ enable = [
   'useless-suppression'
 ]
 
-[tool.pylint.miscellaneous]
 notes = ["FIXME"]
 
-[tool.pylint.typecheck]
 generated-member = [
   'shapely.geometry.base.BaseGeometry.exterior',
   'shapely.geometry.base.BaseGeometry.x',
