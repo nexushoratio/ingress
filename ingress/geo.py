@@ -40,6 +40,11 @@ sqla = database.sqlalchemy
 geo2 = database.geoalchemy2
 # pylint: enable=duplicate-code
 
+
+class Error(Exception):
+    """Base module exception."""
+
+
 MAX_AGE = 90 * constants.SECONDS_PER_DAY
 FUDGE_FACTOR = 1.1
 MINIMAL_CLUSTER_SIZE = 10
@@ -70,12 +75,21 @@ def mundane_commands(ctx: app.ArgparseApp):
     file_flags = ctx.get_shared_parser('file')
     glob_flags = ctx.get_shared_parser('glob')
 
-    ctx.register_command(update, parents=[bm_flags])
-    ctx.register_command(bounds, parents=[dt_flags, glob_flags])
-    ctx.register_command(trim, parents=[bm_flags, dt_flags])
-    ctx.register_command(cluster, parents=[file_flags])
+    geo_cmds = ctx.new_subparser(
+        ctx.register_command(_geo, name='geo', usage_only=True)
+    )
 
-    parser = ctx.register_command(donuts, parents=[dt_flags])
+    ctx.register_command(
+        bounds, parents=[dt_flags, glob_flags], subparser=geo_cmds
+    )
+    ctx.register_command(
+        trim, parents=[bm_flags, dt_flags], subparser=geo_cmds
+    )
+    ctx.register_command(cluster, parents=[file_flags], subparser=geo_cmds)
+
+    parser = ctx.register_command(
+        donuts, parents=[dt_flags], subparser=geo_cmds
+    )
     parser.add_argument(
         '-c',
         '--count',
@@ -104,7 +118,9 @@ def mundane_commands(ctx: app.ArgparseApp):
         )
     )
 
-    parser = ctx.register_command(ellipse, parents=[dt_flags])
+    parser = ctx.register_command(
+        ellipse, parents=[dt_flags], subparser=geo_cmds
+    )
     parser.add_argument(
         '-c',
         '--count',
@@ -133,14 +149,12 @@ def mundane_commands(ctx: app.ArgparseApp):
         )
     )
 
+    ctx.register_command(update, parents=[bm_flags], subparser=geo_cmds)
 
-def update(args: argparse.Namespace) -> int:
-    """Update the directions between portals in a bookmarks file."""
-    portals = bookmarks.load(args.bookmarks)
-    _clean(args.dbc)
-    _update_directions(args.dbc, portals)
 
-    return 0
+def _geo(args: argparse.Namespace) -> int:
+    """(V) A family of commands for working with geometry."""
+    raise Error('This function should never be called.')
 
 
 def bounds(args: argparse.Namespace) -> int:
@@ -279,6 +293,15 @@ def ellipse(args: argparse.Namespace) -> int:
         print(f'min={group[0].distance} max={group[-1].distance}')
         guids = frozenset(portal.guid for portal in group)
         bookmarks.save_from_guids(guids, filename, dbc)
+
+    return 0
+
+
+def update(args: argparse.Namespace) -> int:
+    """Update the directions between portals in a bookmarks file."""
+    portals = bookmarks.load(args.bookmarks)
+    _clean(args.dbc)
+    _update_directions(args.dbc, portals)
 
     return 0
 
