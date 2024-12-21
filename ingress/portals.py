@@ -16,7 +16,10 @@ if typing.TYPE_CHECKING:  # pragma: no cover
 
     from mundane import app
 
+# pylint: disable=duplicate-code
 sqla = database.sqlalchemy
+geo2 = database.geoalchemy2
+# pylint: enable=duplicate-code
 
 Statement: typing.TypeAlias = sqla.sql.selectable.Select
 ValidFields: typing.TypeAlias = tuple[str, ...]
@@ -343,16 +346,12 @@ def export(args: argparse.Namespace) -> int:
         bookmarks.save(portals, args.bookmarks)
     else:
         hull = sqla.select(
-            database.geoalchemy2.functions.ST_ConvexHull(
-                database.geoalchemy2.functions.ST_Union(
-                    database.PortalV2.point
-                )
+            geo2.functions.ST_ConvexHull(
+                geo2.functions.ST_Union(database.PortalV2.point)
             )
         ).scalar_subquery()
         stmt = sqla.select(database.PortalV2.guid).where(
-            database.geoalchemy2.functions.ST_Touches(
-                hull, database.PortalV2.point
-            )
+            geo2.functions.ST_Touches(hull, database.PortalV2.point)
         )
         guids = set(
             row['guid'] for row in dbc.session.execute(stmt).mappings()

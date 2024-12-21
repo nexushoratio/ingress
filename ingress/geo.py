@@ -35,7 +35,10 @@ if typing.TYPE_CHECKING:  # pragma: no cover
 
     from mundane import app
 
+# pylint: disable=duplicate-code
 sqla = database.sqlalchemy
+geo2 = database.geoalchemy2
+# pylint: enable=duplicate-code
 
 MAX_AGE = 90 * constants.SECONDS_PER_DAY
 FUDGE_FACTOR = 1.1
@@ -220,8 +223,8 @@ def donuts(args: argparse.Namespace) -> int:  # pylint: disable=too-many-locals
 
     guids = frozenset(x.guid for x in all_donuts[0])
     stmt = sqla.select(
-        database.geoalchemy2.functions.ST_ConvexHull(
-            database.geoalchemy2.functions.ST_Union(database.PortalV2.point)
+        geo2.functions.ST_ConvexHull(
+            geo2.functions.ST_Union(database.PortalV2.point)
         )
     ).where(database.PortalV2.guid.in_(guids))
 
@@ -286,9 +289,7 @@ def _load_portal_distances(points: WKB, dbc: database.Database) -> Bite:
     for point in points:
         distance = operator.add(
             distance,
-            database.geoalchemy2.functions.ST_Distance(
-                point, database.PortalV2.point, 0
-            )
+            geo2.functions.ST_Distance(point, database.PortalV2.point, 0)
         )
     stmt = sqla.select(
         database.PortalV2,
@@ -600,9 +601,8 @@ def _bite(
     """Given a donut, return a bite that is not a choking hazard."""
     dss = dbc.session.scalar
     guids = frozenset(x.guid for x in donut)
-    stmt = sqla.select(
-        database.geoalchemy2.functions.ST_Collect(database.PortalV2.point)
-    ).where(database.PortalV2.guid.in_(guids))
+    stmt = sqla.select(geo2.functions.ST_Collect(database.PortalV2.point)
+                       ).where(database.PortalV2.guid.in_(guids))
 
     db_points = dbc.session.scalar(stmt)
 
@@ -670,12 +670,10 @@ def _load_sprinkles(center_point: WKB, dbc: database.Database) -> Bite:
     """Load all portal information needed for donuts."""
     stmt = sqla.select(
         database.PortalV2,
-        database.geoalchemy2.functions.ST_Distance(
-            center_point, database.PortalV2.point, 0
-        ).label('distance'),
-        database.geoalchemy2.functions.ST_Azimuth(
-            center_point, database.PortalV2.point
-        ).label('azimuth')
+        geo2.functions.ST_Distance(center_point, database.PortalV2.point,
+                                   0).label('distance'),
+        geo2.functions.ST_Azimuth(center_point,
+                                  database.PortalV2.point).label('azimuth')
     )
     return [
         Sprinkle(
