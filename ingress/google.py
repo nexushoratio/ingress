@@ -161,8 +161,8 @@ def latlng_to_address(latlng: str) -> AddressDetails:
             )
         )
 
-    answers.sort()
-    answer = answers[0]
+    answer = _select_result(answers)
+
     logging.info('\n%s', pprint.pformat(answers))
     for type_value in sorted(answer.type_values):
         logging.info('%s: %s', type_value.typ, type_value.val)
@@ -170,6 +170,23 @@ def latlng_to_address(latlng: str) -> AddressDetails:
     return AddressDetails(
         address=answer.address, type_values=answer.type_values
     )
+
+
+def _select_result(results: list[AddressResult]) -> AddressResult:
+    """Look through the results for the "best" one."""
+
+    results.sort()
+    result0 = results[0]
+    # It has been noticed that some results will include one type or another,
+    # but not both.  Supplement the selected result with no more than one type
+    # might not be present.
+    for result in results[1:]:
+        for type_value in result.type_values:
+            known_types = set(x.typ for x in result0.type_values)
+            if type_value.typ not in known_types:
+                logging.info('supplementing result with: %s', type_value)
+                result0.type_values.add(type_value)
+    return result0
 
 
 def encode_polyline(coords):
