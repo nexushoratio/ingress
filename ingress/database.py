@@ -27,6 +27,9 @@ if typing.TYPE_CHECKING:  # pragma: no cover
 VACUUM_TRIGGER_ENVVAR: str = 'INGRESS_VACUUM_TRIGGER'
 VACUUM_TRIGGER_DEFAULT = '256'
 
+WKB: typing.TypeAlias = geoalchemy2.WKBElement
+WKT: typing.TypeAlias = geoalchemy2.WKTElement
+
 
 @dataclasses.dataclass(kw_only=True)
 class ExistingTable:
@@ -105,22 +108,20 @@ metadata = sqlalchemy.schema.MetaData(naming_convention=convention)
 Base = orm.declarative_base(metadata=metadata)
 
 
-def latlng_dict_to_point(latlng: dict[str, str]) -> geoalchemy2.WKTElement:
+def latlng_dict_to_point(latlng: dict[str, str]) -> WKT:
     """Convert lat,lng to a geoalchemy wrapped POINT."""
-    point = geoalchemy2.WKTElement(
-        f'POINT({latlng["lng"]} {latlng["lat"]})', srid=4326
-    )
+    point = WKT(f'POINT({latlng["lng"]} {latlng["lat"]})', srid=4326)
     return point
 
 
-def _latlng_to_point(latlng: str) -> geoalchemy2.WKTElement:
+def _latlng_to_point(latlng: str) -> WKT:
     """Convert lat,lng to a geoalchemy wrapped POINT."""
     lat, lng = latlng.split(',')
-    point = geoalchemy2.WKTElement(f'POINT({lng} {lat})', srid=4326)
+    point = WKT(f'POINT({lng} {lat})', srid=4326)
     return point
 
 
-def _point_to_latlng(point: geoalchemy2.WKTElement) -> str:
+def _point_to_latlng(point: WKT) -> str:
     """Convert a geoalchemy wrapped POINT to a lat,lng string."""
     shape = geoalchemy2.shape.to_shape(point)
     return f'{shape.y},{shape.x}'
