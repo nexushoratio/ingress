@@ -1,5 +1,7 @@
 """Functions to work with IITC bookmarks files."""
 
+# pylint: disable=too-many-lines
+
 from __future__ import annotations
 
 import functools
@@ -309,6 +311,12 @@ def mundane_commands(ctx: app.ArgparseApp):
         parents=[flags.uuid_req, flags.label_opt]
     )
     ctx.register_command(
+        folder_clear,
+        name='clear',
+        subparser=folder_cmds,
+        parents=[flags.uuid_req]
+    )
+    ctx.register_command(
         folder_del,
         name='del',
         subparser=folder_cmds,
@@ -555,6 +563,27 @@ def folder_set(args: argparse.Namespace) -> int:
         if args.label:
             folder.label = args.label
         dbc.session.add(folder)
+        dbc.session.commit()
+    else:
+        print(f'Unknown uuid: "{args.uuid}"')
+        ret = 1
+
+    return ret
+
+
+def folder_clear(args: argparse.Namespace) -> int:
+    """(V) Clear all entries in a bookmark folder from the database."""
+    dbc = args.dbc
+
+    folder = dbc.session.get(database.BookmarkFolder, args.uuid)
+    ret = 0
+    if folder:
+        inputs = dict(
+            (key, getattr(folder, key)) for key in folder.__mapper__.c.keys()
+        )
+        dbc.session.delete(folder)
+        dbc.session.flush()
+        dbc.session.add(database.BookmarkFolder(**inputs))
         dbc.session.commit()
     else:
         print(f'Unknown uuid: "{args.uuid}"')
