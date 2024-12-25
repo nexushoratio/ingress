@@ -7,7 +7,6 @@ import collections
 import dataclasses
 import difflib
 import logging
-import os
 import pathlib
 import time
 import typing
@@ -23,9 +22,6 @@ if typing.TYPE_CHECKING:  # pragma: no cover
     from mundane import app
 
 # pylint: disable=too-few-public-methods
-
-VACUUM_TRIGGER_ENVVAR: str = 'INGRESS_VACUUM_TRIGGER'
-VACUUM_TRIGGER_DEFAULT = '256'
 
 WKB: typing.TypeAlias = geoalchemy2.WKBElement
 WKT: typing.TypeAlias = geoalchemy2.WKTElement
@@ -59,24 +55,6 @@ def mundane_global_flags(ctx: app.ArgparseApp):
         default=f'{ctx.appname}.db'
     )
 
-    ctx.global_flags.add_argument(
-        '--db-vacuum-trigger',
-        help=(
-            'The number of unused pages that will trigger a VACUUM operation'
-            ' on the database when the connection closes.  This is a type of'
-            ' optimization that can improve performance.  However, the action'
-            ' can take several seconds, so it should generally not be'
-            ' configured to happen often.  Typically this is needed after'
-            ' operations such as ingesting, expunging, or pruning a large'
-            ' number of portals or addresses.  A default value may be set via'
-            f' the environment variable "{VACUUM_TRIGGER_ENVVAR}".  (Default:'
-            '  %(default)s)'
-        ),
-        action='store',
-        default=os.getenv(VACUUM_TRIGGER_ENVVAR, VACUUM_TRIGGER_DEFAULT),
-        type=int
-    )
-
     ctx.register_after_parse_hook(init_db)
 
 
@@ -85,12 +63,9 @@ def init_db(args: argparse.Namespace):
 
     # Do not bother if no command was given.
     if args.name:
-        args.dbc = Database(
-            args.db_dir, args.db_name, vacuum_trigger=args.db_vacuum_trigger
-        )
+        args.dbc = Database(args.db_dir, args.db_name)
         del args.db_dir
         del args.db_name
-        del args.db_vacuum_trigger
 
         atexit.register(args.dbc.dispose)
 
@@ -605,11 +580,10 @@ class Database:  # pylint: disable=missing-class-docstring
         self,
         directory: str,
         filename: str,
-        vacuum_trigger: int = int(VACUUM_TRIGGER_DEFAULT)
     ):
         self._connect_time = 0.0
-        self._vacuum_trigger = vacuum_trigger
         self._spatialite_initialized = False
+        self._vacuum_reason = None
         pathlib.Path(directory).mkdir(exist_ok=True)
         sql_logger = logging.getLogger('sqlalchemy')
         root_logger = logging.getLogger()
@@ -661,12 +635,9 @@ class Database:  # pylint: disable=missing-class-docstring
         count = conn.execute('PRAGMA freelist_count').fetchone()[0]
         logging.info('freelist_count: %d', count)
         self._frag_check(conn)
-        if count > self._vacuum_trigger:
+        if self._vacuum_reason:
             logging.info('vacuuming')
-            print(
-                f'Performing VACUUM as (freelist {count=} '
-                f' > trigger={self._vacuum_trigger})'
-            )
+            print(f'Performing VACUUM because:\n  {self._vacuum_reason}')
             for row in conn.execute('VACUUM'):
                 print(row)
 
