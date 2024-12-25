@@ -220,6 +220,13 @@ class _CommonFlags:
         return parser
 
     @functools.cached_property
+    def uuid_opt(self) -> argparse.ArgumentParser:
+        """Optional --uuid flag."""
+        parser = self._parser()
+        parser.add_argument('--uuid', action='store', help='UUID to use.')
+        return parser
+
+    @functools.cached_property
     def zoom_req(self) -> argparse.ArgumentParser:
         """Required --zoom flag."""
         parser = self._parser()
@@ -302,7 +309,7 @@ def mundane_commands(ctx: app.ArgparseApp):
         folder_add,
         name='add',
         subparser=folder_cmds,
-        parents=[flags.label_req]
+        parents=[flags.uuid_opt, flags.label_req]
     )
     ctx.register_command(
         folder_set,
@@ -547,6 +554,8 @@ def folder_add(args: argparse.Namespace) -> int:
     dbc = args.dbc
 
     folder = database.BookmarkFolder(label=args.label)
+    if args.uuid:
+        folder.uuid = args.uuid
     dbc.session.add(folder)
     dbc.session.commit()
 
