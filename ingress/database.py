@@ -630,7 +630,7 @@ class Database:  # pylint: disable=missing-class-docstring
     def _close(self, **kwargs):
         """Maintenance on close."""
         conn = kwargs['dbapi_connection']
-        for row in conn.execute('PRAGMA optimize(-1)'):
+        for row in conn.execute('PRAGMA optimize'):
             logging.info('optimize: %s', row[0])
         count = conn.execute('PRAGMA freelist_count').fetchone()[0]
         logging.info('freelist_count: %d', count)
