@@ -21,6 +21,7 @@ sqla = database.sqlalchemy
 geo2 = database.geoalchemy2
 # pylint: enable=duplicate-code
 
+RowMapping: typing.TypeAlias = sqla.engine.row.RowMapping
 Statement: typing.TypeAlias = sqla.sql.selectable.Select
 ValidFields: typing.TypeAlias = tuple[str, ...]
 
@@ -431,7 +432,7 @@ def _show_impl(args: argparse.Namespace) -> int:
         )
         return 0
 
-    groups = collections.defaultdict(list)
+    groups: dict[str, list[RowMapping]] = collections.defaultdict(list)
     count = 0
 
     for row in dbc.session.execute(stmt).mappings():
@@ -463,7 +464,9 @@ def _show_impl(args: argparse.Namespace) -> int:
     return 0
 
 
-def _add_bookmark_folders(dbc, groups):
+def _add_bookmark_folders(
+    dbc: database.Database, groups: dict[str, list[RowMapping]]
+):
     """Add the group of portals to database managed bookmarks."""
     for group in groups:
         folder = database.BookmarkFolder(label=group or 'show')
