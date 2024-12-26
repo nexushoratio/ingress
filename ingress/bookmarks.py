@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import enum
 import functools
 import glob
 import itertools
@@ -31,6 +32,16 @@ sqla = database.sqlalchemy
 
 OTHERS = 'idOthers'
 
+# Sentinel for a bookmark default.
+DEFAULT_FOLDER = object()
+
+
+class ExistingFolder(enum.StrEnum):
+    """Indicates how existing folders are handled."""
+    FAIL = enum.auto()
+    CLEAR = enum.auto()
+    APPEND = enum.auto()
+
 
 def mundane_shared_flags(ctx: app.ArgparseApp):
     """Register shared flags."""
@@ -46,6 +57,32 @@ def mundane_shared_flags(ctx: app.ArgparseApp):
     parser = ctx.new_shared_parser('bookmarks_optional')
     if parser:
         parser.add_argument(*bm_args, **bm_kwargs)
+
+    existing = tuple(ExistingFolder)
+    parser = ctx.new_shared_parser('bookmark_label')
+    if parser:
+        parser.add_argument(
+            '-b',
+            '--bookmark',
+            nargs=ctx.argparse_api.OPTIONAL,
+            const=DEFAULT_FOLDER,
+            action='store',
+            metavar='LABEL',
+            help=(
+                'Enable use of a bookmark folder.  Depending on context, the'
+                ' value in LABEL may be used.'
+            )
+        )
+        parser.add_argument(
+            '--existing-mode',
+            action='store',
+            default=existing[0],
+            choices=existing,
+            help=(
+                'Control how existing folders should be treated when the'
+                ' bookmark folder feature is enabled.  (Default: %(default)s)'
+            )
+        )
 
     parser = ctx.new_shared_parser('folder_id_req_list')
     if parser:
