@@ -375,14 +375,15 @@ def show(args: argparse.Namespace) -> int:
     Many fields can be used to define the constraints.  The fields can be
     found using the --list-fields flag.
 
-    Some fields will always be present, however, others may be controlled by
+    Some fields will always be available, however, others may be controlled by
     other command sets.  For example, the values from the "address type"
-    family of commands will show up here depending on visibility set there.
+    family of commands will show up here depending on how visibility set
+    there.
 
     Filter flags take a "FIELD:VALUE" argument, where the name of the field is
     separated by a literal colon (:) character.  In most cases, if a field is
     repeated for the same filter, the most restrictive one will take
-    precedence, in others, they will be additive.  If you need fancier
+    precedence; in others, they will be additive.  If you need fancier
     reports, a separate SQL reporting engine may be necessary.
 
     Hint: The portals mentioned in the output may also be saved to an internal
