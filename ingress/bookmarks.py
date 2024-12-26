@@ -587,12 +587,7 @@ def folder_clear(args: argparse.Namespace) -> int:
     folder = dbc.session.get(database.BookmarkFolder, args.uuid)
     ret = 0
     if folder:
-        inputs = dict(
-            (key, getattr(folder, key)) for key in folder.__mapper__.c.keys()
-        )
-        dbc.session.delete(folder)
-        dbc.session.flush()
-        dbc.session.add(database.BookmarkFolder(**inputs))
+        _clear_folder(dbc, folder)
         dbc.session.commit()
     else:
         print(f'Unknown uuid: "{args.uuid}"')
@@ -990,6 +985,21 @@ def write_(args: argparse.Namespace) -> int:
         json.save(args.bookmarks, bookmarks)
 
     return ret
+
+
+def _clear_folder(
+    dbc: database.Database, folder: database.BookmarkFolder
+) -> database.BookmarkFolder:
+    """Clear references to a bookmark folder."""
+    inputs = dict(
+        (key, getattr(folder, key)) for key in folder.__mapper__.c.keys()
+    )
+    dbc.session.delete(folder)
+    dbc.session.flush()
+    new_folder = database.BookmarkFolder(**inputs)
+    dbc.session.add(new_folder)
+    dbc.session.flush([new_folder])
+    return new_folder
 
 
 def _delete_by_uuids(dbc: database.Database, table, uuids: list[str]) -> int:
