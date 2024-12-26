@@ -111,6 +111,7 @@ def mundane_commands(ctx: app.ArgparseApp):
             vars(namespace)[self.dest].append((self.old_dest, values))
 
     bm_req_flags = ctx.get_shared_parser('bookmarks')
+    bm_label_flags = ctx.get_shared_parser('bookmark_label')
 
     portal_cmds = ctx.new_subparser(
         ctx.register_command(_portal, name='portal', usage_only=True)
@@ -134,15 +135,8 @@ def mundane_commands(ctx: app.ArgparseApp):
         help='Roughly how many portals should be in the output.'
     )
 
-    parser = ctx.register_command(show, subparser=portal_cmds)
-    parser.add_argument(
-        '--bookmark',
-        default=False,
-        action=ctx.argparse_api.BooleanOptionalAction,
-        help=(
-            'Create bookmark folders and entries in the'
-            ' database. (Default: %(default)s)'
-        )
+    parser = ctx.register_command(
+        show, parents=[bm_label_flags], subparser=portal_cmds
     )
 
     f_mv = 'FIELD'
@@ -386,9 +380,11 @@ def show(args: argparse.Namespace) -> int:
     precedence; in others, they will be additive.  If you need fancier
     reports, a separate SQL reporting engine may be necessary.
 
-    Hint: The portals mentioned in the output may also be saved to an internal
-    bookmark folder for use in subsequent commands.  See the "bookmark" family
-    of commands for details.
+    The results may also be saved to an internal bookmark folder by way of the
+    --bookmark flag.  If grouping, the folder labels will be the same as the
+    output sections.  If grouping is not enabled, then a folder label may be
+    passed as an option to --bookmark.  Otherwise, "show" is used.  See the
+    "bookmark" family of commands for more information.
     """
     try:
         return _show_impl(args)
@@ -460,18 +456,23 @@ def _show_impl(args: argparse.Namespace) -> int:
     print('\n\n=======\n\n'.join(text_output))
 
     if args.bookmark:
-        _add_bookmark_folders(dbc, groups)
+        _add_bookmark_folders(args, groups)
 
     return 0
 
 
 def _add_bookmark_folders(
-    dbc: database.Database, groups: dict[str, list[RowMapping]]
+    args: argparse.Namespace, groups: dict[str, list[RowMapping]]
 ):
     """Add the group of portals to database managed bookmarks."""
+    dbc = args.dbc
+
+    use_default = args.bookmark == bookmarks.DEFAULT_FOLDER
+    label = args.name if use_default else args.bookmark
+    existing = args.existing_mode
+
     for group in groups:
-        folder = database.BookmarkFolder(label=group or 'show')
-        dbc.session.add(folder)
+        folder = bookmarks.prepare_folder(dbc, group or label, existing)
         for portal in groups[group]:
             guid = portal['guid']
             dbc.session.add(
