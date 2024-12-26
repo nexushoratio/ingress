@@ -385,7 +385,7 @@ class UuidMixin:
             kwargs['uuid'] = uuid.uuid4().hex
         super().__init__(**kwargs)
 
-    uuid = sqlalchemy.Column(
+    uuid: str = sqlalchemy.Column(
         sqlalchemy.String, nullable=False, primary_key=True
     )
 
