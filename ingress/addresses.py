@@ -32,6 +32,7 @@ class Error(Exception):
 def mundane_commands(ctx: app.ArgparseApp):
     """Parser registration API."""
     bm_flags = ctx.get_shared_parser('bookmarks')
+    bm_label_flags = ctx.get_shared_parser('bookmark_label')
 
     type_flag = ctx.argparse_api.ArgumentParser(add_help=False)
     type_flag.add_argument(
@@ -98,7 +99,9 @@ def mundane_commands(ctx: app.ArgparseApp):
         )
     )
 
-    parser = ctx.register_command(prune, subparser=address_cmds)
+    parser = ctx.register_command(
+        prune, subparser=address_cmds, parents=[bm_label_flags]
+    )
     parser.add_argument(
         '--commit',
         default=False,
@@ -422,10 +425,20 @@ def prune(args: argparse.Namespace) -> int:
     Prune portals from the database where its address has an
     (type, value) for the pruning operation set to "remove".
 
-    Hint: See the 'address update', 'address type', and
-    'address type value' families of commands for more information.
+    With no options, only the list of portals that might be pruned are
+    displayed.  The --commit flag will perform the deletions.
+
+    Alternatively, the --bookmark flag will save the list in an internal
+    bookmark folder.  A folder LABEL may be passed as an option to --bookmark,
+    otherwise it will be named "prune".  See the 'bookmark' family of commands
+    for more information.
+
+    Hint: See the 'address update', 'address type', and 'address type value'
+    families of commands for more information.
     """
     dbc = args.dbc
+
+    guids = set()
 
     stmt = sqla.select(database.PortalV2)
     stmt = stmt.join(
@@ -440,12 +453,25 @@ def prune(args: argparse.Namespace) -> int:
     for row in dbc.session.execute(stmt):
         portal = row.PortalV2
         print(f'Pruning {portal.guid} - {portal.label}')
+        guids.add(portal.guid)
         dbc.session.delete(portal)
 
     if args.commit:
         dbc.session.commit()
     else:
         dbc.session.rollback()
+        if args.bookmark and guids:
+            use_default = args.bookmark == bookmarks.DEFAULT_FOLDER
+            label = args.name if use_default else args.bookmark
+            existing = args.existing_mode
+            folder = bookmarks.prepare_folder(dbc, label, existing)
+            for guid in guids:
+                dbc.session.add(
+                    database.PortalBookmark(
+                        folder_id=folder.uuid, portal_id=guid
+                    )
+                )
+            dbc.session.commit()
 
     return 0
 
