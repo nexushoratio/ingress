@@ -1024,6 +1024,31 @@ def write_(args: argparse.Namespace) -> int:
     return ret
 
 
+def prepare_folder(
+    dbc: database.Database, label: str, existing: ExistingFolder
+) -> database.BookmarkFolder:
+    """Prepare a folder based upon the supplied parameters.
+
+    It will be flushed to the database.
+    """
+    stmt = sqla.select(database.BookmarkFolder
+                       ).where(database.BookmarkFolder.label == label)
+    old_folder = dbc.session.scalar(stmt)
+    # Using an older version of yapf that does not support match/case.
+    if old_folder and existing == ExistingFolder.FAIL:
+        raise Error(f'The bookmark folder "{label}" already exists.')
+    if old_folder and existing == ExistingFolder.CLEAR:
+        folder = _clear_folder(dbc, old_folder)
+    elif old_folder and existing == ExistingFolder.APPEND:
+        folder = old_folder
+    else:
+        folder = database.BookmarkFolder(label=label)
+        dbc.session.add(folder)
+        dbc.session.flush([folder])
+
+    return folder
+
+
 def _clear_folder(
     dbc: database.Database, folder: database.BookmarkFolder
 ) -> database.BookmarkFolder:
