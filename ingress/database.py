@@ -103,12 +103,19 @@ def _point_to_latlng(point: WKT) -> str:
 
 
 class ReprMixin:
-    """A reasonable default __repr__ implementation."""
+    """A reasonable default __repr__ implementation.
+
+    Subclasses may specify a collection of columns to exclude from repr by
+    overriding `_repr_exclude_keys`.
+    """
+
+    _repr_exclude_keys: tuple[str, ...] = ()
 
     def __repr__(self):
         params = ', '.join(
             f'{key}={getattr(self, key)!r}'
             for key in self.__mapper__.c.keys()
+            if key not in self._repr_exclude_keys
         )
         return f'{self.__class__.__name__}({params})'
 
@@ -154,8 +161,10 @@ class PortalDict(typing.TypedDict, total=False):
     latlng: str
 
 
-class PortalV2(Base):  # pylint: disable=missing-class-docstring
+class PortalV2(ReprMixin, Base):  # pylint: disable=missing-class-docstring
     __tablename__ = 'v2_portals'
+
+    _repr_exclude_keys = ('lat', 'lng', 'point')
 
     guid = sqlalchemy.Column(
         sqlalchemy.String, primary_key=True, nullable=False
@@ -198,15 +207,6 @@ class PortalV2(Base):  # pylint: disable=missing-class-docstring
                        ] = getattr(self, key)
 
         return portal
-
-    def __repr__(self):
-        return (
-            'PortalV2('
-            f'label={self.label},'
-            f' first_seen={self.first_seen},'
-            f' last_seen={self.last_seen}'
-            ')'
-        )
 
 
 class ClusterLeader(Base):  # pylint: disable=missing-class-docstring
@@ -279,8 +279,10 @@ sqlalchemy.event.listen(
 )
 
 
-class Address(Base):  # pylint: disable=missing-class-docstring
+class Address(ReprMixin, Base):  # pylint: disable=missing-class-docstring
     __tablename__ = 'addresses'
+
+    _repr_exclude_keys = ('lat', 'lng')
 
     latlng = sqlalchemy.Column(
         sqlalchemy.String, nullable=False, primary_key=True
@@ -295,15 +297,6 @@ class Address(Base):  # pylint: disable=missing-class-docstring
     )
     address = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     date = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
-
-    def __repr__(self):
-        return (
-            'Address('
-            f'latlng={self.latlng!r},'
-            f' address={self.address!r},'
-            f' date={self.date!r}'
-            ')'
-        )
 
 
 class AddressType(ReprMixin, Base):  # pylint: disable=missing-class-docstring
@@ -346,7 +339,7 @@ class AddressTypeValue(ReprMixin, Base):  # pylint: disable=missing-class-docstr
     note = sqlalchemy.Column(sqlalchemy.String)
 
 
-class AddressTypeValueAssociation(Base):  # pylint: disable=missing-class-docstring
+class AddressTypeValueAssociation(ReprMixin, Base):  # pylint: disable=missing-class-docstring
     __tablename__ = 'address_type_value_associations'
 
     latlng: str = sqlalchemy.Column(
@@ -359,15 +352,6 @@ class AddressTypeValueAssociation(Base):  # pylint: disable=missing-class-docstr
     value = sqlalchemy.Column(
         sqlalchemy.String, nullable=False, primary_key=True
     )
-
-    def __repr__(self):
-        return (
-            'AddressTypeValueAssociation('
-            f'latlng={self.latlng!r},'
-            f' type={self.type!r},'
-            f' value={self.value!r}'
-            ')'
-        )
 
     __table_args__ = (
         sqlalchemy.ForeignKeyConstraint(
@@ -392,6 +376,8 @@ class UuidMixin:
 
 class Place(ReprMixin, UuidMixin, Base):  # pylint: disable=missing-class-docstring
     __tablename__ = 'places'
+
+    _repr_exclude_keys = ('lat', 'lng', 'point')
 
     label = sqlalchemy.Column(sqlalchemy.Unicode)
     latlng = sqlalchemy.Column(sqlalchemy.String, nullable=False, unique=True)
