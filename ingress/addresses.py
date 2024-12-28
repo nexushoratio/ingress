@@ -208,7 +208,6 @@ def update(args: argparse.Namespace) -> int:
     dbc = args.dbc
 
     delay_base = _tune_delay_base(args.delay)
-    now = int(time.time())
     portals = bookmarks.load(args.bookmarks)
 
     fetched = 0
@@ -233,6 +232,7 @@ def update(args: argparse.Namespace) -> int:
             )
             time.sleep(delay)
             address_detail = google.latlng_to_address(latlng)
+            now = int(time.time())
             db_address = database.Address(
                 latlng=latlng, address=address_detail.address, date=now
             )
