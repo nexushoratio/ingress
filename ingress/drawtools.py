@@ -13,6 +13,18 @@ if typing.TYPE_CHECKING:  # pragma: no cover
     import argparse
 
     from mundane import app
+    from ingress import geo
+
+# pylint: disable=duplicate-code
+sqla = database.sqlalchemy
+geo2 = database.geoalchemy2
+# pylint: enable=duplicate-code
+
+Statement: typing.TypeAlias = sqla.sql.selectable.Select
+
+
+class Error(Exception):
+    """Base module exception."""
 
 
 def mundane_shared_flags(ctx: app.ArgparseApp):
@@ -28,26 +40,61 @@ def mundane_shared_flags(ctx: app.ArgparseApp):
         )
 
 
-def save_bounds(filename, collections):
-    """Save the hull of MultiPoints instances in drawtools format."""
+def save_bounds(
+    dbc: database.Database, filename: str, collections: list[Statement]
+):
+    """Save the hulls of collections of points in drawtools format."""
     hulls = list()
     color = 256 * 256 * 256
     stride = color // (len(collections) + 1)
-    for index, collection in enumerate(collections, start=1):
-        if len(collection.geoms) < 3:
-            # give points and lines a bit of area
-            collection = collection.buffer(0.0005, resolution=1)
-        color = stride * index
 
-        hull_shapely = collection.convex_hull.exterior.coords
-        hull = [{'lng': point[0], 'lat': point[1]} for point in hull_shapely]
+    for index, stmt in enumerate(collections):
+        collection = stmt.cte('collection', recursive=True)
+        buffered = sqla.select(
+            sqla.case(
+                (
+                    collection.c.geom.ST_NumGeometries() < 3,
+                    collection.c.geom.ST_Buffer(0.00005, 3)
+                ),
+                else_=collection.c.geom
+            ).label('geom')
+        ).select_from(collection).cte('buffered')
+        hull = sqla.select(
+            buffered.c.geom.ST_ConvexHull().ST_ExteriorRing().label('geom')
+        ).cte('hull')
+        n_geom = sqla.select(sqla.literal(1).label('n'), hull.c.geom).where(
+            hull.c.geom.ST_PointN(1) != sqla.null()
+        ).cte(
+            'n_geom', recursive=True
+        )
+        n_geom = n_geom.union_all(
+            sqla.select(n_geom.c.n + 1, n_geom.c.geom).where(
+                n_geom.c.geom.ST_PointN(n_geom.c.n + 1) != sqla.null()
+            )
+        )
+        points = sqla.select(
+            n_geom.c.n,
+            n_geom.c.geom.ST_PointN(n_geom.c.n).label('geom')
+        ).cte('points')
+        stmt = sqla.select(
+            points.c.geom.ST_Y().label('lat'),
+            points.c.geom.ST_X().label('lng')
+        )
+
+        color = stride * (index + 1)
+
+        lat_lngs = list(
+            dict(row) for row in dbc.session.execute(stmt).mappings()
+        )
+
         hulls.append(
             {
                 'type': 'polygon',
                 'color': f'#{color:06x}',
-                'latLngs': hull
+                'latLngs': lat_lngs,
             }
         )
+
     json.save(filename, hulls)
 
 

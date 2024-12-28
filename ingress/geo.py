@@ -72,14 +72,14 @@ def mundane_commands(ctx: app.ArgparseApp):
     bm_flags = ctx.get_shared_parser('bookmarks')
     dt_flags = ctx.get_shared_parser('drawtools')
     file_flags = ctx.get_shared_parser('file')
-    glob_flags = ctx.get_shared_parser('glob')
+    folder_id_req_list = ctx.get_shared_parser('folder_id_req_list')
 
     geo_cmds = ctx.new_subparser(
         ctx.register_command(_geo, name='geo', usage_only=True)
     )
 
     ctx.register_command(
-        bounds, parents=[dt_flags, glob_flags], subparser=geo_cmds
+        bounds, parents=[dt_flags, folder_id_req_list], subparser=geo_cmds
     )
     ctx.register_command(
         trim, parents=[bm_flags, dt_flags], subparser=geo_cmds
@@ -157,30 +157,47 @@ def _geo(args: argparse.Namespace) -> int:
 
 
 def bounds(args: argparse.Namespace) -> int:
-    """Create a drawtools file outlining portals in multiple bookmarks files.
+    """Create a drawtools file outlining portals in multiple bookmark folders.
 
-    A new boundary is created for each bookmarks file.
+    A single boundary file is created.  One boundary is created for each
+    bookmark folder.
 
     Each boundary is given a unique color determined automatically.  They are
     known to be difficult to see against some IITC maps, so manual editing may
     be required.
 
     Hint: Useful for processing the output of the 'donuts' command.
-    """
-    collection_of_multi_points = list()
-    for filename in itertools.chain(*args.glob):
-        data = bookmarks.load(filename)
-        points = list()
-        for bookmark in list(data.values()):
-            latlng = _latlng_str_to_floats(bookmark['latlng'])
-            lnglat = (latlng[1], latlng[0])
-            point = shapely.geometry.Point(lnglat)
-            points.append(point)
-        multi_points = shapely.geometry.MultiPoint(points)
-        collection_of_multi_points.append(multi_points)
-    drawtools.save_bounds(args.drawtools, collection_of_multi_points)
 
-    return 0
+    Hint: See the 'bookmark' family of commands for more information about
+    bookmark folders.
+    """
+    dbc = args.dbc
+
+    collection_of_points: list[drawtools.Statement] = list()
+
+    ret = 0
+    for folder_id in args.folder_id:
+        folder = dbc.session.get(database.BookmarkFolder, folder_id)
+        if folder:
+            stmt = sqla.select(
+                geo2.functions.ST_Collect(database.PortalV2.point
+                                          ).label('geom')
+            ).join(
+                database.PortalBookmark,
+                database.PortalBookmark.portal_id == database.PortalV2.guid
+            ).where(database.PortalBookmark.folder_id == folder_id)
+            collection_of_points.append(stmt)
+        else:
+            # pylint: disable=duplicate-code
+            print(f'Unknown folder id: "{folder_id}"')
+            ret = 1
+            break
+            # pylint: enable=duplicate-code
+
+    if not ret:
+        drawtools.save_bounds(dbc, args.drawtools, collection_of_points)
+
+    return ret
 
 
 def trim(args: argparse.Namespace) -> int:
