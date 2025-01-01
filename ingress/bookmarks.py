@@ -50,72 +50,66 @@ def mundane_shared_flags(ctx: app.ArgparseApp):
         'action': 'store',
         'help': 'IITC bookmarks json file to use.',
     }
-    parser = ctx.new_shared_parser('bookmarks')
-    if parser:
-        parser.add_argument(*bm_args, required=True, **bm_kwargs)
+    parser = ctx.safe_new_shared_parser('bookmarks')
+    parser.add_argument(*bm_args, required=True, **bm_kwargs)
 
-    parser = ctx.new_shared_parser('bookmarks_optional')
-    if parser:
-        parser.add_argument(*bm_args, **bm_kwargs)
+    parser = ctx.safe_new_shared_parser('bookmarks_optional')
+    parser.add_argument(*bm_args, **bm_kwargs)
 
     existing = tuple(ExistingFolder)
-    parser = ctx.new_shared_parser('bookmark_label')
-    if parser:
-        parser.add_argument(
-            '-b',
-            '--bookmark',
-            nargs=ctx.argparse_api.OPTIONAL,
-            const=DEFAULT_FOLDER,
-            action='store',
-            metavar='LABEL',
-            help=(
-                'Enable use of a bookmark folder.  Depending on context, the'
-                ' value in LABEL may be used.'
-            )
+    parser = ctx.safe_new_shared_parser('bookmark_label')
+    parser.add_argument(
+        '-b',
+        '--bookmark',
+        nargs=ctx.argparse_api.OPTIONAL,
+        const=DEFAULT_FOLDER,
+        action='store',
+        metavar='LABEL',
+        help=(
+            'Enable use of a bookmark folder.  Depending on context, the'
+            ' value in LABEL may be used.'
         )
-        parser.add_argument(
-            '--existing-mode',
-            action='store',
-            default=existing[0],
-            choices=existing,
-            help=(
-                'Control how existing folders should be treated when the'
-                ' bookmark folder feature is enabled.  (Default: %(default)s)'
-            )
+    )
+    parser.add_argument(
+        '--existing-mode',
+        action='store',
+        default=existing[0],
+        choices=existing,
+        help=(
+            'Control how existing folders should be treated when the'
+            ' bookmark folder feature is enabled.  (Default: %(default)s)'
         )
+    )
 
-    parser = ctx.new_shared_parser('folder_id_req')
-    if parser:
-        parser.add_argument(
-            '--folder-id',
-            action='store',
-            required=True,
-            help='Folder UUID to use.'
-        )
+    parser = ctx.safe_new_shared_parser('folder_id_req')
+    parser.add_argument(
+        '--folder-id',
+        action='store',
+        required=True,
+        help='Folder UUID to use.'
+    )
 
-    parser = ctx.new_shared_parser('folder_id_req_list')
-    if parser:
-        parser.add_argument(
-            '-f',
-            '--folder-id',
-            action='append',
-            required=True,
-            help='Folder UUID to use.  May be specified multiple times.'
-        )
+    parser = ctx.safe_new_shared_parser('folder_id_req_list')
+    parser.add_argument(
+        '-f',
+        '--folder-id',
+        action='append',
+        required=True,
+        help='Folder UUID to use.  May be specified multiple times.'
+    )
 
-    parser = ctx.new_shared_parser('glob')
-    if parser:
-        parser.add_argument(
-            '-g',
-            '--glob',
-            action='append',
-            required=True,
-            type=glob.iglob,  # type: ignore[arg-type]  # old version of mypy
-            help=(
-                'A filename glob that will be matched by the program'
-                ' instead of the shell.  May be specified multiple times.'
-            )
+    parser = ctx.safe_new_shared_parser('glob')
+    parser.add_argument(
+        '-g',
+        '--glob',
+        action='append',
+        required=True,
+        type=glob.iglob,  # type: ignore[arg-type]  # old version of mypy
+        help=(
+            'A filename glob that will be matched by the program'
+            ' instead of the shell.  May be specified multiple times.'
         )
+    )
 
 
 class _CommonFlags:
@@ -132,17 +126,10 @@ class _CommonFlags:
     def _parser(self) -> argparse.ArgumentParser:
         return self._ctx.new_parser()
 
-    def _shared_parser(self, name: str) -> argparse.ArgumentParser:
-        """Return an existing shared parser."""
-        parser = self._ctx.get_shared_parser(name)
-        if parser is None:
-            raise Error(f'Shared parser "{name}" was not registered.')
-        return parser
-
     @functools.cached_property
     def folder_id_req(self) -> argparse.ArgumentParser:
         """Required --folder-id flag."""
-        return self._shared_parser('folder_id_req')
+        return self._ctx.safe_get_shared_parser('folder_id_req')
 
     @functools.cached_property
     def folder_id_opt(self) -> argparse.ArgumentParser:
@@ -156,7 +143,7 @@ class _CommonFlags:
     @functools.cached_property
     def folder_id_req_list(self) -> argparse.ArgumentParser:
         """Required repeatable --folder-id flag."""
-        return self._shared_parser('folder_id_req_list')
+        return self._ctx.safe_get_shared_parser('folder_id_req_list')
 
     @functools.cached_property
     def label_req(self) -> argparse.ArgumentParser:
@@ -302,8 +289,8 @@ class _CommonFlags:
 
 def mundane_commands(ctx: app.ArgparseApp):
     """Register commands."""
-    bm_flags = ctx.get_shared_parser('bookmarks')
-    glob_flags = ctx.get_shared_parser('glob')
+    bm_flags = ctx.safe_get_shared_parser('bookmarks')
+    glob_flags = ctx.safe_get_shared_parser('glob')
 
     parser = ctx.register_command(flatten, parents=[bm_flags])
     parser.add_argument(

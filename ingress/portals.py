@@ -110,8 +110,8 @@ def mundane_commands(ctx: app.ArgparseApp):
             # Add the --flag=values to the appropriate dest type/group.
             vars(namespace)[self.dest].append((self.old_dest, values))
 
-    bm_req_flags = ctx.get_shared_parser('bookmarks')
-    bm_label_flags = ctx.get_shared_parser('bookmark_label')
+    bm_req_flags = ctx.safe_get_shared_parser('bookmarks')
+    bm_label_flags = ctx.safe_get_shared_parser('bookmark_label')
 
     portal_cmds = ctx.new_subparser(
         ctx.register_command(_portal, name='portal', usage_only=True)

@@ -69,10 +69,10 @@ Bite: typing.TypeAlias = list[Sprinkle]
 
 def mundane_commands(ctx: app.ArgparseApp):
     """Parser registration API."""
-    bm_flags = ctx.get_shared_parser('bookmarks')
-    dt_flags = ctx.get_shared_parser('drawtools')
-    file_flags = ctx.get_shared_parser('file')
-    folder_id_req_list = ctx.get_shared_parser('folder_id_req_list')
+    bm_flags = ctx.safe_get_shared_parser('bookmarks')
+    dt_flags = ctx.safe_get_shared_parser('drawtools')
+    file_flags = ctx.safe_get_shared_parser('file')
+    folder_id_req_list = ctx.safe_get_shared_parser('folder_id_req_list')
 
     geo_cmds = ctx.new_subparser(
         ctx.register_command(_geo, name='geo', usage_only=True)

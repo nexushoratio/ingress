@@ -31,8 +31,8 @@ class Error(Exception):
 
 def mundane_commands(ctx: app.ArgparseApp):
     """Parser registration API."""
-    bm_flags = ctx.get_shared_parser('bookmarks')
-    bm_label_flags = ctx.get_shared_parser('bookmark_label')
+    bm_flags = ctx.safe_get_shared_parser('bookmarks')
+    bm_label_flags = ctx.safe_get_shared_parser('bookmark_label')
 
     type_flag = ctx.argparse_api.ArgumentParser(add_help=False)
     type_flag.add_argument(

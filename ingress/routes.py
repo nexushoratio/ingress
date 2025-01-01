@@ -28,7 +28,7 @@ COLORS = {
 
 def mundane_commands(ctx: app.ArgparseApp):
     """Register commands."""
-    bm_flags = ctx.get_shared_parser('bookmarks')
+    bm_flags = ctx.safe_get_shared_parser('bookmarks')
 
     parser = ctx.register_command(route, parents=[bm_flags])
     parser.add_argument(

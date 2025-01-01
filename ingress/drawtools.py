@@ -29,15 +29,14 @@ class Error(Exception):
 
 def mundane_shared_flags(ctx: app.ArgparseApp):
     """Register shared flags."""
-    parser = ctx.new_shared_parser('drawtools')
-    if parser:
-        parser.add_argument(
-            '-d',
-            '--drawtools',
-            action='store',
-            required=True,
-            help='IITC drawtools json file to use'
-        )
+    parser = ctx.safe_new_shared_parser('drawtools')
+    parser.add_argument(
+        '-d',
+        '--drawtools',
+        action='store',
+        required=True,
+        help='IITC drawtools json file to use'
+    )
 
 
 def save_bounds(
