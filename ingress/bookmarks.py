@@ -118,10 +118,10 @@ class _CommonFlags:
         Args:
             ctx: The ArgparseApp instance to use.
         """
-        self.ctx = ctx
+        self._ctx = ctx
 
     def _parser(self) -> argparse.ArgumentParser:
-        return self.ctx.new_parser()
+        return self._ctx.new_parser()
 
     @functools.cached_property
     def folder_id_req(self) -> argparse.ArgumentParser:
