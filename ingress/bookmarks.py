@@ -123,6 +123,13 @@ class _CommonFlags:
     def _parser(self) -> argparse.ArgumentParser:
         return self._ctx.new_parser()
 
+    def _shared_parser(self, name: str) -> argparse.ArgumentParser:
+        """Return an existing shared parser."""
+        parser = self._ctx.get_shared_parser(name)
+        if parser is None:
+            raise Error(f'Shared parser "{name}" was not registered.')
+        return parser
+
     @functools.cached_property
     def folder_id_req(self) -> argparse.ArgumentParser:
         """Required --folder-id flag."""
@@ -143,6 +150,11 @@ class _CommonFlags:
             '--folder-id', action='store', help='Folder UUID to use.'
         )
         return parser
+
+    @functools.cached_property
+    def folder_id_req_list(self) -> argparse.ArgumentParser:
+        """Required repeatable --folder-id flag."""
+        return self._shared_parser('folder_id_req_list')
 
     @functools.cached_property
     def label_req(self) -> argparse.ArgumentParser:
@@ -290,7 +302,6 @@ def mundane_commands(ctx: app.ArgparseApp):
     """Register commands."""
     bm_flags = ctx.get_shared_parser('bookmarks')
     glob_flags = ctx.get_shared_parser('glob')
-    folder_id_req_list = ctx.get_shared_parser('folder_id_req_list')
 
     parser = ctx.register_command(flatten, parents=[bm_flags])
     parser.add_argument(
@@ -332,7 +343,7 @@ def mundane_commands(ctx: app.ArgparseApp):
         write_,
         name='write',
         subparser=bookmark_cmds,
-        parents=[bm_flags, folder_id_req_list]
+        parents=[bm_flags, flags.folder_id_req_list]
     )
 
     folder_cmds = ctx.new_subparser(
