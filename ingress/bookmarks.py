@@ -84,6 +84,15 @@ def mundane_shared_flags(ctx: app.ArgparseApp):
             )
         )
 
+    parser = ctx.new_shared_parser('folder_id_req')
+    if parser:
+        parser.add_argument(
+            '--folder-id',
+            action='store',
+            required=True,
+            help='Folder UUID to use.'
+        )
+
     parser = ctx.new_shared_parser('folder_id_req_list')
     if parser:
         parser.add_argument(
@@ -133,14 +142,7 @@ class _CommonFlags:
     @functools.cached_property
     def folder_id_req(self) -> argparse.ArgumentParser:
         """Required --folder-id flag."""
-        parser = self._parser()
-        parser.add_argument(
-            '--folder-id',
-            action='store',
-            required=True,
-            help='Folder UUID to use.'
-        )
-        return parser
+        return self._shared_parser('folder_id_req')
 
     @functools.cached_property
     def folder_id_opt(self) -> argparse.ArgumentParser:
