@@ -2,19 +2,27 @@
 
 import unittest
 
+from mundane import app
+
 from ingress import json
 
 
 class MundaneSharedFlagsTest(unittest.TestCase):
 
     def test_basic(self):
-        self.assertTrue(json.mundane_shared_flags)
+        my_app = app.ArgparseApp()
+        json.mundane_shared_flags(my_app)
+
+        self.assertIsNotNone(my_app.get_shared_parser('file'))
 
 
 class MundaneCommandsTest(unittest.TestCase):
 
     def test_basic(self):
-        self.assertTrue(json.mundane_commands)
+        my_app = app.ArgparseApp()
+        my_app.safe_new_shared_parser('file')
+
+        json.mundane_commands(my_app)
 
 
 class LoadTest(unittest.TestCase):

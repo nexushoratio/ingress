@@ -1,26 +1,60 @@
 """Tests for bookmarks.py"""
 
+# pylint: disable=protected-access
+
 import unittest
 
+from mundane import app
+
 from ingress import bookmarks
-
-
-class ExistingFolderTest(unittest.TestCase):
-
-    def test_basic(self):
-        self.assertTrue(bookmarks.ExistingFolder)
 
 
 class MundaneSharedFlagsTest(unittest.TestCase):
 
     def test_basic(self):
-        self.assertTrue(bookmarks.mundane_shared_flags)
+        my_app = app.ArgparseApp()
+        bookmarks.mundane_shared_flags(my_app)
+
+        self.assertIsNotNone(my_app.get_shared_parser('bookmarks'))
+        self.assertIsNotNone(my_app.get_shared_parser('bookmark_label'))
+        self.assertIsNotNone(my_app.get_shared_parser('folder_id_req'))
+        self.assertIsNotNone(my_app.get_shared_parser('folder_id_req_list'))
+        self.assertIsNotNone(my_app.get_shared_parser('glob'))
 
 
 class MundaneCommandsTest(unittest.TestCase):
 
     def test_basic(self):
-        self.assertTrue(bookmarks.mundane_commands)
+        my_app = app.ArgparseApp()
+        my_app.safe_new_shared_parser('bookmarks')
+        my_app.safe_new_shared_parser('glob')
+        my_app.safe_new_shared_parser('folder_id_req_list')
+        my_app.safe_new_shared_parser('folder_id_req')
+
+        bookmarks.mundane_commands(my_app)
+
+
+class NeverCallTest(unittest.TestCase):
+
+    def test_place(self):
+        with self.assertRaises(bookmarks.Error):
+            bookmarks._place(None)
+
+    def test_bookmark(self):
+        with self.assertRaises(bookmarks.Error):
+            bookmarks._bookmark(None)
+
+    def test_folder(self):
+        with self.assertRaises(bookmarks.Error):
+            bookmarks._folder(None)
+
+    def test_map(self):
+        with self.assertRaises(bookmarks.Error):
+            bookmarks._map(None)
+
+    def test_portal(self):
+        with self.assertRaises(bookmarks.Error):
+            bookmarks._portal(None)
 
 
 class FlattenTest(unittest.TestCase):

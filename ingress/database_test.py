@@ -1,11 +1,26 @@
 """Tests for database.py"""
 
+# pylint: disable=protected-access
+
 import unittest
+
+from mundane import app
 
 from ingress import database
 
 
-# pylint: disable=protected-access
+class MundaneGlobalFlagsTest(unittest.TestCase):
+
+    def test_basic(self):
+        my_app = app.ArgparseApp()
+
+        database.mundane_global_flags(my_app)
+        flags = vars(my_app.parser.parse_args([]))
+
+        self.assertIn('db_dir', flags)
+        self.assertIn('db_name', flags)
+
+
 class ConversionsTest(unittest.TestCase):
 
     def test_latlng_via_point(self):

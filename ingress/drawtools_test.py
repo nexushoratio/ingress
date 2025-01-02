@@ -4,6 +4,8 @@ import json
 import tempfile
 import unittest
 
+from mundane import app
+
 from ingress import drawtools
 
 TETRAHELIX = {
@@ -40,6 +42,15 @@ def save_to_temp_json(obj) -> str:
     with tempfile.NamedTemporaryFile(mode='w', delete=False) as handle:
         json.dump(obj, handle)
     return handle.name
+
+
+class MundaneSharedFlagsTest(unittest.TestCase):
+
+    def test_basic(self):
+        my_app = app.ArgparseApp()
+        drawtools.mundane_shared_flags(my_app)
+
+        self.assertIsNotNone(my_app.get_shared_parser('drawtools'))
 
 
 class LoadPointTest(unittest.TestCase):

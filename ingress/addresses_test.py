@@ -1,6 +1,10 @@
 """Tests for addresses.py"""
 
+# pylint: disable=protected-access
+
 import unittest
+
+from mundane import app
 
 from ingress import addresses
 
@@ -8,7 +12,26 @@ from ingress import addresses
 class MundaneCommandsTest(unittest.TestCase):
 
     def test_basic(self):
-        self.assertTrue(addresses.mundane_commands)
+        my_app = app.ArgparseApp()
+        my_app.safe_new_shared_parser('bookmarks')
+        my_app.safe_new_shared_parser('bookmark_label')
+
+        addresses.mundane_commands(my_app)
+
+
+class NeverCallTest(unittest.TestCase):
+
+    def test_address(self):
+        with self.assertRaises(addresses.Error):
+            addresses._address(None)
+
+    def test_type(self):
+        with self.assertRaises(addresses.Error):
+            addresses._type(None)
+
+    def test_value(self):
+        with self.assertRaises(addresses.Error):
+            addresses._value(None)
 
 
 class UpdateTest(unittest.TestCase):
