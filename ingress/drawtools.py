@@ -15,10 +15,7 @@ if typing.TYPE_CHECKING:  # pragma: no cover
     from mundane import app
     from ingress import geo
 
-# pylint: disable=duplicate-code
 sqla = database.sqlalchemy
-geo2 = database.geoalchemy2
-# pylint: enable=duplicate-code
 
 Statement: typing.TypeAlias = sqla.sql.selectable.Select
 
