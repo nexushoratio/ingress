@@ -21,8 +21,6 @@ if typing.TYPE_CHECKING:  # pragma: no cover
 
     from mundane import app
 
-# pylint: disable=too-few-public-methods
-
 WKB: typing.TypeAlias = geoalchemy2.WKBElement
 WKT: typing.TypeAlias = geoalchemy2.WKTElement
 
@@ -100,6 +98,9 @@ def _point_to_latlng(point: WKT) -> str:
     """Convert a geoalchemy wrapped POINT to a lat,lng string."""
     shape = geoalchemy2.shape.to_shape(point)
     return f'{shape.y},{shape.x}'
+
+
+# pylint: disable=too-few-public-methods
 
 
 class ReprMixin:
