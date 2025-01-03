@@ -14,6 +14,7 @@ from mundane import log_mgr
 
 from ingress import addresses
 from ingress import bookmarks
+from ingress import config
 from ingress import database
 from ingress import drawtools
 from ingress import geo
@@ -29,7 +30,8 @@ def main():
         use_log_mgr=True, use_docstring_for_description=sys.modules[__name__]
     )
     modules = (
-        bookmarks, database, drawtools, geo, addresses, json, portals, routes
+        bookmarks, database, drawtools, geo, addresses, json, portals, routes,
+        config
     )
     ingress_app.register_global_flags(modules)
     ingress_app.register_shared_flags(modules)
