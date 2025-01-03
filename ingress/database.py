@@ -658,6 +658,9 @@ class Database:  # pylint: disable=missing-class-docstring
                 if sum_pages:
                     fragged = 1.0 * sum_gaps / sum_pages
                     logging.info('fragmentation: %f', fragged)
+                    # 10% fragmentation seems like a good starting point
+                    if fragged > 0.1:
+                        logging.info('fragmentation: good time to vacuum')
                 else:
                     logging.info('no measurable fragmentation')
             else:
