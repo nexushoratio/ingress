@@ -6,6 +6,7 @@ import atexit
 import collections
 import dataclasses
 import difflib
+import functools
 import logging
 import pathlib
 import time
@@ -59,11 +60,9 @@ def mundane_global_flags(ctx: app.ArgparseApp):
 def init_db(args: argparse.Namespace):
     """Initialize the database using command line arguments."""
 
-    # Do not bother if no command was given.
-    if args.name:
-        args.dbc = Database(args.db_dir, args.db_name)
-        del args.db_dir
-        del args.db_name
+    args.dbc = Database(args.db_dir, args.db_name)
+    del args.db_dir
+    del args.db_name
 
 
 convention = {
@@ -561,20 +560,30 @@ _AUTO_DROPS = (
 
 class Database:  # pylint: disable=missing-class-docstring
 
+    _engine: sqlalchemy.engine.Engine
+    _session: sqlalchemy.orm.Session
+
     def __init__(
         self,
         directory: str,
         filename: str,
     ):
+        logging.info('init: %s, %s', directory, filename)
+        self._directory = directory
+        self._filename = filename
         self._connect_time = 0.0
         self._spatialite_initialized = False
         self._vacuum_reason = None
-        pathlib.Path(directory).mkdir(exist_ok=True)
         sql_logger = logging.getLogger('sqlalchemy')
         root_logger = logging.getLogger()
         sql_logger.setLevel(root_logger.getEffectiveLevel())
+
+    @functools.cached_property
+    def session(self):
+        """Create and return the session."""
+        pathlib.Path(self._directory).mkdir(exist_ok=True)
         self._engine = sqlalchemy.create_engine(
-            f'sqlite:///{directory}/{filename}',
+            f'sqlite:///{self._directory}/{self._filename}',
             future=True,
             poolclass=sqlalchemy.pool.StaticPool
         )
@@ -585,7 +594,7 @@ class Database:  # pylint: disable=missing-class-docstring
             self._engine, 'close', self._close, named=True
         )
         self._sanity_check()
-        self.session = orm.sessionmaker(bind=self._engine, future=True)()
+        self._session = orm.sessionmaker(bind=self._engine, future=True)()
         if self._spatialite_initialized:
             print(
                 'Ignore the following error messages about'
@@ -596,6 +605,7 @@ class Database:  # pylint: disable=missing-class-docstring
         Base.metadata.create_all(self._engine)
         self._post_create_migrations()
         atexit.register(self.dispose)
+        return self._session
 
     def dispose(self):
         """Orderly cleanup."""
@@ -758,7 +768,7 @@ class Database:  # pylint: disable=missing-class-docstring
     def _post_create_migrations(self):
         """Migrate portals to v2_portals."""
         stmt = sqlalchemy.select(sqlalchemy.func.count()).select_from(_Portal)
-        count = self.session.scalar(stmt)
+        count = self._session.scalar(stmt)
         if count:
             print('Performing a database migration.')
             print(
@@ -769,14 +779,14 @@ class Database:  # pylint: disable=missing-class-docstring
             logging.info('migrating count: %d', count)
             stmt = sqlalchemy.select(_Portal)
             portals = [
-                row._Portal.to_iitc() for row in self.session.execute(stmt)  # pylint: disable=protected-access
+                row._Portal.to_iitc() for row in self._session.execute(stmt)  # pylint: disable=protected-access
             ]
             logging.info('portal dictionaries generated: %d', len(portals))
-            self.session.bulk_insert_mappings(PortalV2, portals)
+            self._session.bulk_insert_mappings(PortalV2, portals)
             logging.info('bulk inserts completed')
             stmt = sqlalchemy.delete(_Portal)
-            self.session.execute(stmt)
+            self._session.execute(stmt)
             logging.info('bulk delete completed')
-            self.session.commit()
+            self._session.commit()
             logging.info('finished migration')
             print('Migration complete.')
