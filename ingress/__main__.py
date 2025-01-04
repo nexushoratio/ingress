@@ -8,6 +8,7 @@ marked with "(V)" have been verified to work under those conditions.
 """
 
 import sys
+import typing
 
 from mundane import app
 from mundane import log_mgr
@@ -23,7 +24,7 @@ from ingress import portals
 from ingress import routes
 
 
-def main():
+def main() -> typing.NoReturn:
     """The Ingress app."""
     log_mgr.set_root_log_level('INFO')
     ingress_app = app.ArgparseApp(
@@ -40,5 +41,5 @@ def main():
     sys.exit(ingress_app.run())
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     main()
