@@ -65,8 +65,6 @@ def init_db(args: argparse.Namespace):
         del args.db_dir
         del args.db_name
 
-        atexit.register(args.dbc.dispose)
-
 
 convention = {
     'ix': 'ix_%(column_0_label)s',
@@ -597,9 +595,11 @@ class Database:  # pylint: disable=missing-class-docstring
             print('https://github.com/geoalchemy/geoalchemy2/issues/519')
         Base.metadata.create_all(self._engine)
         self._post_create_migrations()
+        atexit.register(self.dispose)
 
     def dispose(self):
         """Orderly cleanup."""
+        atexit.unregister(self.dispose)
         self._engine.dispose()
 
     def _connect(self, **kwargs):
