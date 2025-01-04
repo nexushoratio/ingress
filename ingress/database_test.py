@@ -2,11 +2,14 @@
 
 # pylint: disable=protected-access
 
+import argparse
+import pathlib
 import unittest
 
 from mundane import app
 
 from ingress import database
+from ingress import test_helper
 
 
 class MundaneGlobalFlagsTest(unittest.TestCase):
@@ -45,6 +48,39 @@ class ConversionsTest(unittest.TestCase):
         )
 
         self.assertEqual(tetrahelix, result)
+
+
+class InitDbTest(unittest.TestCase):
+
+    def test_args(self):
+        # Create dbc just to generate filenames
+        dbc = test_helper.database_connection(self)
+        args = argparse.Namespace(
+            db_dir=dbc._directory, db_name=dbc._filename
+        )
+
+        self.assertTrue(hasattr(args, 'db_dir'))
+        self.assertTrue(hasattr(args, 'db_name'))
+        self.assertFalse(hasattr(args, 'dbc'))
+
+        database.init_db(args)
+
+        self.assertFalse(hasattr(args, 'db_dir'))
+        self.assertFalse(hasattr(args, 'db_name'))
+        self.assertTrue(hasattr(args, 'dbc'))
+
+        self.assertIsInstance(args.dbc, database.Database)  # pylint: disable=no-member
+
+
+class DatabaseTest(unittest.TestCase):
+
+    def test_deferred_session(self):
+        dbc = test_helper.database_connection(self)
+        db_path = pathlib.Path(dbc._directory, dbc._filename)
+
+        self.assertFalse(db_path.exists())
+        self.assertIsInstance(dbc.session, database.sqlalchemy.orm.Session)
+        self.assertTrue(db_path.exists())
 
 
 if __name__ == '__main__':  # pragma: no cover

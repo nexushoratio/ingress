@@ -579,7 +579,7 @@ class Database:  # pylint: disable=missing-class-docstring
         sql_logger.setLevel(root_logger.getEffectiveLevel())
 
     @functools.cached_property
-    def session(self):
+    def session(self) -> sqlalchemy.orm.Session:
         """Create and return the session."""
         pathlib.Path(self._directory).mkdir(exist_ok=True)
         self._engine = sqlalchemy.create_engine(
@@ -611,6 +611,16 @@ class Database:  # pylint: disable=missing-class-docstring
         """Orderly cleanup."""
         atexit.unregister(self.dispose)
         self._engine.dispose()
+
+    def __repr__(self):
+        params = ', '.join(
+            (
+                f'directory={self._directory}',
+                f'filename={self._filename}',
+            )
+        )
+
+        return f'{self.__class__.__name__}({params})'
 
     def _connect(self, **kwargs):
         """Set defaults for our connection."""
