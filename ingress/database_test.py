@@ -25,6 +25,28 @@ class MundaneGlobalFlagsTest(unittest.TestCase):
         self.assertIn('db_name', flags)
 
 
+class InitDbTest(unittest.TestCase):
+
+    def test_args(self):
+        # Create dbc just to generate filenames
+        dbc = test_helper.database_connection(self)
+        args = argparse.Namespace(
+            db_dir=dbc._directory, db_name=dbc._filename
+        )
+
+        self.assertTrue(hasattr(args, 'db_dir'))
+        self.assertTrue(hasattr(args, 'db_name'))
+        self.assertFalse(hasattr(args, 'dbc'))
+
+        database.init_db(args)
+
+        self.assertFalse(hasattr(args, 'db_dir'))
+        self.assertFalse(hasattr(args, 'db_name'))
+        self.assertTrue(hasattr(args, 'dbc'))
+
+        self.assertIsInstance(args.dbc, database.Database)  # pylint: disable=no-member
+
+
 class ConversionsTest(unittest.TestCase):
 
     def test_latlng_via_point(self):
@@ -49,28 +71,6 @@ class ConversionsTest(unittest.TestCase):
         )
 
         self.assertEqual(tetrahelix, result)
-
-
-class InitDbTest(unittest.TestCase):
-
-    def test_args(self):
-        # Create dbc just to generate filenames
-        dbc = test_helper.database_connection(self)
-        args = argparse.Namespace(
-            db_dir=dbc._directory, db_name=dbc._filename
-        )
-
-        self.assertTrue(hasattr(args, 'db_dir'))
-        self.assertTrue(hasattr(args, 'db_name'))
-        self.assertFalse(hasattr(args, 'dbc'))
-
-        database.init_db(args)
-
-        self.assertFalse(hasattr(args, 'db_dir'))
-        self.assertFalse(hasattr(args, 'db_name'))
-        self.assertTrue(hasattr(args, 'dbc'))
-
-        self.assertIsInstance(args.dbc, database.Database)  # pylint: disable=no-member
 
 
 class ReprMixinTest(unittest.TestCase):
