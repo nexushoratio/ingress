@@ -16,6 +16,7 @@ import uuid
 import geoalchemy2  # type: ignore[import]
 import sqlalchemy
 from sqlalchemy import orm
+import wurlitzer  # type: ignore[import]
 
 if typing.TYPE_CHECKING:  # pragma: no cover
     import argparse
@@ -595,14 +596,24 @@ class Database:  # pylint: disable=missing-class-docstring
         )
         self._sanity_check()
         self._session = orm.sessionmaker(bind=self._engine, future=True)()
+
         if self._spatialite_initialized:
-            print(
+            logging.info(
                 'Ignore the following error messages about'
-                ' "updateTableTriggers()".'
+                ' updateTableTriggers()'
             )
-            print('For details see:')
-            print('https://github.com/geoalchemy/geoalchemy2/issues/519')
-        Base.metadata.create_all(self._engine)
+            logging.info('For details see:')
+            logging.info(
+                'https://github.com/geoalchemy/geoalchemy2/issues/519'
+            )
+        with wurlitzer.pipes() as (stdout, stderr):
+            Base.metadata.create_all(self._engine)
+
+        for line in stdout.read().splitlines():
+            logging.info('create_all stdout: %s', line)
+        for line in stderr.read().splitlines():
+            logging.info('create_all stderr: %s', line)
+
         self._post_create_migrations()
         atexit.register(self.dispose)
         return self._session

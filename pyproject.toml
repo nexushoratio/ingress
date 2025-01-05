@@ -21,6 +21,7 @@ dependencies = [
   'Shapely>=1.8.5',
   'SQLAlchemy>=1.4.46',
   'toposort>=1.9',
+  'wurlitzer>=8.0.3',
 ]
 dynamic = ['version']
 
