@@ -73,6 +73,32 @@ class InitDbTest(unittest.TestCase):
         self.assertIsInstance(args.dbc, database.Database)  # pylint: disable=no-member
 
 
+class ReprMixinTest(unittest.TestCase):
+
+    def test_basic(self):
+        addr_type = database.AddressType(type='test', note='A note.')
+
+        self.assertEqual(
+            str(addr_type),
+            "AddressType(type='test', visibility=None, note='A note.')"
+        )
+
+    def test_exclude(self):
+        addr = database.Address(
+            address='123 Main Street, Home Town, DC',
+            latlng='12.34,-56.78',
+            date=1
+        )
+
+        # Note that "lat" and "lng" are excluded
+        self.assertEqual(
+            str(addr), (
+                "Address(latlng='12.34,-56.78',"
+                " address='123 Main Street, Home Town, DC', date=1)"
+            )
+        )
+
+
 class DatabaseTest(unittest.TestCase):
 
     def test_deferred_session(self):
