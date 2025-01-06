@@ -131,6 +131,14 @@ class UuidMixinTest(unittest.TestCase):
 
 class DatabaseTest(unittest.TestCase):
 
+    def test_repr(self):
+        dbc = test_helper.database_connection(self)
+        mee = self.id()
+
+        self.assertRegex(
+            str(dbc), rf'Database\(directory=.*, filename={mee}\)'
+        )
+
     def test_deferred_session(self):
         dbc = test_helper.database_connection(self)
         db_path = pathlib.Path(dbc._directory, dbc._filename)
