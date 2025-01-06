@@ -610,7 +610,7 @@ class Database:  # pylint: disable=missing-class-docstring
             Base.metadata.create_all(self._engine)
 
         for line in stdout.read().splitlines():
-            logging.info('create_all stdout: %s', line)
+            logging.info('create_all stdout: %s', line)  # pragma: no cover
         for line in stderr.read().splitlines():
             logging.info('create_all stderr: %s', line)
 
