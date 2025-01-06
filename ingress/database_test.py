@@ -99,6 +99,23 @@ class ReprMixinTest(unittest.TestCase):
         )
 
 
+class PortalV2Test(unittest.TestCase):
+
+    def test_iitc(self):
+        tetrahelix = {
+            "first_seen": 1,
+            "guid": "09d5d1e149014c70ba3154fe3421e2a6.12",
+            "label": "Tetrahelix",
+            "last_seen": 2,
+            "latlng": "37.423521,-122.089649"
+        }
+        portal = database.PortalV2(**tetrahelix)
+
+        result = portal.to_iitc()
+
+        self.assertEqual(result, tetrahelix)
+
+
 class DatabaseTest(unittest.TestCase):
 
     def test_deferred_session(self):
