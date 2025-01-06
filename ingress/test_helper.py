@@ -44,4 +44,6 @@ def prep_logger_handlers(test: unittest.TestCase):
 
 def database_connection(test: unittest.TestCase) -> database.Database:
     """Create a database in temporary directory."""
-    return database.Database(tempfile.mkdtemp(), test.id())
+    dbc = database.Database(tempfile.mkdtemp(), test.id())
+    test.addCleanup(dbc.dispose)
+    return dbc

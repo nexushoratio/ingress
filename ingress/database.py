@@ -621,7 +621,8 @@ class Database:  # pylint: disable=missing-class-docstring
     def dispose(self):
         """Orderly cleanup."""
         atexit.unregister(self.dispose)
-        self._engine.dispose()
+        if hasattr(self, '_engine') and self._engine:
+            self._engine.dispose()
 
     def __repr__(self):
         params = ', '.join(
