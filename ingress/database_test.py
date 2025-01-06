@@ -116,6 +116,19 @@ class PortalV2Test(unittest.TestCase):
         self.assertEqual(result, tetrahelix)
 
 
+class UuidMixinTest(unittest.TestCase):
+
+    def test_default(self):
+        folder = database.BookmarkFolder()
+
+        self.assertTrue(folder.uuid)
+
+    def test_provided(self):
+        folder = database.BookmarkFolder(uuid='abc')
+
+        self.assertEqual(folder.uuid, 'abc')
+
+
 class DatabaseTest(unittest.TestCase):
 
     def test_deferred_session(self):
