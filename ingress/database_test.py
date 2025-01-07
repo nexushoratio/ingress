@@ -3,6 +3,8 @@
 # pylint: disable=protected-access
 
 import argparse
+import contextlib
+import io
 import pathlib
 import sqlite3
 import unittest
@@ -146,6 +148,36 @@ class DatabaseTest(unittest.TestCase):
         self.assertFalse(db_path.exists())
         self.assertIsInstance(dbc.session, database.sqlalchemy.orm.Session)
         self.assertTrue(db_path.exists())
+
+    def test_sanity_check_with_auto_drop(self):
+        dbc = test_helper.database_connection(self)
+        db_path = pathlib.Path(dbc._directory, dbc._filename)
+        conn = sqlite3.connect(db_path)
+        dbc._connect(dbapi_connection=conn)
+
+        ddl = 'CREATE TABLE cluster_leaders (guid VARCHAR NOT NULL)'
+        conn.execute(ddl)
+
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            stmt = database.sqlalchemy.select(database.ClusterLeader)
+            dbc.session.execute(stmt)
+
+        self.assertIn('dropping: cluster_leaders', stdout.getvalue())
+
+    def test_sanity_check_without_auto_drop(self):
+        dbc = test_helper.database_connection(self)
+        db_path = pathlib.Path(dbc._directory, dbc._filename)
+        conn = sqlite3.connect(db_path)
+        dbc._connect(dbapi_connection=conn)
+
+        ddl = 'CREATE TABLE portals (guid VARCHAR NOT NULL)'
+        conn.execute(ddl)
+
+        with self.assertRaisesRegex(database.Error,
+                                    'Unhandled tables with differences'):
+            stmt = database.sqlalchemy.select(database.ClusterLeader)
+            dbc.session.execute(stmt)
 
     def test_portals_v2_migration(self):
         dbc = test_helper.database_connection(self)
