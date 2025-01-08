@@ -227,6 +227,35 @@ CREATE TABLE portals (
 
         self.assertEqual(actual, expected)
 
+    def test_optimize_output(self):
+        dbc = test_helper.database_connection(self)
+        dbc.session.add(
+            database.PortalV2(
+                guid='guid',
+                label='label',
+                first_seen=0,
+                last_seen=0,
+                latlng='123,45'
+            )
+        )
+        dbc.session.commit()
+
+        stmt = database.sqlalchemy.select(
+            database.PortalV2
+        ).where(database.PortalV2.first_seen < 1)
+        dbc.session.scalars(stmt)
+        dbc.dispose()
+
+        db_path = pathlib.Path(dbc._directory, dbc._filename)
+        conn = sqlite3.connect(db_path)
+
+        tables = [
+            row[0]
+            for row in conn.execute('SELECT DISTINCT(tbl) FROM sqlite_stat1')
+        ]
+
+        self.assertIn('v2_portals', tables)
+
 
 if __name__ == '__main__':  # pragma: no cover
     unittest.main()
