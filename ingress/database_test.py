@@ -179,6 +179,20 @@ class DatabaseTest(unittest.TestCase):
             stmt = database.sqlalchemy.select(database.ClusterLeader)
             dbc.session.execute(stmt)
 
+    def test_spatialite_initialized(self):
+        # When the database is first created, spatialite is also initialized
+        # which causes some issues with geoalchemy2 and computed columns that
+        # need to be handled.
+        dbc = test_helper.database_connection(self)
+        self.assertFalse(dbc._spatialite_initialized)
+        self.assertTrue(dbc.session)
+        self.assertTrue(dbc._spatialite_initialized)
+        dbc.dispose()
+
+        # But, after the first time, no need for the special handling
+        self.assertTrue(dbc.session)
+        self.assertFalse(dbc._spatialite_initialized)
+
     def test_portals_v2_migration(self):
         dbc = test_helper.database_connection(self)
         db_path = pathlib.Path(dbc._directory, dbc._filename)

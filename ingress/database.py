@@ -563,6 +563,7 @@ class Database:
     """A container for database setup/teardown for this application."""
 
     _engine: sqlalchemy.engine.Engine
+    _spatialite_initialized: bool
 
     def __init__(
         self,
@@ -573,8 +574,7 @@ class Database:
         self._directory = directory
         self._filename = filename
         self._connect_time = 0.0
-        self._spatialite_initialized = False
-        self._vacuum_reason = None
+        self._init_values()
         sql_logger = logging.getLogger('sqlalchemy')
         root_logger = logging.getLogger()
         sql_logger.setLevel(root_logger.getEffectiveLevel())
@@ -629,6 +629,8 @@ class Database:
         except AttributeError:
             pass
 
+        self._init_values()
+
     def __repr__(self):
         params = ', '.join(
             (
@@ -638,6 +640,11 @@ class Database:
         )
 
         return f'{self.__class__.__name__}({params})'
+
+    def _init_values(self):
+        """A few variables that need to be initialized after a dispose()."""
+        self._spatialite_initialized = False
+        self._vacuum_reason = None
 
     def _connect(self, **kwargs):
         """Set defaults for our connection."""
