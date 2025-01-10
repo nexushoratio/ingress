@@ -654,10 +654,9 @@ class Database:  # pylint: disable=missing-class-docstring
         logging.info('freelist_count: %d', count)
         self._frag_check(conn)
         if self._vacuum_reason:
-            logging.info('vacuuming')
+            logging.info('vacuuming: %s', self._vacuum_reason)
             print(f'Performing VACUUM because:\n  {self._vacuum_reason}')
-            for row in conn.execute('VACUUM'):
-                print(row)
+            conn.execute('VACUUM')
 
     def _frag_check(self, conn):
         """Compute possible sqlite fragmentation."""

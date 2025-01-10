@@ -256,6 +256,30 @@ CREATE TABLE portals (
 
         self.assertIn('v2_portals', tables)
 
+    def test_trigger_vacuum(self):
+        dbc = test_helper.database_connection(self)
+        for lng in range(45, 50):
+            dbc.session.add(
+                database.PortalV2(
+                    guid=f'guid-{lng}',
+                    label='label',
+                    first_seen=0,
+                    last_seen=0,
+                    latlng=f'123,{lng}'
+                )
+            )
+        dbc.session.commit()
+        dbc.session.execute(database.sqlalchemy.delete(database.PortalV2))
+        dbc.session.commit()
+
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout), self.assertLogs() as logs:
+            dbc._vacuum_reason = 'testing-reason'
+            dbc.dispose()
+
+        self.assertIn('testing-reason', stdout.getvalue())
+        self.assertIn('vacuuming: testing-reason', '\n'.join(logs.output))
+
 
 if __name__ == '__main__':  # pragma: no cover
     unittest.main()
