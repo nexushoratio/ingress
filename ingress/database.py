@@ -697,14 +697,12 @@ class Database:
                     # Only look at names with some number of gaps.
                     if cnt > 10:
                         sum_gaps += cnt
-                if sum_pages:
-                    fragged = 1.0 * sum_gaps / sum_pages
-                    logging.info('fragmentation: %f', fragged)
-                    # 10% fragmentation seems like a good starting point
-                    if fragged > 0.1:
-                        logging.info('fragmentation: good time to vacuum')
-                else:
-                    logging.info('no measurable fragmentation')
+
+                fragged = 1.0 * sum_gaps / sum_pages
+                logging.info('fragmentation: %f', fragged)
+                # 10% fragmentation seems like a good starting point
+                if fragged > 0.1:
+                    logging.info('fragmentation: good time to vacuum')
             else:
                 logging.info(
                     'Time connected was too short, skipping frag check.'

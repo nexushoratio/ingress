@@ -285,6 +285,104 @@ CREATE TABLE portals (
         dbc.dispose()
         dbc.dispose()
 
+    def test_frag_check_short_connection(self):
+        dbc = test_helper.database_connection(self)
+
+        self.assertTrue(dbc.session)
+        dbc.dispose()
+
+        dbc = database.Database(dbc._directory, dbc._filename)
+        dbc.session.add(
+            database.PortalV2(
+                guid='guid',
+                label='label',
+                first_seen=0,
+                last_seen=0,
+                latlng='123,45'
+            )
+        )
+        dbc.session.commit()
+
+        with self.assertLogs() as logs:
+            # Set in the future
+            dbc._connect_time += 10
+            dbc.dispose()
+
+        self.assertIn('skipping frag check', '\n'.join(logs.output))
+
+    def test_frag_check_long_connection_no_changes(self):
+        dbc = test_helper.database_connection(self)
+        self.assertTrue(dbc.session)
+        dbc._vacuum_reason = f'forced-{self.id()}'
+        dbc.dispose()
+
+        dbc = database.Database(dbc._directory, dbc._filename)
+        dbc.session.commit()
+        with self.assertLogs():
+            # Set in the past
+            dbc._connect_time -= 10
+            dbc.dispose()
+
+        # Just triggers code coverage
+
+    def test_frag_check_long_connection_with_single_change(self):
+        dbc = test_helper.database_connection(self)
+
+        self.assertTrue(dbc.session)
+        dbc._vacuum_reason = f'forced-{self.id()}'
+        dbc.dispose()
+
+        dbc = database.Database(dbc._directory, dbc._filename)
+        dbc.session.add(
+            database.PortalV2(
+                guid='guid',
+                label='label',
+                first_seen=0,
+                last_seen=0,
+                latlng='123,45'
+            )
+        )
+        dbc.session.commit()
+
+        with self.assertLogs() as logs:
+            # Set in the past
+            dbc._connect_time -= 10
+            dbc.dispose()
+
+        logs_output = '\n'.join(logs.output)
+        self.assertIn('total_changes:', logs_output)
+        self.assertIn('fragmentation: 0.0', logs_output)
+
+    def test_frag_check_long_connection_with_many_change(self):
+        dbc = test_helper.database_connection(self)
+
+        self.assertTrue(dbc.session)
+        dbc._vacuum_reason = f'forced-{self.id()}'
+        dbc.dispose()
+
+        dbc = database.Database(dbc._directory, dbc._filename)
+        for lat in range(89):
+            for lng in range(179):
+                dbc.session.add(
+                    database.PortalV2(
+                        guid=f'guid-{lat:02}-{lng:03}',
+                        label='label',
+                        first_seen=0,
+                        last_seen=0,
+                        latlng=f'{lat},{lng}'
+                    )
+                )
+        dbc.session.commit()
+
+        with self.assertLogs() as logs:
+            # Set in the past
+            dbc._connect_time -= 10
+            dbc.dispose()
+
+        logs_output = '\n'.join(logs.output)
+        self.assertIn('total_changes:', logs_output)
+        self.assertIn('fragmentation: good time to vacuum', logs_output)
+
     def test_trigger_vacuum(self):
         dbc = test_helper.database_connection(self)
         for lng in range(45, 50):
