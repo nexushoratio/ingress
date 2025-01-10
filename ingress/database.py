@@ -559,7 +559,8 @@ _AUTO_DROPS = (
 )
 
 
-class Database:  # pylint: disable=missing-class-docstring
+class Database:
+    """A container for database setup/teardown for this application."""
 
     _engine: sqlalchemy.engine.Engine
 
