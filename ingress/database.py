@@ -624,6 +624,11 @@ class Database:  # pylint: disable=missing-class-docstring
         if hasattr(self, '_engine') and self._engine:
             self._engine.dispose()
 
+        try:
+            del self.session
+        except AttributeError:
+            pass
+
     def __repr__(self):
         params = ', '.join(
             (

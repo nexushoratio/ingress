@@ -256,6 +256,21 @@ CREATE TABLE portals (
 
         self.assertIn('v2_portals', tables)
 
+    def test_dispose_resets_session(self):
+        dbc = test_helper.database_connection(self)
+
+        orig_session = dbc.session
+        self.assertEqual(dbc.session, orig_session)
+
+        dbc.dispose()
+        self.assertNotEqual(dbc.session, orig_session)
+
+    def test_dispose_before_session_does_not_crash(self):
+        dbc = test_helper.database_connection(self)
+
+        dbc.dispose()
+        dbc.dispose()
+
     def test_trigger_vacuum(self):
         dbc = test_helper.database_connection(self)
         for lng in range(45, 50):
