@@ -562,7 +562,6 @@ _AUTO_DROPS = (
 class Database:  # pylint: disable=missing-class-docstring
 
     _engine: sqlalchemy.engine.Engine
-    _session: sqlalchemy.orm.Session
 
     def __init__(
         self,
@@ -595,7 +594,7 @@ class Database:  # pylint: disable=missing-class-docstring
             self._engine, 'close', self._close, named=True
         )
         self._sanity_check()
-        self._session = orm.sessionmaker(bind=self._engine, future=True)()
+        session = orm.sessionmaker(bind=self._engine, future=True)()
 
         if self._spatialite_initialized:
             logging.info(
@@ -614,9 +613,9 @@ class Database:  # pylint: disable=missing-class-docstring
         for line in stderr.read().splitlines():
             logging.info('create_all stderr: %s', line)
 
-        self._post_create_migrations()
+        self._post_create_migrations(session)
         atexit.register(self.dispose)
-        return self._session
+        return session
 
     def dispose(self):
         """Orderly cleanup."""
@@ -790,10 +789,10 @@ class Database:  # pylint: disable=missing-class-docstring
         )
         return tuples
 
-    def _post_create_migrations(self):
+    def _post_create_migrations(self, session: sqlalchemy.orm.Session):
         """Migrate portals to v2_portals."""
         stmt = sqlalchemy.select(sqlalchemy.func.count()).select_from(_Portal)
-        count = self._session.scalar(stmt)
+        count = session.scalar(stmt)
         if count:
             print('Performing a database migration.')
             print(
@@ -802,16 +801,17 @@ class Database:  # pylint: disable=missing-class-docstring
                 f' to table "{PortalV2.__tablename__}".'
             )
             logging.info('migrating count: %d', count)
-            stmt = sqlalchemy.select(_Portal)
+            select_stmt = sqlalchemy.select(_Portal)
             portals = [
-                row._Portal.to_iitc() for row in self._session.execute(stmt)  # pylint: disable=protected-access
+                row['_Portal'].to_iitc()
+                for row in session.execute(select_stmt).mappings()
             ]
             logging.info('portal dictionaries generated: %d', len(portals))
-            self._session.bulk_insert_mappings(PortalV2, portals)
+            session.bulk_insert_mappings(PortalV2, portals)
             logging.info('bulk inserts completed')
-            stmt = sqlalchemy.delete(_Portal)
-            self._session.execute(stmt)
+            delete_stmt = sqlalchemy.delete(_Portal)
+            session.execute(delete_stmt)
             logging.info('bulk delete completed')
-            self._session.commit()
+            session.commit()
             logging.info('finished migration')
             print('Migration complete.')
