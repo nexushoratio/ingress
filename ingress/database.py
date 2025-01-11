@@ -756,9 +756,8 @@ class Database:
 
         for tablename, diffs in to_drop:
             print(f'dropping: {tablename}\n{diffs}')
-            table = existing_tables.get(tablename)
-            if table:
-                table.table.drop(bind=self._engine)
+            table = existing_tables[tablename]
+            table.table.drop(bind=self._engine)
 
     def _load_existing_tables(self) -> dict[str, ExistingTable]:
         """Get information about existing tables."""
@@ -775,15 +774,13 @@ class Database:
                 )
 
             # https://github.com/sqlalchemy/sqlalchemy/discussions/11580
-            if conn.dialect.driver == 'pysqlite':
-                for row in conn.execute(sqlalchemy.text("""
-                        SELECT name,sql
-                        FROM sqlite_master
-                        WHERE type = "table"
-                        """)):
-                    existing_table = existing_tables.get(row.name)
-                    if existing_table:
-                        existing_table.ddls.update(self._clean_ddl(row.sql))
+            for row in conn.execute(sqlalchemy.text("""
+                    SELECT name,sql
+                    FROM sqlite_master
+                    WHERE type = "table"
+                    """)):
+                existing_table = existing_tables[row.name]
+                existing_table.ddls.update(self._clean_ddl(row.sql))
 
         return existing_tables
 
