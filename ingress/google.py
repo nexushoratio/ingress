@@ -66,16 +66,17 @@ class AddressResult:
     """Address result from the Maps API."""
     location_type: str = dataclasses.field(compare=False)
     score: int = dataclasses.field(init=False)
-    pos: int = dataclasses.field(default=0, compare=False)
+    pos: int | None = dataclasses.field(default=None, compare=False)
     address: str
     type_values: set[AddressTypeValue]
 
     def __post_init__(self):
+        if self.pos is None:
+            object.__setattr__(
+                self, 'pos', LOCATION_TYPE_SCORES[self.location_type]
+            )
         # Magic sauce
-        object.__setattr__(
-            self, 'score', LOCATION_TYPE_SCORES[self.location_type] + self.pos
-            - len(self.type_values)
-        )
+        object.__setattr__(self, 'score', self.pos)
 
 
 @attr.s
