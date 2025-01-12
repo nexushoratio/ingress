@@ -699,7 +699,7 @@ class Database:
                         sum_gaps += cnt
 
                 fragged = 1.0 * sum_gaps / sum_pages
-                logging.info('fragmentation: %f', fragged)
+                logging.info('fragmentation: %.1f%%', fragged * 100.0)
                 # 10% fragmentation seems like a good starting point
                 if fragged > 0.1:
                     logging.info('fragmentation: good time to vacuum')
