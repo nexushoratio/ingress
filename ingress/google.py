@@ -179,7 +179,7 @@ def _select_result(results: list[AddressResult]) -> AddressResult:
     result0 = results[0]
     # It has been noticed that some results will include one type or another,
     # but not both.  Supplement the selected result with no more than one type
-    # might not be present.
+    # not already present
     for result in results[1:]:
         for type_value in result.type_values:
             known_types = set(x.typ for x in result0.type_values)
