@@ -705,7 +705,7 @@ class Database:
                     sum_pages
                 )
                 # 10% fragmentation seems like a good starting point
-                if fragged > 0.1 and sum_pages > 1000:
+                if fragged > 0.1 and sum_pages > 2000:
                     logging.info('fragmentation: good time to vacuum')
             else:
                 logging.info(
