@@ -564,6 +564,7 @@ class Database:
 
     _engine: sqlalchemy.engine.Engine
     _spatialite_initialized: bool
+    _vacuum_reason: str | None
 
     def __init__(
         self,
