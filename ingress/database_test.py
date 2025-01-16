@@ -385,19 +385,15 @@ CREATE TABLE portals (
 
     def test_trigger_vacuum(self):
         dbc = test_helper.database_connection(self)
-        for lng in range(45, 50):
-            dbc.session.add(
-                database.PortalV2(
-                    guid=f'guid-{lng}',
-                    label='label',
-                    first_seen=0,
-                    last_seen=0,
-                    latlng=f'123,{lng}'
-                )
-            )
-        dbc.session.commit()
-        dbc.session.execute(database.sqlalchemy.delete(database.PortalV2))
-        dbc.session.commit()
+
+        # Force a VACUUM so our external reason later is the trigger.
+        self.assertTrue(dbc.session)
+        db_path = pathlib.Path(dbc._directory, dbc._filename)
+        conn = sqlite3.connect(db_path)
+        conn.enable_load_extension(True)
+        conn.load_extension('mod_spatialite')
+        conn.enable_load_extension(False)
+        conn.execute('VACUUM')
 
         stdout = io.StringIO()
         with contextlib.redirect_stdout(stdout), self.assertLogs() as logs:
