@@ -353,7 +353,7 @@ CREATE TABLE portals (
         self.assertIn('total_changes:', logs_output)
         self.assertIn('fragmentation: 0.0', logs_output)
 
-    def test_frag_check_long_connection_with_many_change(self):
+    def test_frag_check_long_connection_with_many_changes(self):
         dbc = test_helper.database_connection(self)
 
         self.assertTrue(dbc.session)
