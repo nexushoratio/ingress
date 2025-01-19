@@ -35,6 +35,9 @@ class MockAllImportsTest(unittest.TestCase):
         self.assertIsInstance(test_helper.mock, types.ModuleType)
         self.assertIsInstance(test_helper.mock.patch, types.FunctionType)
 
+    def test_ingress_interesting_items_skipped(self):
+        self.assertNotIsInstance(test_helper.database.PortalV2, mock.Base)
+
 
 class DatabaseConnectionTest(unittest.TestCase):
 

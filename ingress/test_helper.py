@@ -31,11 +31,16 @@ class NotConfiguredError(Exception):
 def mock_ingress_imports(
     test: unittest.TestCase, mut: types.ModuleType
 ) -> MockedImports:
-    """Mock out and disable all 'ingress' imports by default.
+    """Mock out and disable almost all 'ingress' imports by default.
+
+    Certain items, such as the ORM definitions, regularly need to stick
+    around.
 
     Test methods must reenable individual functions on demand.
     """
     mocked_imports = MockedImports(modules=dict(), mocks=dict())
+    # Save before it gets mocked out
+    base = database.Base
     for name, mod in inspect.getmembers(mut, inspect.ismodule):
         if mod.__spec__.name.startswith('ingress.'):
             patcher = mock.patch.object(mut, name, autospec=True)
@@ -46,6 +51,14 @@ def mock_ingress_imports(
                 attr_item = getattr(mock_, attr_name)
                 if isinstance(attr_item, mock.MagicMock):
                     attr_item.side_effect = NotConfiguredError
+                try:
+                    orig_item = getattr(original, attr_name)
+                    if inspect.isclass(orig_item) and issubclass(orig_item,
+                                                                 base):
+                        setattr(mock_, attr_name, orig_item)
+                except AttributeError:
+                    pass
+
             mocked_imports.modules[name] = original
             mocked_imports.mocks[name] = mock_
 
