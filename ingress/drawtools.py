@@ -13,6 +13,7 @@ if typing.TYPE_CHECKING:  # pragma: no cover
     import argparse
 
     from mundane import app
+
     from ingress import geo
 
 sqla = database.sqlalchemy

@@ -48,6 +48,11 @@ split_before_dot = true
 split_before_first_argument = true
 split_complex_comprehension = true
 
+[tool.isort]
+profile = 'google'
+known_first_party = ['mundane']
+known_local_folder = ['ingress']
+
 [tool.pylint]
 fail-on = ['I']
 docstring-min-length = 2
@@ -104,6 +109,7 @@ passenv = PYTHON*
 sitepackages = True
 commands =
     python -m yapf -i -r ingress
+    python -m isort ingress
     python -m pylint ingress
     python -m mypy
     python -m coverage run

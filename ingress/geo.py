@@ -17,18 +17,18 @@ import pyproj
 import shapely  # type: ignore[import]
 import toposort
 
-# from pygraph.algorithms import traversal as pytraversal
-# from pygraph.classes import graph as pygraph
-# from pygraph.classes import exceptions as pyexceptions
-
 from mundane import constants
 
-from ingress import database
 from ingress import bookmarks
+from ingress import database
 from ingress import drawtools
 from ingress import google
 from ingress import json
 from ingress import rtree
+
+# from pygraph.algorithms import traversal as pytraversal
+# from pygraph.classes import graph as pygraph
+# from pygraph.classes import exceptions as pyexceptions
 
 if typing.TYPE_CHECKING:  # pragma: no cover
     import argparse
