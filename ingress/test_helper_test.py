@@ -26,9 +26,9 @@ class MockAllImportsTest(unittest.TestCase):
 
     def test_only_ingress_mocked(self):
         # is mocked
-        self.assertIsInstance(test_helper.database, mock.NonCallableMagicMock)
+        self.assertIsInstance(test_helper.database, mock.Base)
         self.assertIsInstance(
-            test_helper.database.mundane_global_flags, mock.MagicMock
+            test_helper.database.mundane_global_flags, mock.Base
         )
 
         # is not mocked
