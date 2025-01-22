@@ -498,7 +498,7 @@ def _clean(args: argparse.Namespace):
     oldest_allowed = now - max_age
     stmt = sqla.select(database.Address
                        ).where(database.Address.date < oldest_allowed
-                               ).limit(limit)
+                               ).order_by(database.Address.date).limit(limit)
     for row in dbc.session.execute(stmt):
         addr = row.Address
         if not header_printed:
