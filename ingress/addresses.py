@@ -215,11 +215,17 @@ def update(args: argparse.Namespace) -> int:
     }
     fetched = 0
     delay = 0.0
+    headers = list()
     if args.limit is None:
-        template = '({current})'
+        template = ' {current:5} '
+        headers.append('Fetch #')
     else:
-        template = '({current}/{limit})'
-    template += ' Fetching for {label} (delayed by {delay:.2f} seconds)'
+        template = '{current:5}  /{limit:5}'
+        headers.append('Fetch #/Limit')
+    template += ' | {delay:7.2f} | {label}'
+    headers.extend((' Delay ', 'Label'))
+    template_data['header'] = ' | '.join(headers)
+    header_printed = False
     for portal in portals.values():
         latlng = portal['latlng']
         if dbc.session.get(database.Address, latlng) is None:
@@ -232,6 +238,9 @@ def update(args: argparse.Namespace) -> int:
                     'delay': delay,
                 }
             )
+            if not header_printed:
+                print(template_data['header'])
+                header_printed = True
             print(template.format(**template_data))
             time.sleep(delay)
             address_detail = google.latlng_to_address(latlng)
