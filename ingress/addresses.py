@@ -210,6 +210,9 @@ def update(args: argparse.Namespace) -> int:
     delay_base = _tune_delay_base(args.delay)
     portals = bookmarks.load(args.bookmarks)
 
+    template_data = {
+        'limit': args.limit,
+    }
     fetched = 0
     delay = 0.0
     if args.limit is None:
@@ -222,14 +225,14 @@ def update(args: argparse.Namespace) -> int:
         if dbc.session.get(database.Address, latlng) is None:
             if fetched:
                 delay = _random_delay(delay_base)
-            print(
-                template.format(
-                    current=fetched + 1,
-                    limit=args.limit,
-                    label=portal['label'],
-                    delay=delay
-                )
+            template_data.update(
+                {
+                    'current': fetched + 1,
+                    'label': portal['label'],
+                    'delay': delay,
+                }
             )
+            print(template.format(**template_data))
             time.sleep(delay)
             address_detail = google.latlng_to_address(latlng)
             now = int(time.time())
