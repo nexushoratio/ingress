@@ -212,18 +212,20 @@ def update(args: argparse.Namespace) -> int:
 
     template_data = {
         'limit': args.limit,
+        'current_width': 5,
+        'delay_width': 5,
     }
     fetched = 0
     delay = 0.0
     headers = list()
     if args.limit is None:
-        template = ' {current:5} '
+        template = ' {current:{current_width}} '
         headers.append('Fetch #')
     else:
-        template = '{current:5}  /{limit:5}'
+        template = ' {current:{current_width}} /{limit:{current_width}}'
         headers.append('Fetch #/Limit')
-    template += ' | {delay:7.2f} | {label}'
-    headers.extend((' Delay ', 'Label'))
+    template += ' | {delay:{delay_width}.2f} | {label}'
+    headers.extend(('Delay', 'Label'))
     template_data['header'] = '\n' + ' | '.join(headers)
     for portal in portals.values():
         latlng = portal['latlng']
