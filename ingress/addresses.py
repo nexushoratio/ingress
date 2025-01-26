@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 import logging
 import os
 import random
@@ -27,6 +28,14 @@ _DAILY_FETCHES_ENVVAR: str = 'INGRESS_DAILY_FETCHES'
 
 class Error(Exception):
     """Base module exception."""
+
+
+@dataclasses.dataclass
+class UpdateOutputTemplate:
+    """Describes current values used for the output of update."""
+    data: dict[str, typing.Any] = dataclasses.field(init=False)
+    row: str = dataclasses.field(init=False)
+    header: str = dataclasses.field(init=False)
 
 
 def mundane_commands(ctx: app.ArgparseApp):
@@ -209,30 +218,15 @@ def update(args: argparse.Namespace) -> int:
 
     delay_base = _tune_delay_base(args.delay)
     portals = bookmarks.load(args.bookmarks)
-
-    template_data = {
-        'limit': args.limit,
-        'current_width': 5,
-        'delay_width': 5,
-    }
+    template = _assemble_update_template(args)
     fetched = 0
     delay = 0.0
-    headers = list()
-    if args.limit is None:
-        template = ' {current:{current_width}} '
-        headers.append('Fetch #')
-    else:
-        template = ' {current:{current_width}} /{limit:{current_width}}'
-        headers.append('Fetch #/Limit')
-    template += ' | {delay:{delay_width}.2f} | {label}'
-    headers.extend(('Delay', 'Label'))
-    template_data['header'] = '\n' + ' | '.join(headers)
     for portal in portals.values():
         latlng = portal['latlng']
         if dbc.session.get(database.Address, latlng) is None:
             if fetched:
                 delay = _random_delay(delay_base)
-            template_data.update(
+            template.data.update(
                 {
                     'current': fetched + 1,
                     'label': portal['label'],
@@ -240,8 +234,9 @@ def update(args: argparse.Namespace) -> int:
                 }
             )
             if fetched % 20 == 0:
-                print(template_data['header'])
-            print(template.format(**template_data))
+                print(template.header)
+            print(template.row.format(**template.data))
+
             time.sleep(delay)
             address_detail = google.latlng_to_address(latlng)
             now = int(time.time())
@@ -486,6 +481,29 @@ def prune(args: argparse.Namespace) -> int:
             dbc.session.commit()
 
     return 0
+
+
+def _assemble_update_template(
+    args: argparse.Namespace
+) -> UpdateOutputTemplate:
+    """Assemble values for the header and row templates."""
+    template = UpdateOutputTemplate()
+    template.data = {
+        'limit': args.limit,
+        'current_width': 5,
+        'delay_width': 5,
+    }
+    headers = list()
+    if args.limit is None:
+        template.row = ' {current:{current_width}} '
+        headers.append('Fetch #')
+    else:
+        template.row = ' {current:{current_width}} /{limit:{current_width}}'
+        headers.append('Fetch #/Limit')
+    template.row += ' | {delay:{delay_width}.2f} | {label}'
+    headers.extend(('Delay', 'Label'))
+    template.header = '\n' + ' | '.join(headers)
+    return template
 
 
 def _clean(args: argparse.Namespace):
