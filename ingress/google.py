@@ -147,20 +147,25 @@ def latlng_to_address(latlng: str) -> AddressDetails:
         )
 
     for pos, entry in enumerate(result['results']):
-        location_type = entry['geometry']['location_type']
-        type_values: set[AddressTypeValue] = set()
-        for component in entry['address_components']:
-            name = component['long_name']
-            for typ in component['types']:
-                type_values.add(AddressTypeValue(typ=typ, val=name))
-        answers.append(
-            AddressResult(
-                pos=pos,
-                address=entry['formatted_address'],
-                type_values=type_values,
-                location_type=location_type
+        if entry['types'] == ['plus_code']:
+            logging.info(
+                'Ignoring plus_code entry: %s', pprint.pformat(entry)
             )
-        )
+        else:
+            location_type = entry['geometry']['location_type']
+            type_values: set[AddressTypeValue] = set()
+            for component in entry['address_components']:
+                name = component['long_name']
+                for typ in component['types']:
+                    type_values.add(AddressTypeValue(typ=typ, val=name))
+            answers.append(
+                AddressResult(
+                    pos=pos,
+                    address=entry['formatted_address'],
+                    type_values=type_values,
+                    location_type=location_type
+                )
+            )
 
     answer = _select_result(answers)
 
