@@ -484,6 +484,9 @@ def prune(args: argparse.Namespace) -> int:
 
 
 DELAY = 'Delay'
+FETCH = 'Fetch #'
+LABEL = 'Label'
+LIMIT = 'Limit'
 
 
 def _assemble_update_template(
@@ -495,9 +498,12 @@ def _assemble_update_template(
     template.data = {
         'nul': '',
         'limit': args.limit,
-        'current_width': 5,
+        'fetch_width': 5,
         'delay_width': max(len(DELAY), len(delay)),
         'delay_str': DELAY,
+        'fetch_str': FETCH,
+        'label_str': LABEL,
+        'limit_str': LIMIT,
     }
     template.data['delay_nul'
                   ] = (len(DELAY) - template.data['delay_width']) % 2
@@ -505,14 +511,14 @@ def _assemble_update_template(
         'delay_width'] - template.data['delay_nul']
     headers = list()
     if args.limit is None:
-        template.row = ' {current:{current_width}} '
-        headers.append('Fetch #')
+        template.row = ' {current:{fetch_width}} '
+        headers.append('{fetch_str}')
     else:
-        template.row = ' {current:{current_width}} /{limit:{current_width}}'
-        headers.append('Fetch #/Limit')
+        template.row = ' {current:{fetch_width}} /{limit:{fetch_width}}'
+        headers.append('{fetch_str}/{limit_str}')
     template.row += ' | {delay:{delay_width}.2f} | {label}'
     headers.extend(
-        ('{nul:{delay_nul}}{delay_str:^{delay_str_width}}', 'Label')
+        ('{nul:{delay_nul}}{delay_str:^{delay_str_width}}', '{label_str}')
     )
     template.header = '\n' + ' | '.join(headers)
     return template
