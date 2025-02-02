@@ -487,40 +487,56 @@ DELAY = 'Delay'
 FETCH = 'Fetch #'
 LABEL = 'Label'
 LIMIT = 'Limit'
+LIMIT_NONE = '(No limit)'
 
 
 def _assemble_update_template(
     args: argparse.Namespace
 ) -> UpdateOutputTemplate:
     """Assemble values for the header and row templates."""
+    dbc = args.dbc
+
     delay = f'{max(_random_delay(args.delay) for _ in range(10000)):.2f}'
+    if args.limit is None:
+        limit_header = LIMIT_NONE
+        count_str = f'{args.limit}'
+    else:
+        limit_header = f'{LIMIT}: {args.limit}'
+        stmt = sqla.select(sqla.func.count()).select_from(database.PortalV2)
+        count_str = f'{dbc.session.scalar(stmt)}'
     template = UpdateOutputTemplate()
     template.data = {
         'nul': '',
-        'limit': args.limit,
-        'fetch_width': 5,
+        'fetch_width': max(len(limit_header), len(FETCH), len(count_str)),
+        'limit_header': limit_header,
         'delay_width': max(len(DELAY), len(delay)),
         'delay_str': DELAY,
         'fetch_str': FETCH,
         'label_str': LABEL,
-        'limit_str': LIMIT,
     }
     template.data['delay_nul'
                   ] = (len(DELAY) - template.data['delay_width']) % 2
     template.data['delay_str_width'] = template.data[
         'delay_width'] - template.data['delay_nul']
-    headers = list()
-    if args.limit is None:
-        template.row = ' {current:{fetch_width}} '
-        headers.append('{fetch_str}')
-    else:
-        template.row = ' {current:{fetch_width}} /{limit:{fetch_width}}'
-        headers.append('{fetch_str}/{limit_str}')
+    template.data['fetch_nul'
+                  ] = (template.data['fetch_width'] - len(FETCH)) % 2
+    template.data['fetch_str_width'] = template.data[
+        'fetch_width'] - template.data['fetch_nul']
+    template.data['current_width'] = template.data['fetch_width'] - 1
+
+    header1 = list()
+    header2 = list()
+    header1.append('{nul:{fetch_nul}}{fetch_str:^{fetch_str_width}}')
+    header2.append('{limit_header:^{fetch_width}}')
+    template.row = '{current:{current_width}} '
     template.row += ' | {delay:{delay_width}.2f} | {label}'
-    headers.extend(
+    header1.extend(
         ('{nul:{delay_nul}}{delay_str:^{delay_str_width}}', '{label_str}')
     )
-    template.header = '\n' + ' | '.join(headers)
+    header2.extend(('{nul:{delay_nul}}{nul:{delay_str_width}}', ''))
+    template.header = '\n'.join(
+        ('', ' | '.join(header1), ' | '.join(header2))
+    )
     return template
 
 
