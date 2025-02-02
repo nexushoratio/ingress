@@ -526,10 +526,11 @@ def _assemble_update_template(
 
     header1 = list()
     header2 = list()
+    columns = list()
     header1.append('{nul:{fetch_nul}}{fetch_str:^{fetch_str_width}}')
     header2.append('{limit_header:^{fetch_width}}')
-    template.row = '{current:{current_width}} '
-    template.row += ' | {delay:{delay_width}.2f} | {label}'
+    columns.append('{current:{current_width}} ')
+    columns.extend(('{delay:{delay_width}.2f}', '{label}'))
     header1.extend(
         ('{nul:{delay_nul}}{delay_str:^{delay_str_width}}', '{label_str}')
     )
@@ -537,6 +538,7 @@ def _assemble_update_template(
     template.header = '\n'.join(
         ('', ' | '.join(header1), ' | '.join(header2))
     )
+    template.row = ' | '.join(columns)
     return template
 
 
