@@ -514,27 +514,27 @@ def _assemble_update_template(
         'fetch_str': FETCH,
         'label_str': LABEL,
     }
-    template.data['delay_nul'
+    template.data['delay_pad'
                   ] = (len(DELAY) - template.data['delay_width']) % 2
     template.data['delay_str_width'] = template.data[
-        'delay_width'] - template.data['delay_nul']
-    template.data['fetch_nul'
+        'delay_width'] - template.data['delay_pad']
+    template.data['fetch_pad'
                   ] = (template.data['fetch_width'] - len(FETCH)) % 2
     template.data['fetch_str_width'] = template.data[
-        'fetch_width'] - template.data['fetch_nul']
+        'fetch_width'] - template.data['fetch_pad']
     template.data['current_width'] = template.data['fetch_width'] - 1
 
     header1 = list()
     header2 = list()
     columns = list()
-    header1.append('{nul:{fetch_nul}}{fetch_str:^{fetch_str_width}}')
+    header1.append('{nul:{fetch_pad}}{fetch_str:^{fetch_str_width}}')
     header2.append('{limit_header:^{fetch_width}}')
     columns.append('{current:{current_width}} ')
     columns.extend(('{delay:{delay_width}.2f}', '{label}'))
     header1.extend(
-        ('{nul:{delay_nul}}{delay_str:^{delay_str_width}}', '{label_str}')
+        ('{nul:{delay_pad}}{delay_str:^{delay_str_width}}', '{label_str}')
     )
-    header2.extend(('{nul:{delay_nul}}{nul:{delay_str_width}}', ''))
+    header2.extend(('{nul:{delay_pad}}{nul:{delay_str_width}}', ''))
     template.header = '\n'.join(
         ('', ' | '.join(header1), ' | '.join(header2))
     )
