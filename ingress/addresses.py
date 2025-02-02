@@ -234,8 +234,8 @@ def update(args: argparse.Namespace) -> int:
                 }
             )
             if fetched % 20 == 0:
-                print(template.header)
-            print(template.row.format(**template.data))
+                print(template.header.format_map(template.data))
+            print(template.row.format_map(template.data))
 
             time.sleep(delay)
             address_detail = google.latlng_to_address(latlng)
@@ -483,16 +483,26 @@ def prune(args: argparse.Namespace) -> int:
     return 0
 
 
+DELAY = 'Delay'
+
+
 def _assemble_update_template(
     args: argparse.Namespace
 ) -> UpdateOutputTemplate:
     """Assemble values for the header and row templates."""
+    delay = f'{max(_random_delay(args.delay) for _ in range(10000)):.2f}'
     template = UpdateOutputTemplate()
     template.data = {
+        'nul': '',
         'limit': args.limit,
         'current_width': 5,
-        'delay_width': 5,
+        'delay_width': max(len(DELAY), len(delay)),
+        'delay_str': DELAY,
     }
+    template.data['delay_nul'
+                  ] = (len(DELAY) - template.data['delay_width']) % 2
+    template.data['delay_str_width'] = template.data[
+        'delay_width'] - template.data['delay_nul']
     headers = list()
     if args.limit is None:
         template.row = ' {current:{current_width}} '
@@ -501,7 +511,9 @@ def _assemble_update_template(
         template.row = ' {current:{current_width}} /{limit:{current_width}}'
         headers.append('Fetch #/Limit')
     template.row += ' | {delay:{delay_width}.2f} | {label}'
-    headers.extend(('Delay', 'Label'))
+    headers.extend(
+        ('{nul:{delay_nul}}{delay_str:^{delay_str_width}}', 'Label')
+    )
     template.header = '\n' + ' | '.join(headers)
     return template
 
