@@ -228,7 +228,7 @@ def update(args: argparse.Namespace) -> int:
                 delay = _random_delay(delay_base)
             template.data.update(
                 {
-                    'current': fetched + 1,
+                    'fetch': fetched + 1,
                     'label': portal['label'],
                     'delay': delay,
                 }
@@ -521,7 +521,7 @@ def _assemble_update_template(
 
     header1.append('{fetch_str:^{fetch_col_width}}')
     header2.append('{limit_str:^{fetch_col_width}}')
-    columns.append('{current:{fetch_col_width}}')
+    columns.append('{fetch:{fetch_col_width}}')
 
     header1.append('{delay_str:^{delay_col_width}}')
     header2.append('{nul:{delay_col_width}}')
