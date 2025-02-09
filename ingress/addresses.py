@@ -218,10 +218,10 @@ def update(args: argparse.Namespace) -> int:
 
     delay_base = _tune_delay_base(args.delay)
     portals = bookmarks.load(args.bookmarks)
-    template = _assemble_update_template(args)
+    template = _assemble_update_template(args, len(portals))
     fetched = 0
     delay = 0.0
-    for portal in portals.values():
+    for entry, portal in enumerate(portals.values(), start=1):
         latlng = portal['latlng']
         if dbc.session.get(database.Address, latlng) is None:
             if fetched:
@@ -231,6 +231,7 @@ def update(args: argparse.Namespace) -> int:
                     'fetch': fetched + 1,
                     'label': portal['label'],
                     'delay': delay,
+                    'entry': entry,
                 }
             )
             if fetched % 20 == 0:
@@ -484,6 +485,7 @@ def prune(args: argparse.Namespace) -> int:
 
 
 DELAY = 'Delay'
+ENTRY = 'Entry #'
 FETCH = 'Fetch #'
 LABEL = 'Label'
 LIMIT = 'Limit'
@@ -491,12 +493,13 @@ LIMIT_NONE = '(No limit)'
 
 
 def _assemble_update_template(
-    args: argparse.Namespace
+    args: argparse.Namespace, portal_count: int
 ) -> UpdateOutputTemplate:
     """Assemble values for the header and row templates."""
     dbc = args.dbc
 
     delay = f'{max(_random_delay(args.delay) for _ in range(10000)):.2f}'
+    entry_of = f'(of {portal_count})'
     if args.limit is None:
         limit_header = LIMIT_NONE
         count_str = f'{args.limit}'
@@ -508,9 +511,12 @@ def _assemble_update_template(
     template.data = {
         'nul': '',
         'fetch_col_width': max(len(limit_header), len(FETCH), len(count_str)),
+        'entry_col_width': max(len(ENTRY), len(entry_of)),
         'delay_col_width': max(len(DELAY), len(delay)),
         'fetch_str': FETCH,
         'limit_str': limit_header,
+        'entry_str': ENTRY,
+        'entry_of_str': entry_of,
         'delay_str': DELAY,
         'label_str': LABEL,
     }
@@ -522,6 +528,10 @@ def _assemble_update_template(
     header1.append('{fetch_str:^{fetch_col_width}}')
     header2.append('{limit_str:^{fetch_col_width}}')
     columns.append('{fetch:{fetch_col_width}}')
+
+    header1.append('{entry_str:^{entry_col_width}}')
+    header2.append('{entry_of_str:^{entry_col_width}}')
+    columns.append('{entry:{entry_col_width}}')
 
     header1.append('{delay_str:^{delay_col_width}}')
     header2.append('{nul:{delay_col_width}}')
