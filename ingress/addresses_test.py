@@ -2,11 +2,13 @@
 
 # pylint: disable=protected-access
 
+import argparse
 import unittest
 
 from mundane import app
 
 from ingress import addresses
+from ingress import test_helper
 
 
 class MundaneCommandsTest(unittest.TestCase):
@@ -36,8 +38,20 @@ class NeverCallTest(unittest.TestCase):
 
 class UpdateTest(unittest.TestCase):
 
-    def test_basic(self):
-        self.assertTrue(addresses.update)
+    def setUp(self):
+        self._mocks = test_helper.mock_ingress_imports(self, addresses)
+        self._dbc = test_helper.database_connection(self)
+        self._args = argparse.Namespace(
+            dbc=self._dbc, daily_updates=1, limit=None, delay=5
+        )
+
+    def test_empty(self):
+        self._args.bookmarks = self.id()
+        self._mocks.mocks['bookmarks'].load.side_effect = None
+        self._mocks.mocks['bookmarks'].load.return_value = dict()
+        result = addresses.update(self._args)
+
+        self.assertEqual(result, 0)
 
 
 class TypeListTest(unittest.TestCase):
