@@ -508,37 +508,43 @@ def _assemble_update_template(
     template.data = {
         'nul': '',
         'fetch_width': max(len(limit_header), len(FETCH), len(count_str)),
-        'limit_header': limit_header,
         'delay_width': max(len(DELAY), len(delay)),
-        'delay_str': DELAY,
         'fetch_str': FETCH,
+        'limit_str': limit_header,
+        'delay_str': DELAY,
         'label_str': LABEL,
     }
-    template.data['delay_pad'
-                  ] = (len(DELAY) - template.data['delay_width']) % 2
-    template.data['delay_str_width'] = template.data[
-        'delay_width'] - template.data['delay_pad']
     template.data['fetch_pad'
                   ] = (template.data['fetch_width'] - len(FETCH)) % 2
     template.data['fetch_str_width'] = template.data[
         'fetch_width'] - template.data['fetch_pad']
     template.data['current_width'] = template.data['fetch_width'] - 1
+    template.data['delay_pad'
+                  ] = (len(DELAY) - template.data['delay_width']) % 2
+    template.data['delay_str_width'] = template.data[
+        'delay_width'] - template.data['delay_pad']
 
     header1 = list()
     header2 = list()
     columns = list()
+
     header1.append('{nul:{fetch_pad}}{fetch_str:^{fetch_str_width}}')
-    header2.append('{limit_header:^{fetch_width}}')
+    header2.append('{limit_str:^{fetch_width}}')
     columns.append('{current:{current_width}} ')
-    columns.extend(('{delay:{delay_width}.2f}', '{label}'))
-    header1.extend(
-        ('{nul:{delay_pad}}{delay_str:^{delay_str_width}}', '{label_str}')
-    )
-    header2.extend(('{nul:{delay_pad}}{nul:{delay_str_width}}', ''))
+
+    header1.append('{nul:{delay_pad}}{delay_str:^{delay_str_width}}')
+    header2.append('{nul:{delay_pad}}{nul:{delay_str_width}}')
+    columns.append('{delay:{delay_width}.2f}')
+
+    header1.append('{label_str}')
+    header2.append('')
+    columns.append('{label}')
+
     template.header = '\n'.join(
         ('', ' | '.join(header1), ' | '.join(header2))
     )
     template.row = ' | '.join(columns)
+
     return template
 
 
