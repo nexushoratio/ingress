@@ -502,11 +502,11 @@ def _assemble_update_template(
     entry_of = f'(of {portal_count})'
     if args.limit is None:
         limit_header = LIMIT_NONE
-        count_str = f'{args.limit}'
-    else:
-        limit_header = f'{LIMIT}: {args.limit}'
         stmt = sqla.select(sqla.func.count()).select_from(database.PortalV2)
         count_str = f'{dbc.session.scalar(stmt)}'
+    else:
+        limit_header = f'{LIMIT}: {args.limit}'
+        count_str = f'{args.limit}'
     template = UpdateOutputTemplate()
     template.data = {
         'nul': '',
