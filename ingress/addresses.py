@@ -488,8 +488,6 @@ DELAY = 'Delay'
 ENTRY = 'Entry #'
 FETCH = 'Fetch #'
 LABEL = 'Label'
-LIMIT = 'Limit'
-LIMIT_NONE = '(No limit)'
 
 
 def _assemble_update_template(
@@ -501,20 +499,20 @@ def _assemble_update_template(
     delay = f'{max(_random_delay(args.delay) for _ in range(10000)):.2f}'
     entry_of = f'(of {portal_count})'
     if args.limit is None:
-        limit_header = LIMIT_NONE
+        fetch_of = ''
         stmt = sqla.select(sqla.func.count()).select_from(database.PortalV2)
         count_str = f'{dbc.session.scalar(stmt)}'
     else:
-        limit_header = f'{LIMIT}: {args.limit}'
+        fetch_of = f'(of {args.limit})'
         count_str = f'{args.limit}'
     template = UpdateOutputTemplate()
     template.data = {
         'nul': '',
-        'fetch_col_width': max(len(limit_header), len(FETCH), len(count_str)),
+        'fetch_col_width': max(len(FETCH), len(fetch_of), len(count_str)),
         'entry_col_width': max(len(ENTRY), len(entry_of)),
         'delay_col_width': max(len(DELAY), len(delay)),
         'fetch_str': FETCH,
-        'limit_str': limit_header,
+        'fetch_of_str': fetch_of,
         'entry_str': ENTRY,
         'entry_of_str': entry_of,
         'delay_str': DELAY,
@@ -526,7 +524,7 @@ def _assemble_update_template(
     columns = list()
 
     header1.append('{fetch_str:^{fetch_col_width}}')
-    header2.append('{limit_str:^{fetch_col_width}}')
+    header2.append('{fetch_of_str:^{fetch_col_width}}')
     columns.append('{fetch:{fetch_col_width}}')
 
     header1.append('{entry_str:^{entry_col_width}}')
