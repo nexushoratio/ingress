@@ -539,10 +539,10 @@ def _assemble_update_template(
     header2.append('')
     columns.append('{label}')
 
-    template.header = '\n'.join(
-        ('', ' | '.join(header1), ' | '.join(header2))
+    template.header = '\n '.join(
+        (' ', ' | '.join(header1), ' | '.join(header2))
     )
-    template.row = ' | '.join(columns)
+    template.row = ' ' + ' | '.join(columns)
 
     return template
 
