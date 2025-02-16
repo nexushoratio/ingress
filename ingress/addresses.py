@@ -519,6 +519,9 @@ def _assemble_update_template(
         'label_str': LABEL,
     }
 
+    _bias_headers(template.data, 'fetch_str', 'fetch_of_str')
+    _bias_headers(template.data, 'entry_str', 'entry_of_str')
+
     header1 = list()
     header2 = list()
     columns = list()
@@ -545,6 +548,20 @@ def _assemble_update_template(
     template.row = ' ' + ' | '.join(columns)
 
     return template
+
+
+def _bias_headers(data: dict[str, str], key_one: str, key_two: str):
+    """Prepend the shorter string with a single space.
+
+    Python's center-string algorithms are inconsistent when it comes to
+    handling odd/even padding.  This can cause dynamically centered headers to
+    look strange.  Work around this by always prefixing the shorter string
+    with a space.
+    """
+    if len(data[key_one]) > len(data[key_two]):
+        data[key_two] = ' ' + data[key_two]
+    if len(data[key_two]) > len(data[key_one]):
+        data[key_one] = ' ' + data[key_one]
 
 
 def _clean(args: argparse.Namespace):
