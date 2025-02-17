@@ -30,10 +30,34 @@ class Error(Exception):
     """Base module exception."""
 
 
+class UpdateDataDict(typing.TypedDict, total=False):
+    """A dict used for formatting the output of the update command."""
+    nul: str
+    fetch_col_width: int
+    entry_col_width: int
+    delay_col_width: int
+    fetch_str: str
+    fetch_of_str: str
+    entry_str: str
+    entry_of_str: str
+    delay_str: str
+    label_str: str
+    fetch: int
+    label: str
+    delay: float
+    entry: int
+
+
+UpdateHeaderKeys: typing.TypeAlias = typing.Literal['fetch_str',
+                                                    'fetch_of_str',
+                                                    'entry_str',
+                                                    'entry_of_str']
+
+
 @dataclasses.dataclass
 class UpdateOutputTemplate:
     """Describes current values used for the output of update."""
-    data: dict[str, typing.Any] = dataclasses.field(init=False)
+    data: UpdateDataDict = dataclasses.field(init=False)
     row: str = dataclasses.field(init=False)
     header: str = dataclasses.field(init=False)
 
@@ -494,14 +518,11 @@ def _assemble_update_template(
     args: argparse.Namespace, portal_count: int
 ) -> UpdateOutputTemplate:
     """Assemble values for the header and row templates."""
-    dbc = args.dbc
-
     delay = f'{max(_random_delay(args.delay) for _ in range(10000)):.2f}'
     entry_of = f'(of {portal_count})'
     if args.limit is None:
         fetch_of = ''
-        stmt = sqla.select(sqla.func.count()).select_from(database.PortalV2)
-        count_str = f'{dbc.session.scalar(stmt)}'
+        count_str = f'{portal_count}'
     else:
         fetch_of = f'(of {args.limit})'
         count_str = f'{args.limit}'
@@ -550,7 +571,9 @@ def _assemble_update_template(
     return template
 
 
-def _bias_headers(data: dict[str, str], key_one: str, key_two: str):
+def _bias_headers(
+    data: UpdateDataDict, key_one: UpdateHeaderKeys, key_two: UpdateHeaderKeys
+):
     """Prepend the shorter string with a single space.
 
     Python's center-string algorithms are inconsistent when it comes to
