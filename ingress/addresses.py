@@ -34,7 +34,11 @@ class UpdateDataDict(typing.TypedDict, total=False):
     """A dict used for formatting the output of the update command."""
     nul: str
     fetch_col_width: int
+    fetch_num_width: int
+    fetch_num_pad: int
     entry_col_width: int
+    entry_num_width: int
+    entry_num_pad: int
     delay_col_width: int
     fetch_str: str
     fetch_of_str: str
@@ -52,6 +56,13 @@ UpdateHeaderKeys: typing.TypeAlias = typing.Literal['fetch_str',
                                                     'fetch_of_str',
                                                     'entry_str',
                                                     'entry_of_str']
+
+UpdateIntegerKeys: typing.TypeAlias = typing.Literal['fetch_col_width',
+                                                     'fetch_num_width',
+                                                     'fetch_num_pad',
+                                                     'entry_col_width',
+                                                     'entry_num_width',
+                                                     'entry_num_pad']
 
 
 @dataclasses.dataclass
@@ -543,17 +554,26 @@ def _assemble_update_template(
     _bias_headers(template.data, 'fetch_str', 'fetch_of_str')
     _bias_headers(template.data, 'entry_str', 'entry_of_str')
 
+    _bias_integer(
+        template.data, count_str, 'fetch_col_width', 'fetch_num_width',
+        'fetch_num_pad'
+    )
+    _bias_integer(
+        template.data, f'{portal_count}', 'entry_col_width',
+        'entry_num_width', 'entry_num_pad'
+    )
+
     header1 = list()
     header2 = list()
     columns = list()
 
     header1.append('{fetch_str:^{fetch_col_width}}')
     header2.append('{fetch_of_str:^{fetch_col_width}}')
-    columns.append('{fetch:{fetch_col_width}}')
+    columns.append('{fetch:{fetch_num_width}}{nul:{fetch_num_pad}}')
 
     header1.append('{entry_str:^{entry_col_width}}')
     header2.append('{entry_of_str:^{entry_col_width}}')
-    columns.append('{entry:{entry_col_width}}')
+    columns.append('{entry:{entry_num_width}}{nul:{entry_num_pad}}')
 
     header1.append('{delay_str:^{delay_col_width}}')
     header2.append('{nul:{delay_col_width}}')
@@ -585,6 +605,25 @@ def _bias_headers(
         data[key_two] = ' ' + data[key_two]
     if len(data[key_two]) > len(data[key_one]):
         data[key_one] = ' ' + data[key_one]
+
+
+def _bias_integer(
+    data: UpdateDataDict, example: str, col_width: UpdateIntegerKeys,
+    num_width: UpdateIntegerKeys, num_pad: UpdateIntegerKeys
+):
+    """Compute values to "best" center integers in a column.
+
+    Centering a number in a column can be tricky.  Typically they will be
+    right-aligned, but they often look better when centered within the width
+    of the column.  This extracts the previously computed column width and an
+    example string and determines values to use for formatting.
+    """
+    diff = data[col_width] - len(example)
+    # XXX: Smaller numbers are observed in output more often than larger
+    # numbers.  So, if padding might normally 3/2, make it 2/3 to appear more
+    # balanced.
+    data[num_width] = data[col_width] - diff // 2 - diff % 2
+    data[num_pad] = data[col_width] - data[num_width]
 
 
 def _clean(args: argparse.Namespace):
