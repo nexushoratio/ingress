@@ -799,7 +799,8 @@ class Database:
 
     def _post_create_migrations(self, session: sqlalchemy.orm.Session):
         """Migrate portals to v2_portals."""
-        stmt = sqlalchemy.select(sqlalchemy.func.count()).select_from(_Portal)
+        stmt = sqlalchemy.select(sqlalchemy.sql.functions.count()
+                                 ).select_from(_Portal)
         count = session.scalar(stmt)
         if count:
             print('Performing a database migration.')
