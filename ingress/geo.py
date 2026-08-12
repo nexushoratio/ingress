@@ -582,7 +582,7 @@ def _add_edges(graph, index, node_map_by_index, max_distance):  # pylint: disabl
     logging.info('_add_edges: edges added: %d', edge_count)
 
 
-def _bites(  # pylint: disable=too-many-arguments
+def _bites(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         dbc: database.Database, all_donuts: list[Bite], count: int,
         max_bites: int, max_length: float, max_area: float) -> list[Bite]:
     """Divide the donuts into bite-sized morsels (e.g., COUNT portals)."""

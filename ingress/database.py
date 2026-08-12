@@ -23,8 +23,8 @@ if typing.TYPE_CHECKING:  # pragma: no cover
 
     from mundane import app
 
-WKB: typing.TypeAlias = geoalchemy2.WKBElement
-WKT: typing.TypeAlias = geoalchemy2.WKTElement
+WKB: typing.TypeAlias = geoalchemy2.WKBElement  # pylint: disable=invalid-name
+WKT: typing.TypeAlias = geoalchemy2.WKTElement  # pylint: disable=invalid-name
 
 
 @dataclasses.dataclass(kw_only=True)
