@@ -1,5 +1,7 @@
 """Tests for drawtools.py"""
 
+# pylint: disable=protected-access
+
 import json
 import tempfile
 import unittest
@@ -143,6 +145,50 @@ class LoadPointsTest(unittest.TestCase):
     def test_missing_file(self):
         with self.assertRaises(FileNotFoundError):
             drawtools.load_points('bogus')
+
+
+class RainbowTest(unittest.TestCase):
+
+    def test_red(self):
+        self.assertEqual(drawtools._rainbow(0.0), '#ff0000')
+
+    def test_orangish(self):
+        self.assertEqual(drawtools._rainbow(0.1), '#ff8000')
+
+    def test_yellow(self):
+        self.assertEqual(drawtools._rainbow(0.2), '#ffff00')
+
+    def test_chartreuse(self):
+        self.assertEqual(drawtools._rainbow(0.3), '#80ff00')
+
+    def test_green(self):
+        self.assertEqual(drawtools._rainbow(0.4), '#00ff00')
+
+    def test_spring_green(self):
+        self.assertEqual(drawtools._rainbow(0.5), '#00ff80')
+
+    def test_cyan(self):
+        self.assertEqual(drawtools._rainbow(0.6), '#00ffff')
+
+    def test_dodger_bluish(self):
+        self.assertEqual(drawtools._rainbow(0.7), '#0080ff')
+
+    def test_blue(self):
+        self.assertEqual(drawtools._rainbow(0.8), '#0000ff')
+
+    def test_purplish(self):
+        self.assertEqual(drawtools._rainbow(0.9), '#8000ff')
+
+    def test_magenta(self):
+        self.assertEqual(drawtools._rainbow(1.0), '#ff00ff')
+
+    def test_too_low(self):
+        with self.assertRaisesRegex(drawtools.Error, 'out of range: -0.01'):
+            drawtools._rainbow(-0.01)
+
+    def test_too_high(self):
+        with self.assertRaisesRegex(drawtools.Error, 'out of range: 1.02'):
+            drawtools._rainbow(1.02)
 
 
 if __name__ == '__main__':  # pragma: no cover

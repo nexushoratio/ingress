@@ -1,6 +1,7 @@
 """Functions for working with IITC drawtools files."""
 from __future__ import annotations
 
+import colorsys
 import typing
 
 import pyproj
@@ -42,8 +43,6 @@ def save_bounds(
 ):
     """Save the hulls of collections of points in drawtools format."""
     hulls = list()
-    color = 256 * 256 * 256
-    stride = color // (len(collections) + 1)
 
     for index, stmt in enumerate(collections):
         collection = stmt.cte('collection', recursive=True)
@@ -78,19 +77,19 @@ def save_bounds(
             points.c.geom.ST_X().label('lng')
         )
 
-        color = stride * (index + 1)
-
         lat_lngs = list(
             dict(row) for row in dbc.session.execute(stmt).mappings()
         )
 
-        hulls.append(
-            {
+        if lat_lngs:
+            hulls.append({
                 'type': 'polygon',
-                'color': f'#{color:06x}',
                 'latLngs': lat_lngs,
-            }
-        )
+            })
+
+    for index, hull in enumerate(hulls):
+        color = _rainbow(index / (len(hulls) - 1))
+        hull['color'] = f'#{color}'
 
     json.save(filename, hulls)
 
@@ -164,3 +163,25 @@ def load_points(filename: str) -> frozenset[database.WKT]:
             raise TypeError(f'"{typ}" is a type not yet handled.')
 
     return frozenset(points)
+
+
+def _rainbow(hue: float) -> str:
+    """Return a color along a rainbow-like continuum.
+
+    See https://www.colorcet.com/userguide#rainbow on why this is bad.
+
+    Args:
+      hue: Some point in the range [0.0, 1.0].
+
+    Returns:
+      A hex-number as a string.
+    """
+    if hue < 0.0 or hue > 1.0:
+        raise Error(f'out of range: {hue}')
+    red, grn, blu = colorsys.hsv_to_rgb(hue * 5 / 6, 1, 1)
+
+    red_ = round(red * 255)
+    grn_ = round(grn * 255)
+    blu_ = round(blu * 255)
+    result = f'#{red_:02x}{grn_:02x}{blu_:02x}'
+    return result
