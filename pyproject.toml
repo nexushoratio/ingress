@@ -114,5 +114,5 @@ commands =
     python -m mypy
     python -m coverage run
     python -m coverage report
-    python -m coverage html --fail-under 49
+    python -m coverage html -q --fail-under 49
 """
