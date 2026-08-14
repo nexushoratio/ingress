@@ -152,32 +152,30 @@ class DatabaseTest(unittest.TestCase):
     def test_sanity_check_with_auto_drop(self):
         dbc = test_helper.database_connection(self)
         db_path = pathlib.Path(dbc._directory, dbc._filename)
-        conn = sqlite3.connect(db_path)
-        dbc._connect(dbapi_connection=conn)
+        with contextlib.closing(sqlite3.connect(db_path)) as conn:
+            dbc._connect(dbapi_connection=conn)
+            ddl = 'CREATE TABLE cluster_leaders (guid VARCHAR NOT NULL)'
+            conn.execute(ddl)
 
-        ddl = 'CREATE TABLE cluster_leaders (guid VARCHAR NOT NULL)'
-        conn.execute(ddl)
-
-        stdout = io.StringIO()
-        with contextlib.redirect_stdout(stdout):
-            stmt = database.sqlalchemy.select(database.ClusterLeader)
-            dbc.session.execute(stmt)
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                stmt = database.sqlalchemy.select(database.ClusterLeader)
+                dbc.session.execute(stmt)
 
         self.assertIn('dropping: cluster_leaders', stdout.getvalue())
 
     def test_sanity_check_without_auto_drop(self):
         dbc = test_helper.database_connection(self)
         db_path = pathlib.Path(dbc._directory, dbc._filename)
-        conn = sqlite3.connect(db_path)
-        dbc._connect(dbapi_connection=conn)
+        with contextlib.closing(sqlite3.connect(db_path)) as conn:
+            dbc._connect(dbapi_connection=conn)
+            ddl = 'CREATE TABLE portals (guid VARCHAR NOT NULL)'
+            conn.execute(ddl)
 
-        ddl = 'CREATE TABLE portals (guid VARCHAR NOT NULL)'
-        conn.execute(ddl)
-
-        with self.assertRaisesRegex(database.Error,
-                                    'Unhandled tables with differences'):
-            stmt = database.sqlalchemy.select(database.ClusterLeader)
-            dbc.session.execute(stmt)
+            with self.assertRaisesRegex(database.Error,
+                                        'Unhandled tables with differences'):
+                stmt = database.sqlalchemy.select(database.ClusterLeader)
+                dbc.session.execute(stmt)
 
     def test_spatialite_initialized(self):
         # When the database is first created, spatialite is also initialized
@@ -196,10 +194,11 @@ class DatabaseTest(unittest.TestCase):
     def test_portals_v2_migration(self):
         dbc = test_helper.database_connection(self)
         db_path = pathlib.Path(dbc._directory, dbc._filename)
-        conn = sqlite3.connect(db_path)
-        dbc._connect(dbapi_connection=conn)
-        # Darn, unable to use the 'CreateTable' output here because GEOMETRY.
-        ddl = """
+        with contextlib.closing(sqlite3.connect(db_path)) as conn:
+            dbc._connect(dbapi_connection=conn)
+            # Darn, unable to use the 'CreateTable' output here because
+            # GEOMETRY.
+            ddl = """
 CREATE TABLE portals (
     guid VARCHAR NOT NULL,
     label VARCHAR NOT NULL,
@@ -209,35 +208,37 @@ CREATE TABLE portals (
     CONSTRAINT pk_portals PRIMARY KEY (guid)
 )
 """
-        conn.execute(ddl)
-        conn.execute(
-            'SELECT RecoverGeometryColumn(?,?,?,?,?)',
-            ('portals', 'latlng', 4326, 'POINT', 'XY')
-        )
-        data = [
-            (
-                '1e4669c234ad492e9dfa7b0a2da05cde.16',
-                'Google Volleyball Sand Court', 0, 0, -122.085126, 37.421963
-            ),
-            (
-                '09d5d1e149014c70ba3154fe3421e2a6.12', 'Tetrahelix', 0, 0,
-                -122.089649, 37.423521
-            ),
-            (
-                '9f2eaaa0c1ae4204a2ba5edd46ad4c95.12', "Cupid's Span", 0, 0,
-                -122.390014, 37.791541
+            conn.execute(ddl)
+            conn.execute(
+                'SELECT RecoverGeometryColumn(?,?,?,?,?)',
+                ('portals', 'latlng', 4326, 'POINT', 'XY')
             )
-        ]
-        conn.executemany(
-            'INSERT INTO portals VALUES(?,?,?,?,MakePoint(?,?,4326))', data
-        )
-        conn.commit()
-        expected = frozenset(str(item[5]) for item in data)
+            data = [
+                (
+                    '1e4669c234ad492e9dfa7b0a2da05cde.16',
+                    'Google Volleyball Sand Court', 0, 0, -122.085126,
+                    37.421963
+                ),
+                (
+                    '09d5d1e149014c70ba3154fe3421e2a6.12', 'Tetrahelix', 0, 0,
+                    -122.089649, 37.423521
+                ),
+                (
+                    '9f2eaaa0c1ae4204a2ba5edd46ad4c95.12', "Cupid's Span", 0,
+                    0, -122.390014, 37.791541
+                )
+            ]
+            conn.executemany(
+                'INSERT INTO portals VALUES(?,?,?,?,MakePoint(?,?,4326))',
+                data
+            )
+            conn.commit()
+            expected = frozenset(str(item[5]) for item in data)
 
-        stmt = database.sqlalchemy.select(database.PortalV2)
-        actual = frozenset(
-            row.PortalV2.lat for row in dbc.session.execute(stmt)
-        )
+            stmt = database.sqlalchemy.select(database.PortalV2)
+            actual = frozenset(
+                row.PortalV2.lat for row in dbc.session.execute(stmt)
+            )
 
         self.assertEqual(actual, expected)
 
@@ -261,12 +262,11 @@ CREATE TABLE portals (
         dbc.dispose()
 
         db_path = pathlib.Path(dbc._directory, dbc._filename)
-        conn = sqlite3.connect(db_path)
-
-        tables = [
-            row[0]
-            for row in conn.execute('SELECT DISTINCT(tbl) FROM sqlite_stat1')
-        ]
+        with contextlib.closing(sqlite3.connect(db_path)) as conn:
+            tables = [
+                row[0] for row in
+                conn.execute('SELECT DISTINCT(tbl) FROM sqlite_stat1')
+            ]
 
         self.assertIn('v2_portals', tables)
 
@@ -389,11 +389,11 @@ CREATE TABLE portals (
         # Force a VACUUM so our external reason later is the trigger.
         self.assertTrue(dbc.session)
         db_path = pathlib.Path(dbc._directory, dbc._filename)
-        conn = sqlite3.connect(db_path)
-        conn.enable_load_extension(True)
-        conn.load_extension('mod_spatialite')
-        conn.enable_load_extension(False)
-        conn.execute('VACUUM')
+        with contextlib.closing(sqlite3.connect(db_path)) as conn:
+            conn.enable_load_extension(True)
+            conn.load_extension('mod_spatialite')
+            conn.enable_load_extension(False)
+            conn.execute('VACUUM')
 
         stdout = io.StringIO()
         with contextlib.redirect_stdout(stdout), self.assertLogs() as logs:
