@@ -784,8 +784,9 @@ class Database:
                     FROM sqlite_master
                     WHERE type = "table"
                     """)):
-                existing_table = existing_tables[row.name]
-                existing_table.ddls.update(self._clean_ddl(row.sql))
+                existing_table = existing_tables.get(row.name)
+                if existing_table:
+                    existing_table.ddls.update(self._clean_ddl(row.sql))
 
         return existing_tables
 
