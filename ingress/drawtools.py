@@ -89,7 +89,7 @@ def save_bounds(
 
     for index, hull in enumerate(hulls):
         color = _rainbow(index / (len(hulls) - 1))
-        hull['color'] = f'#{color}'
+        hull['color'] = color
 
     json.save(filename, hulls)
 
