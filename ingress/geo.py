@@ -202,9 +202,6 @@ def bounds(args: argparse.Namespace) -> int:
 
 def trim(args: argparse.Namespace) -> int:
     """Trim a bookmarks file to only include portals inside a boundary."""
-    if shapely.speedups.available:
-        shapely.speedups.enable()
-
     portals = bookmarks.load(args.bookmarks)
     collection = drawtools.load_polygons(args.drawtools)
 
