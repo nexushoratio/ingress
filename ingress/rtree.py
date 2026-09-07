@@ -7,7 +7,7 @@ import logging
 import attr
 import pyproj
 import rtree
-import shapely  # type: ignore[import]
+import shapely
 
 from ingress import database
 

@@ -14,7 +14,7 @@ import time
 import typing
 
 import pyproj
-import shapely  # type: ignore[import]
+import shapely
 import toposort
 
 from mundane import constants

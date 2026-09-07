@@ -5,7 +5,7 @@ import colorsys
 import typing
 
 import pyproj
-import shapely  # type: ignore[import]
+import shapely
 
 from ingress import database
 from ingress import json
