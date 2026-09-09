@@ -368,9 +368,9 @@ class UuidMixin:
             kwargs['uuid'] = uuid.uuid4().hex
         super().__init__(**kwargs)
 
-    # TODO(#57): The uuid property was moved to individual classes because
-    # mixins now change the order, which caused all of the tables to get
-    # dropped.  Migration needs to be smarter.
+    uuid = sqlalchemy.Column(
+        sqlalchemy.String, nullable=False, primary_key=True
+    )
 
 
 class Place(ReprMixin, UuidMixin, Base):  # pylint: disable=missing-class-docstring
@@ -378,9 +378,6 @@ class Place(ReprMixin, UuidMixin, Base):  # pylint: disable=missing-class-docstr
 
     _repr_exclude_keys = ('lat', 'lng', 'point')
 
-    uuid: str = sqlalchemy.Column(
-        sqlalchemy.String, nullable=False, primary_key=True
-    )
     label = sqlalchemy.Column(sqlalchemy.Unicode)
     latlng = sqlalchemy.Column(sqlalchemy.String, nullable=False, unique=True)
     lat = sqlalchemy.Column(
@@ -408,18 +405,12 @@ class Place(ReprMixin, UuidMixin, Base):  # pylint: disable=missing-class-docstr
 class BookmarkFolder(ReprMixin, UuidMixin, Base):  # pylint: disable=missing-class-docstring
     __tablename__ = 'bookmark_folders'
 
-    uuid: str = sqlalchemy.Column(
-        sqlalchemy.String, nullable=False, primary_key=True
-    )
     label = sqlalchemy.Column(sqlalchemy.Unicode, nullable=False, unique=True)
 
 
 class MapBookmark(ReprMixin, UuidMixin, Base):  # pylint: disable=missing-class-docstring
     __tablename__ = 'map_bookmarks'
 
-    uuid: str = sqlalchemy.Column(
-        sqlalchemy.String, nullable=False, primary_key=True
-    )
     folder_id: str = sqlalchemy.Column(
         sqlalchemy.ForeignKey('bookmark_folders.uuid', ondelete='CASCADE'),
         nullable=False
@@ -438,9 +429,6 @@ class MapBookmark(ReprMixin, UuidMixin, Base):  # pylint: disable=missing-class-
 class PortalBookmark(ReprMixin, UuidMixin, Base):  # pylint: disable=missing-class-docstring
     __tablename__ = 'portal_bookmarks'
 
-    uuid: str = sqlalchemy.Column(
-        sqlalchemy.String, nullable=False, primary_key=True
-    )
     folder_id: str = sqlalchemy.Column(
         sqlalchemy.ForeignKey('bookmark_folders.uuid', ondelete='CASCADE'),
         nullable=False
