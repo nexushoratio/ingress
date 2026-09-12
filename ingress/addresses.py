@@ -511,7 +511,8 @@ def prune(args: argparse.Namespace) -> int:
             for guid in guids:
                 dbc.session.add(
                     database.PortalBookmark(
-                        folder_id=folder.uuid, portal_id=guid
+                        folder_id=folder.uuid,  # type: ignore
+                        portal_id=guid
                     )
                 )
             dbc.session.commit()

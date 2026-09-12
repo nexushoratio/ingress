@@ -477,7 +477,8 @@ def _add_bookmark_folders(
             guid = portal['guid']
             dbc.session.add(
                 database.PortalBookmark(
-                    folder_id=folder.uuid, portal_id=guid
+                    folder_id=folder.uuid,  # type: ignore
+                    portal_id=guid
                 )
             )
         print(f'folder: {folder.uuid} | {folder.label}')
