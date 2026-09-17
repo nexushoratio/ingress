@@ -631,9 +631,9 @@ def _clean(args: argparse.Namespace):
     """Clean out old cached data."""
     dbc = args.dbc
 
-    stmt = sqla.select(sqla.sql.functions.count()
-                       ).select_from(database.PortalV2)
-    count = dbc.session.scalar(stmt)
+    scalar_stmt = sqla.select(sqla.sql.functions.count()
+                              ).select_from(database.PortalV2)
+    count = dbc.session.scalar(scalar_stmt)
     max_days = count // args.daily_updates
     max_age = max_days * constants.SECONDS_PER_DAY
     logging.info(

@@ -936,14 +936,16 @@ def _clean(dbc: database.Database):
     """Clean out old cached data."""
     now = time.time()
     oldest_allowed = now - MAX_AGE
-    rows = dbc.session.query(database.Leg
-                             ).filter(database.Leg.date < oldest_allowed)
-    for row in rows:
-        print('Delete ', row)
-    rows = dbc.session.query(database.Path
-                             ).filter(database.Path.date < oldest_allowed)
-    for row in rows:
-        print('Delete ', row)
+
+    for leg in dbc.session.query(database.Leg
+                                 ).filter(database.Leg.date < oldest_allowed):
+        print('Delete ', leg)
+
+    for path in dbc.session.query(database.Path
+                                  ).filter(database.Path.date < oldest_allowed
+                                           ):
+        print('Delete ', path)
+
     dbc.session.commit()
 
 

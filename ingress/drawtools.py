@@ -87,9 +87,9 @@ def save_bounds(
                 'latLngs': lat_lngs,
             })
 
-    for index, hull in enumerate(hulls):
+    for index, a_hull in enumerate(hulls):
         color = _rainbow(index / (len(hulls) - 1))
-        hull['color'] = color
+        a_hull['color'] = color
 
     json.save(filename, hulls)
 

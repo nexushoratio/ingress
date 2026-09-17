@@ -978,12 +978,14 @@ def write_(args: argparse.Namespace) -> int:
             maps = dict()
             portals = dict()
 
-            stmt = sqla.select(database.MapBookmark, database.Place).join(
+            mapbm_place_stmt = sqla.select(
+                database.MapBookmark, database.Place
+            ).join(
                 database.Place,
                 database.MapBookmark.place_id == database.Place.uuid
             ).where(database.MapBookmark.folder_id == folder_id)
 
-            for row in dbc.session.execute(stmt).mappings():
+            for row in dbc.session.execute(mapbm_place_stmt).mappings():
                 bkmrk = row['MapBookmark']
                 place = row['Place']
                 maps[bkmrk.uuid] = {
@@ -997,14 +999,14 @@ def write_(args: argparse.Namespace) -> int:
                     'label': folder.label,
                 }
 
-            stmt = sqla.select(
+            portalbm_portal_stmt = sqla.select(
                 database.PortalBookmark, database.PortalV2
             ).join(
                 database.PortalV2,
                 database.PortalBookmark.portal_id == database.PortalV2.guid
             ).where(database.PortalBookmark.folder_id == folder_id)
 
-            for row in dbc.session.execute(stmt).mappings():
+            for row in dbc.session.execute(portalbm_portal_stmt).mappings():
                 bkmrk = row['PortalBookmark']
                 portal = row['PortalV2']
                 portals[bkmrk.uuid] = portal.to_iitc()
