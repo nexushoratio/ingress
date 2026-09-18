@@ -86,7 +86,6 @@ ignored-modules = [
 
 [tool.mypy]
 files = 'ingress'
-plugins = 'sqlalchemy.ext.mypy.plugin'
 
 [tool.coverage.run]
 branch = true
