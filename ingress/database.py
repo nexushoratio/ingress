@@ -76,7 +76,9 @@ convention = {
 
 metadata = sqlalchemy.schema.MetaData(naming_convention=convention)
 
-Base = orm.declarative_base(metadata=metadata)
+
+class Base(orm.DeclarativeBase):  # pylint: disable=too-few-public-methods
+    metadata = metadata
 
 
 def latlng_dict_to_point(latlng: dict[str, str]) -> WKT:
