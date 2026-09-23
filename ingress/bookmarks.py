@@ -56,6 +56,15 @@ def mundane_shared_flags(ctx: app.ArgparseApp):
     parser = ctx.safe_new_shared_parser('bookmarks_optional')
     parser.add_argument(*bm_args, **bm_kwargs)
 
+    parser = ctx.safe_new_shared_parser('bookmarks_list')
+    parser.add_argument(
+        *bm_args,
+        action='append',
+        required=True,
+        help=
+        'IITC bookmarks json file to use.  May be specified multiple times.'
+    )
+
     existing = tuple(ExistingFolder)
     parser = ctx.safe_new_shared_parser('bookmark_label')
     parser.add_argument(
@@ -290,6 +299,7 @@ class _CommonFlags:
 def mundane_commands(ctx: app.ArgparseApp):
     """Register commands."""
     bm_flags = ctx.safe_get_shared_parser('bookmarks')
+    bm_list_flags = ctx.safe_get_shared_parser('bookmarks_list')
     glob_flags = ctx.safe_get_shared_parser('glob')
 
     parser = ctx.register_command(flatten, parents=[bm_flags])
@@ -326,7 +336,7 @@ def mundane_commands(ctx: app.ArgparseApp):
     )
 
     ctx.register_command(
-        read_, name='read', subparser=bookmark_cmds, parents=[bm_flags]
+        read_, name='read', subparser=bookmark_cmds, parents=[bm_list_flags]
     )
     ctx.register_command(
         write_,
@@ -880,7 +890,7 @@ def portal_del(args: argparse.Namespace) -> int:
 
 
 def read_(args: argparse.Namespace) -> int:
-    """(V) Read an IITC style bookmark file.
+    """(V) Read one or more IITC style bookmark files.
 
     This will import the bookmark file to populate the internal bookmark
     tables.
@@ -894,16 +904,17 @@ def read_(args: argparse.Namespace) -> int:
     """
     dbc = args.dbc
 
-    filename = pathlib.PurePath(args.bookmarks).stem
-    bookmarks = json.load(args.bookmarks)
+    for pathname in args.bookmarks:
+        filename = pathlib.PurePath(pathname).stem
+        bookmarks = json.load(pathname)
 
-    for section, value in bookmarks.items():
-        if section == 'maps':
-            _process_maps(dbc, filename, value)
-        elif section == 'portals':
-            _process_portals(dbc, filename, value)
-        else:
-            print(f'Unknown section: {section}')
+        for section, value in bookmarks.items():
+            if section == 'maps':
+                _process_maps(dbc, filename, value)
+            elif section == 'portals':
+                _process_portals(dbc, filename, value)
+            else:
+                print(f'Unknown section: {section}')
 
     dbc.session.commit()
 
