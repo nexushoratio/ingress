@@ -50,7 +50,7 @@ def save_bounds(
             sqla.case(
                 (
                     collection.c.geom.ST_NumGeometries() < 3,
-                    collection.c.geom.ST_Buffer(0.00005, 3),
+                    collection.c.geom.ST_Buffer(0.0005, 3),
                 ),
                 else_=collection.c.geom
             ).label('geom')
