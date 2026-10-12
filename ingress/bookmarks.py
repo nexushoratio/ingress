@@ -368,7 +368,7 @@ def mundane_commands(ctx: app.ArgparseApp):
         folder_clear,
         name='clear',
         subparser=folder_cmds,
-        parents=[flags.uuid_req]
+        parents=[flags.uuid_req_list]
     )
     ctx.register_command(
         folder_del,
@@ -631,14 +631,20 @@ def folder_clear(args: argparse.Namespace) -> int:
     """(V) Clear all entries in a bookmark folder from the database."""
     dbc = args.dbc
 
-    folder = dbc.session.get(database.BookmarkFolder, args.uuid)
     ret = 0
-    if folder:
-        _clear_folder(dbc, folder)
-        dbc.session.commit()
+    for uuid in args.uuid:
+        folder = dbc.session.get(database.BookmarkFolder, uuid)
+        if folder:
+            _clear_folder(dbc, folder)
+        else:
+            print(f'Unknown uuid: "{uuid}"')
+            ret = 1
+            break
+
+    if ret:
+        dbc.session.rollback()
     else:
-        print(f'Unknown uuid: "{args.uuid}"')
-        ret = 1
+        dbc.session.commit()
 
     return ret
 
